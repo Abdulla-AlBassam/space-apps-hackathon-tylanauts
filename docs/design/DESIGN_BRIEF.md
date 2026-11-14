@@ -140,7 +140,7 @@ no free source found). Don't treat anything about those as researched.
 ```
 
 - **Top bar:** who, which mission day, one overall status word.
-- **Row of 3 score cards** (our versions of Recovery / Strain / Sleep). Big number, ring
+- **Row of 3 score cards** (Recovery / Radiation / Mind). Big number, ring
   around it, a word ("Good"), and one line explaining why.
 - **Click a score** to see its contributors Oura-style, each as a plain question with a bar.
 - **Trend chart with a shaded "your normal" band**, like Apple's typical range. Points outside
@@ -174,7 +174,7 @@ bands and tuning later; this is a `docs/PLAN.md` decision, not a design one.
 ---
 
 ## 5. Decisions (answered by Abdulla, 14 Nov)
-1. **Headline scores:** Recovery, Strain and Sleep, for now.
+1. **Headline scores:** Recovery, Radiation and Mind (Abdulla changed this from Recovery, Strain and Sleep on 14 Nov).
 2. **Who it's for:** both the astronaut and the flight surgeon on Earth. The app has a switch;
    the flight surgeon view adds a table of raw readings and which device each came from.
 3. **Colours:** strictly brand colours for now. So "Normal" uses Blue Yonder, not a green.
