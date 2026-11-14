@@ -40,7 +40,7 @@ pitch). Only start this once everything above works.
 | Frontend 2 | FinnAliR | Alerts screen, check-in form, overall look |
 | Backend / data | _TBD_ | Simulated data and how the app reads it |
 | Health logic | _TBD_ | What we measure, how scores and alerts are worked out, NASA sources |
-| Business / pitch | _TBD_ | Slides, demo video, the story, the submission write-up |
+| Business / pitch | TaqiTellsTales | Slides, demo video, the story, the submission write-up |
 
 Put your name in the table when you've agreed on your role.
 
