@@ -1,5 +1,7 @@
 # Deploying the backend (Vercel + Neon Postgres)
 
+*For the backend owner only. Frontend work just uses the live API: see [README.md](README.md).*
+
 **Live:** https://tylanauts-api.vercel.app (docs at `/docs`). Vercel project `tylanauts-api` on
 nayem-m's account, Neon database `tylanauts-db`. Deployed from the command line, not from GitHub,
 so merging to `main` does **not** redeploy it (see "Redeploying" below).

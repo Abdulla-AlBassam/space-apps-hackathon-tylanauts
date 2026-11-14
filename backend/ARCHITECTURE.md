@@ -1,6 +1,6 @@
 # Backend Architecture — Ingestion & Normalization
 
-How to run it is in [README.md](README.md); how the team connects to it is in [INTEGRATION.md](INTEGRATION.md).
+How to use the live API is in [README.md](README.md); how the team connects to it is in [INTEGRATION.md](INTEGRATION.md).
 
 ## 1. The one-sentence version
 

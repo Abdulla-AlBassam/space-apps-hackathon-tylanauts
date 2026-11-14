@@ -1,130 +1,168 @@
-# Astronaut Health Data API (backend)
+# Siryius Health Data API
 
-Takes health readings from many kinds of devices and inputs, converts them all into one standard
-format (IEEE 1752.1 / Open mHealth data points), checks them, and stores them. Any frontend can use
-it over plain HTTP + JSON.
+The live backend for the Siryius dashboard. It takes health readings from devices and from what
+astronauts type in, converts them into one standard format (IEEE 1752.1 / Open mHealth), checks
+them, and stores them in a hosted Postgres database.
 
-**Live API:** https://tylanauts-api.vercel.app (try it at
-https://tylanauts-api.vercel.app/docs). Sending data needs the shared `X-Api-Key`; ask nayem-m.
+| | |
+| --- | --- |
+| **Base URL** | `https://tylanauts-api.vercel.app` |
+| **Try every endpoint in the browser** | https://tylanauts-api.vercel.app/docs |
+| **API schema (OpenAPI 3)** | https://tylanauts-api.vercel.app/openapi.json (same as [`openapi.json`](openapi.json) here) |
+| **Is it up?** | https://tylanauts-api.vercel.app/health returns `{"status": "ok", "storage": "postgres", ...}` |
 
-Design explained in [ARCHITECTURE.md](ARCHITECTURE.md). How the frontend and the plan docs connect to it: [INTEGRATION.md](INTEGRATION.md).
+> **Use the live API only.** Frontend code calls `https://tylanauts-api.vercel.app` directly.
+> Don't install, start or run this backend locally, and don't point the API address at
+> `localhost`: a local copy has its own empty database, and the dashboard would show nothing real.
+> Nothing in this folder needs to run for the frontend to work.
 
-## Run it
+## Who can call it
 
-```bash
-cd backend
-python3 -m venv .venv
-.venv/bin/pip install -r requirements-dev.txt
-.venv/bin/uvicorn app.main:app --reload
-```
+- **Reading** needs no key.
+- **Sending data** needs the `X-Api-Key` header (see [Sending data](#sending-data)).
+- **Browsers** may call it only from these addresses: `https://tylanauts-crew-health.vercel.app`
+  (the live dashboard), `http://localhost:8000` and `http://127.0.0.1:8000` (the dashboard's own
+  local preview, `python3 -m http.server 8000` in `app/`). Any other address, such as a Vercel
+  preview link, is blocked by the browser. Ask nayem-m to add it.
 
-Then open http://localhost:8000/docs for interactive API docs where you can try every endpoint.
-Locally it stores data in a SQLite file; set `DATABASE_URL` to use Postgres instead.
-Hosting on Vercel with Postgres: [DEPLOY.md](DEPLOY.md).
+## Reading data
 
-Tests: `.venv/bin/python -m pytest -q`. To also run every storage test against Postgres, point
-`TEST_DATABASE_URL` at a **throwaway** database (its tables are wiped), e.g.:
-
-```bash
-docker run -d --name pg-test -e POSTGRES_PASSWORD=test -p 127.0.0.1:55432:5432 postgres:16-alpine
-TEST_DATABASE_URL=postgresql://postgres:test@127.0.0.1:55432/postgres .venv/bin/python -m pytest -q
-```
-
-## API schema
-
-[`openapi.json`](openapi.json) is the full API contract (OpenAPI 3): every endpoint, parameter
-and response shape. Frontend developers can read it at `/docs` on a running server, or generate
-client code from the file. Each endpoint has a short id (`ingest`, `query_data_points`,
-`list_metrics`...).
-
-After changing an endpoint, regenerate it: `.venv/bin/python scripts/export_openapi.py`.
-A test fails if the committed file is out of date.
-
-## Endpoints
-
-| Method | Path | What it does |
+| Method | Path | Returns |
 | --- | --- | --- |
-| GET | `/health` | Is the server up, and which storage it uses |
-| GET | `/api/v1/metrics` | Every metric we understand, its canonical unit and allowed range |
-| GET | `/api/v1/adapters` | Every input format we accept, with a ready-to-send example |
-| POST | `/api/v1/ingest/{adapter_id}?subject_id=astro-01&device_id=...` | Send a payload; get a report of what was accepted, rejected (with reasons) or skipped as a duplicate. Needs the `X-Api-Key` header when the server has `INGEST_API_KEY` set |
-| GET | `/api/v1/ingestions/{ingestion_id}` | Look up a past ingestion report |
-| GET | `/api/v1/subjects` | Subjects that have data |
-| GET | `/api/v1/subjects/{subject_id}/data-points?metric=&start=&end=&limit=` | Stored data, oldest first |
+| GET | `/api/v1/subjects` | Ids of everyone with data, e.g. `["crew-01", "crew-02"]` |
+| GET | `/api/v1/subjects/{subject_id}/data-points` | That person's stored readings, oldest first |
+| GET | `/api/v1/metrics` | Every metric the backend stores: id, label, unit, possible range |
+| GET | `/api/v1/adapters` | Every input format it accepts, each with a ready-to-send example |
+| GET | `/api/v1/ingestions/{ingestion_id}` | The report of one past upload |
 
-Example:
+Filters for `/data-points`, all optional:
 
-```bash
-curl -X POST "localhost:8000/api/v1/ingest/manual-entry?subject_id=astro-01" \
-  -H "Content-Type: application/json" \
-  -d '{"entries":[{"metric":"heart-rate","value":62,"unit":"bpm","time":"2026-11-14T08:00:00Z"}]}'
+| Parameter | Meaning |
+| --- | --- |
+| `metric` | Only one metric, e.g. `heart-rate` (unknown names return `400` listing the valid ones) |
+| `start` | From this time, inclusive, e.g. `2026-11-01T00:00:00Z` |
+| `end` | Up to this time, exclusive |
+| `limit` | 1 to 5000, default 500 |
+
+A subject with no data returns `[]`, not an error.
+
+```js
+const API = "https://tylanauts-api.vercel.app/api/v1";
+const res = await fetch(`${API}/subjects/crew-01/data-points?metric=heart-rate&limit=5000`);
+if (!res.ok) throw new Error(`API returned ${res.status}`);
+const records = await res.json();
 ```
 
-## Add a new device
+Each record looks like this (a real one from the live database, ids shortened):
 
-1. Create `app/adapters/my_device.py`:
-
-   ```python
-   import json
-   from app.adapters.base import Adapter, PayloadError, register
-   from app.domain.models import Measurement, RecordError
-
-   @register
-   class MyDeviceAdapter(Adapter):
-       id = "my-device"
-       name = "My Device export"
-       description = "What this format is and where it comes from."
-       example = json.dumps({"readings": [{"ts": "2026-11-14T08:00:00Z", "pulse": 61}]})
-
-       def parse(self, payload):
-           try:
-               data = json.loads(payload)
-           except json.JSONDecodeError as e:
-               raise PayloadError(f"not valid JSON: {e}")
-           for i, r in enumerate(data.get("readings", [])):
-               if "ts" not in r:
-                   yield RecordError(ref=f"readings[{i}]", reason="missing ts")
-                   continue
-               yield Measurement(metric="heart-rate", value=r["pulse"], unit="bpm", time=r["ts"], ref=f"readings[{i}]")
-   ```
-
-2. Run the tests. Your adapter is discovered automatically, shows up in `GET /api/v1/adapters`,
-   and its `example` is pushed through the whole pipeline by `test_every_adapter_example_ingests_cleanly`.
-
-You never build the standard format yourself: yield `Measurement`s in whatever unit the device
-uses, and the pipeline converts, checks and builds the standard data point.
-
-## Add a new metric
-
-1. Add a `MetricDefinition` in `app/domain/metrics.py`.
-2. If Open mHealth has a schema for it, use namespace `omh` and run `.venv/bin/python scripts/fetch_schemas.py`
-   to bundle it. If not, write one in `app/standards/schemas/astro/` (copy `mood-1.0.json`).
-3. If it needs new units, add them in `app/domain/units.py`.
-
-## Folder map
-
-```
-app/
-  main.py            builds the app (wires storage, pipeline, routes)
-  config.py          settings from environment variables
-  api/routes/        HTTP only: read the request, call the pipeline/storage, return JSON
-  adapters/          one file per input format -> Measurements
-  domain/            metric catalog, unit conversions, data models (no web or database code)
-  pipeline/          normalize -> build standard data point -> ingest orchestration
-  standards/         schema validation + bundled official schemas (works offline)
-  storage/           Repository interface + SQLite and Postgres implementations
-openapi.json         the API schema (generated)
-scripts/fetch_schemas.py   refresh the bundled official schemas
-scripts/export_openapi.py  regenerate openapi.json
-tests/
+```json
+{
+  "uuid": "…",
+  "subject_id": "deploy-check",
+  "metric": "heart-rate",
+  "device_id": null,
+  "adapter_id": "manual-entry",
+  "ingestion_id": "…",
+  "effective_start": "2026-11-14T09:00:00Z",
+  "effective_end": null,
+  "values": {"value": 61.0},
+  "data_point": {
+    "header": {"uuid": "…", "schema_id": {"namespace": "omh", "name": "heart-rate", "version": "3.0"},
+               "source_creation_date_time": "…", "modality": "sensed"},
+    "body": {"heart_rate": {"value": 61.0, "unit": "beats/min"},
+             "effective_time_frame": {"date_time": "2026-11-14T09:00:00Z"}}
+  }
+}
 ```
 
-## Settings (environment variables)
+- **The number** is in `values`: `values.value` for most metrics, `values.systolic` and
+  `values.diastolic` for blood pressure.
+- **The unit** is always the metric's standard unit (table below), also inside `data_point.body`.
+- **Times** are always UTC. Point-in-time readings have only `effective_start`. Periods such as a
+  night's sleep also have `effective_end`.
+- **`data_point`** is the full standard record. Most screens never need it.
 
-| Variable | Default | Meaning |
+### Metrics
+
+| id | Unit | Notes |
 | --- | --- | --- |
-| `DATABASE_URL` | unset | Postgres connection string. Set = Postgres (required on Vercel), unset = SQLite |
-| `HEALTH_DB_PATH` | `backend/data/health.db` | SQLite file, when `DATABASE_URL` is unset |
-| `INGEST_API_KEY` | unset | Secret required in the `X-Api-Key` header to send data. Unset = no check (local only) |
-| `CORS_ORIGINS` | `*` | Comma-separated frontend origins allowed to call the API |
-| `MAX_PAYLOAD_BYTES` | `5000000` | Largest accepted upload |
+| `heart-rate` | beats/min | |
+| `blood-pressure` | mmHg | Two values: `systolic`, `diastolic` |
+| `body-temperature` | C | |
+| `blood-glucose` | mg/dL | |
+| `oxygen-saturation` | % | SpO2 |
+| `respiratory-rate` | breaths/min | |
+| `sleep-duration` | h | A period: has `effective_end` |
+| `heart-rate-variability` | ms | RMSSD |
+| `mood` | score | 1 (very low) to 5 (very good), typed in; may carry a note |
+| `radiation-dose` | mSv | Dose equivalent, often per day (a period) |
+
+`GET /api/v1/metrics` is the source of truth if this table and the API ever differ.
+
+### Using it in the current dashboard
+
+[`examples/readings-client.js`](examples/readings-client.js) has `fetchReadings(astronautId)`. It
+calls the live API and returns the flat rows `app/data.js` already uses (`resting_hr`,
+`hrv_rmssd`, ...), so the code after `generateReadings()` keeps working. The mapping, and which
+dashboard metrics the backend doesn't store yet, are in [INTEGRATION.md](INTEGRATION.md).
+
+## Sending data
+
+`POST /api/v1/ingest/{adapter_id}?subject_id=crew-01&device_id=watch-01`
+
+- **Header `X-Api-Key`** is required, or the reply is `401`. The key is a secret: ask nayem-m for
+  it, and never write it into code or files committed to the repo.
+- **`adapter_id`** says what format the body is in. For anything a person types in (check-in
+  form, health log), use `manual-entry`.
+- **`subject_id`** is who the data belongs to: letters, digits, `.`, `_`, `-`, up to 100
+  characters. Use `crew-01` to `crew-04` for the simulated crew. `deploy-check` is a test
+  subject: ignore it.
+- **`device_id`** is optional: which physical device sent it.
+
+The `manual-entry` body:
+
+```json
+{"entries": [
+  {"metric": "mood", "value": 4, "time": "2026-11-14T07:40:00Z", "extras": {"note": "Slept well"}},
+  {"metric": "blood-pressure", "value": {"systolic": 118, "diastolic": 76}, "unit": "mmHg",
+   "time": "2026-11-14T07:42:00Z"},
+  {"metric": "sleep-duration", "value": 6.5, "unit": "h",
+   "start": "2026-11-13T22:30:00Z", "end": "2026-11-14T05:30:00Z"}
+]}
+```
+
+- **`time`** is when it was measured. Sleep and other periods use `start` and `end` instead.
+  Always send UTC with a `Z`. A time with no timezone is assumed to be UTC, and the reply warns.
+- **`unit`** is optional. Leave it out to mean the standard unit. Common spellings are converted
+  (`bpm`, `°F`, `mmol/L`, `hours`...).
+- **`modality`** is `self-reported` by default for this adapter. Use `"sensed"` for instrument
+  readings.
+
+The reply is a report, with status `200` even when some entries were rejected:
+
+```json
+{"ingestion_id": "…", "received": 3, "accepted": 2, "duplicates": 0,
+ "rejected": [{"ref": "entries[1]", "reason": "blood-pressure: systolic must be higher than diastolic (values may be swapped)"}],
+ "warnings": [], "data_point_ids": ["…", "…"]}
+```
+
+Show `rejected[].reason` to the user: it says what to fix. Sending exactly the same reading again
+is safe; it's counted under `duplicates` and not stored twice.
+
+### Errors
+
+| Status | When | Body |
+| --- | --- | --- |
+| `400` | Nothing in the body could be read (e.g. not JSON), or an unknown `metric` filter | `{"detail": "<what's wrong>"}` |
+| `401` | Sending without the right `X-Api-Key` | `{"detail": "missing or wrong X-Api-Key header"}` |
+| `404` | Unknown adapter or ingestion id | `{"detail": "<what's wrong>"}` |
+| `413` | Body over 4.5 MB (Vercel's limit). Split large uploads | Vercel's error, not JSON |
+| `422` | A query parameter has the wrong shape (e.g. a `subject_id` with spaces) | FastAPI's validation details |
+
+## More
+
+- [INTEGRATION.md](INTEGRATION.md): how this differs from the earlier plan, and the dashboard
+  metric mapping.
+- [ARCHITECTURE.md](ARCHITECTURE.md): how the backend works inside.
+- [DEVELOPING.md](DEVELOPING.md): for backend contributors only (adding devices and metrics).
+- [DEPLOY.md](DEPLOY.md): for the backend owner only (hosting and redeploying).

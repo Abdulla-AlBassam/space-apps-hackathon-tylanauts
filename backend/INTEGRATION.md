@@ -2,8 +2,11 @@
 
 The backend is the hub from `docs/DEVICE_HUB.md`, built on the IEEE 1752.1 / Open mHealth
 standard. This page says what changes for the frontend and the plan docs, and what the backend
-does and doesn't cover yet. How to run it: [README.md](README.md). How it works:
+does and doesn't cover yet. How to use the live API: [README.md](README.md). How it works:
 [ARCHITECTURE.md](ARCHITECTURE.md).
+
+Always use the live backend at `https://tylanauts-api.vercel.app`. Don't run a local copy for
+frontend work: it has its own empty database.
 
 ## 1. What changes from the current plan
 
@@ -19,7 +22,7 @@ does and doesn't cover yet. How to run it: [README.md](README.md). How it works:
 | `GET /api/readings?astronaut_id=...&from=...&to=...` | `GET /api/v1/subjects/{subject_id}/data-points?metric=&start=&end=&limit=` | |
 | Bad message gets a clear error | Each bad reading is rejected with where and why; the rest of the message is still stored. Sending the same data twice is safe | |
 | Typed-in results marked `manual` | `manual-entry` adapter; readings marked `self-reported` | |
-| Storage undecided | Postgres (Neon) when hosted, a SQLite file when run locally | Vercel can't keep files |
+| Storage undecided | Postgres (Neon), hosted with the API on Vercel | Vercel can't keep files |
 | Tech stack undecided | Python 3.12 + FastAPI on Vercel, like the dashboard ([DEPLOY.md](DEPLOY.md)). Live at https://tylanauts-api.vercel.app | |
 | No API description | [`openapi.json`](openapi.json): the full API schema, also browsable at `/docs` | Frontend can build against it, or generate a client |
 
@@ -62,29 +65,29 @@ Two things to change around it:
 
 - `fetch` is asynchronous, so the page has to wait for the data before drawing (today
   `generateReadings()` returns instantly).
-- `API_BASE` already points at the live backend, https://tylanauts-api.vercel.app. It allows
-  requests from the live dashboard and from `localhost:8000`; tell the backend owner about any other
-  address (e.g. dashboard preview links). To use a local backend instead, the dashboard's own server
-  (`python3 -m http.server 8000`) and the backend both default to port 8000: run the backend with
-  `--port 8001` and point `API_BASE` there.
+- `API_BASE` already points at the live backend, https://tylanauts-api.vercel.app. Keep it that
+  way. It allows requests from the live dashboard and from the dashboard's local preview on
+  `localhost:8000`; tell the backend owner about any other address (e.g. dashboard preview links).
 - Units come back in the standard's spelling (`beats/min`, `C`), not `bpm` / `°C`.
 
 ## 4. Sending data (simulator, typed-in logs, new devices)
 
 ```bash
-curl -X POST "http://localhost:8000/api/v1/ingest/manual-entry?subject_id=crew-01" \
+curl -X POST "https://tylanauts-api.vercel.app/api/v1/ingest/manual-entry?subject_id=crew-01" \
   -H "Content-Type: application/json" \
+  -H "X-Api-Key: <key from nayem-m>" \
   -d '{"entries":[{"metric":"mood","value":4,"time":"2026-11-14T08:00:00Z","extras":{"note":"Slept well"}}]}'
 ```
 
-- On the hosted backend, sending needs the shared key: add `-H "X-Api-Key: <key>"` (ask the
-  backend owner). Reading never needs it, so the dashboard doesn't either.
+- Sending needs the shared key in `X-Api-Key` (ask the backend owner; never commit it).
+  Reading never needs it.
 - Every input format and a working example of its payload: `GET /api/v1/adapters`.
 - The reply always says how many readings were accepted, how many were duplicates, and why
-  any were rejected.
-- Watch, chest strap and headband each need their own adapter (one small file, see the README).
-  Until those exist, the simulator can send through `manual-entry` (JSON) or `csv-table` (CSV).
-- Try every endpoint in the browser at http://localhost:8000/docs.
+  any were rejected. Full details: [README.md](README.md#sending-data).
+- Watch, chest strap and headband each need their own adapter (a backend change, see
+  [DEVELOPING.md](DEVELOPING.md)). Until those exist, the simulator can send through
+  `manual-entry` (JSON) or `csv-table` (CSV).
+- Try every endpoint in the browser at https://tylanauts-api.vercel.app/docs.
 
 ## 5. Plan docs that need updating
 
