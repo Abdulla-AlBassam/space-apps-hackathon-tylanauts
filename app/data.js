@@ -248,7 +248,7 @@
     if (stacked) {
       alerts.push(make(2, {
         title: `${tier1.length} warning signs at the same time`,
-        detail: tier1.map((f) => f.detail).join(" ") + " One alone is Tier 1; together they make Tier 2.",
+        detail: tier1.map((f) => f.detail).join(" "),
         rules: [...tier1.map((f) => ({ text: f.rule, status: f.status })), { text: "Two or more Tier 1 signs at once", status: "Design" }],
         actions: actionsFor(2, tier1), signals: tier1.map((f) => f.metric), combined: true, cat: "heart",
       }));

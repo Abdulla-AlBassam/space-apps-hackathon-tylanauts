@@ -63,6 +63,10 @@ The look follows the designer's guide: `docs/design/sirius-identity/Sirius_visua
 - **Health dial:** the same 24 ticks used as the score meter on Recovery, Radiation, Mind and the
   crew score. Bone ticks are the score so far, slate ticks are what is left. At **Watch** the last
   filled tick is ember; at **Alert** all filled ticks are ember. Drawn by `SIRIUS.dial(...)`.
+- **Alert cards stay simple:** a title, one short line on what happened, "What to do" and a
+  "Mark as done" button. No tier labels, device tags or rule lists on the card.
+- **Log button:** the white "+ Log" button is on every page (top of the left rail, and in the
+  header of the Crew and Body map pages). It opens the Health log page (`#log`).
 - **Status words:** Steady, Watch, Alert (always with an icon, never colour alone).
 - **Motion:** the designer's motion logo video plays once as an intro when the dashboard opens
   (click to skip; add `?intro=0` to the address to turn it off). The same motion, drawn live,
@@ -97,7 +101,7 @@ what is coming up, the alerts, and each day's readings. It is not new data, just
   comes from; clicking Recovery, Radiation or Mind swaps it straight away. The **Alerts** card
   shows how many alerts are open and how serious they are, and opens the Alerts page
   (`#alerts`). That page has three separate sections, each with its own look: **Alert** (large
-  cards with a warm orange tint and an Alert tag, act today), **Watch** (smaller cards side by side) and **For info** (a
+  cards with a warm orange tint, act today), **Watch** (smaller cards side by side) and **For info** (a
   quiet list with nothing to do). The three counts at the top jump to their section.
 - **Page headers** are a solid block (`--head` in `sirius.css`) that stays at the top while you
   scroll: the title block on Alerts, Calendar, Health log and Devices, the name bar on Today, and

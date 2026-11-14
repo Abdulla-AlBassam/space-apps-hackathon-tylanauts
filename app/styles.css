@@ -62,6 +62,17 @@ body {
 .rail-link svg { width: 22px; height: 22px; }
 .rail-link:hover, .rail-link:focus-visible { color: var(--bone); background: var(--card); outline: none; }
 .rail-link.active { color: var(--bone); background: var(--card-hover); }
+/* The "Log" button at the top of the rail: a white circle with a plus, shown on every page */
+.rail-log { color: var(--bone); margin-bottom: 10px; }
+.rail-log i {
+  display: grid; place-items: center;
+  width: 40px; height: 40px; border-radius: 50%;
+  background: var(--bone); color: var(--ink);
+  transition: background 0.2s;
+}
+.rail-log:hover i { background: #fff; }
+.rail-log.active { background: none; }
+.rail-log.active i { box-shadow: 0 0 0 3px var(--ink), 0 0 0 4px var(--bone); }
 /* The small number on the Alerts icon */
 .rail-count {
   position: absolute;
@@ -398,7 +409,6 @@ body {
 .alert-sec-body { display: grid; gap: 16px; }
 .alert { transition: opacity 0.3s; }
 .alert.done { opacity: 0.45; }
-.alert-top { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 10px; }
 .alert h4 { margin: 0 0 4px; font-weight: 500; line-height: 1.3; }
 .alert p { margin: 0; font-size: 14.5px; color: var(--text-dim); max-width: 56ch; }
 .alert .chips { margin-top: 12px; }
@@ -423,28 +433,26 @@ body {
 .alert.act h4 { font-size: 26px; }
 .alert.act .alert-what p { font-size: 16px; }
 
-/* Watch: smaller cards, two side by side, with the steps underneath */
-.sec-watch .alert-sec-body { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+/* Watch: smaller cards side by side (as many as fit), all the same height in a row.
+   Text on top, the steps under it, the white "Mark as done" button bottom right. */
+.sec-watch .alert-sec-body { grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); }
 .alert.watch {
-  display: flex; flex-direction: column; gap: 18px;
-  padding: 22px 24px; border-radius: var(--radius); background: var(--card);
+  display: flex; flex-direction: column; gap: 22px;
+  padding: 24px; border-radius: var(--radius); background: var(--card);
 }
 .alert.watch h4 { font-size: 19px; }
-/* Steps on the left, the white "Mark as done" button on the right */
-.alert.watch .alert-do { margin-top: auto; padding-top: 16px; border-top: 1px solid var(--hair); display: flex; align-items: flex-end; gap: 16px; flex-wrap: wrap; }
-.alert.watch .alert-steps { flex: 1; min-width: 180px; }
-.alert.watch .alert-do button { margin: 0 0 0 auto; }
+.alert.watch .alert-do { flex: 1; display: flex; flex-direction: column; gap: 20px; }
+.alert.watch .alert-do button { margin: auto 0 0 auto; }
 
 /* For info: a quiet list, no cards */
 .sec-info .alert-sec-body { gap: 0; }
 .alert.info {
-  display: grid; grid-template-columns: minmax(0, 1.2fr) auto minmax(0, 1fr); align-items: center; gap: 8px 32px;
+  display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); align-items: center; gap: 8px 32px;
   padding: 14px 0; border-top: 1px solid var(--hair);
 }
 .alert.info:first-child { border-top: 0; padding-top: 0; }
 .alert.info h4 { font-size: 16px; color: var(--text-dim); }
 .alert.info p { font-size: 14px; color: var(--muted); }
-.alert.info .chips { margin-top: 0; }
 .alert.info .alert-note { text-align: right; }
 
 @media (max-width: 860px) {
@@ -807,6 +815,9 @@ td .chip { font-size: 12px; }
   .app { grid-template-columns: minmax(0, 1fr); }
   .rail { position: static; height: auto; flex-direction: row; justify-content: center; padding: 12px 8px 0; }
   .brand { display: none; }
+  .rail-log { margin-bottom: 0; }
+  .rail-log i { width: 28px; height: 28px; }
+  .rail-log i svg { width: 18px; height: 18px; }
   .main { gap: 28px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
   .layout-even { grid-template-columns: minmax(0, 1fr); }
   .topbar-right { margin-left: 0; flex-wrap: wrap; }
@@ -824,32 +835,6 @@ td .chip { font-size: 12px; }
 .vital-flag .sample-tag { margin-left: 0; }
 .vital-flag .pill + .sample-tag { margin-left: 8px; }
 
-/* Escalation details on an alert. Every card shows them in the same place:
- * a small "Told / From" table under the text, then the rules behind the alert, which stay
- * closed until you click "Why this was flagged" so the cards keep a similar height. */
-.alert-top { min-height: 24px; }
-.alert-meta { margin: 14px 0 0; display: grid; gap: 8px; }
-.alert-meta > div { display: grid; grid-template-columns: 52px minmax(0, 1fr); gap: 12px; align-items: baseline; }
-.alert-meta dt { font: 400 11px var(--font-mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
-.alert-meta dd { margin: 0; font-size: 13.5px; color: var(--text-dim); }
-.alert .alert-meta .chips { margin-top: 0; }
-.alert-why { margin-top: 14px; }
-.alert-why summary {
-  display: inline-flex; align-items: center; gap: 8px; cursor: pointer; list-style: none;
-  font-size: 13.5px; color: var(--text-dim); border-radius: 6px;
-}
-.alert-why summary::-webkit-details-marker { display: none; }
-.alert-why summary:hover { color: var(--bone); }
-.alert-why summary:focus-visible { outline: 2px solid var(--bone); outline-offset: 3px; }
-.alert-why summary .ico { width: 14px; height: 14px; transition: transform 0.15s; }
-.alert-why[open] summary .ico { transform: rotate(90deg); }
-.alert-why-n { font: 400 11px var(--font-mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
-.alert .alert-rules { margin: 10px 0 0; padding: 0 0 0 22px; display: grid; gap: 6px; }
-.alert .alert-rules li { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; font-size: 13.5px; color: var(--text-dim); }
-.alert .alert-rules li::before { content: none; }
-.rule-src { flex: none; font: 400 10px var(--font-mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); border: 1px solid var(--line-strong); border-radius: 999px; padding: 1px 7px; }
-/* In a Watch card the text block grows, so the "What to do" footers line up across a row */
-.alert.watch .alert-what { flex: 1; }
 
 /* ---------- Today: Vitals and This week sit flush ----------
  * The two sections share a row. Their headings get the same height so the tops line up,

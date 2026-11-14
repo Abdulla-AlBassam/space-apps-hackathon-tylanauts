@@ -61,7 +61,9 @@ window.HEALTH_READY.then(function () {
   // The logo (star + dial mark) and the SIRIUS wordmark are drawn by sirius.js.
   $("rail").innerHTML =
     `<a class="brand" href="#today" aria-label="Sirius home">${SIRIUS.mark(40, { label: "" })}<span class="wordmark">Sirius</span></a>` +
-    PAGES.map((p) => `<a class="rail-link" href="#${p.id}" data-page="${p.id}" title="${p.label}">${ic(p.icon)}<span>${p.label}</span>${p.id === "alerts" ? `<i class="rail-count" id="rail-count"></i>` : ""}</a>`).join("") +
+    // The white "Log" button comes first: it opens the Health log page, where results are typed in
+    `<a class="rail-link rail-log" href="#log" data-page="log" title="Log your results"><i>${ic("plus")}</i><span>Log</span></a>` +
+    PAGES.filter((p) => p.id !== "log").map((p) => `<a class="rail-link" href="#${p.id}" data-page="${p.id}" title="${p.label}">${ic(p.icon)}<span>${p.label}</span>${p.id === "alerts" ? `<i class="rail-count" id="rail-count"></i>` : ""}</a>`).join("") +
     `<a class="rail-link" href="crew.html" title="Crew overview">${ic("users")}<span>Crew</span></a>`;
 
   function showPage() {
@@ -287,33 +289,18 @@ window.HEALTH_READY.then(function () {
     { level: "watch", name: "Watch", sub: "Not urgent. Keep an eye on these and follow the steps when you can." },
     { level: "info", name: "For info", sub: "Nothing to do. These are here so you know." },
   ];
-  const alertBadges = (a) =>
-    (a.tier != null ? pill(a.level, `Tier ${a.tier} · ${a.tierName}`) : "") + (a.combined ? `<span class="badge">${ic("sparkles")}Combined devices</span>` : "") + (a.device ? `<span class="badge">${ic("wifi-off")}Device</span>` : "");
   function alertCard(a, i) {
     // For info: one quiet row, no steps and no button
     if (a.level === "info")
       return `<article class="alert info">
         <div class="alert-what"><h4>${a.title}</h4><p>${a.detail}</p></div>
-        <div class="chips">${(a.sources || []).map(deviceChip).join("")}</div>
         <p class="alert-note">${a.actions.join(" ")}</p>
       </article>`;
-    // Every card has the same parts in the same order: tags, title, what happened, a small
-    // "Told / From" table, then the rules behind it (closed until you click), then what to do.
-    const tags = (a.level === "act" && a.tier == null ? pill("act") : "") + alertBadges(a);
-    const chips = (a.sources || []).map(deviceChip).join("");
+    // Every card is kept to three things: a title, one short line on what happened, and what to do.
     return `<article class="alert ${a.level}${a.done ? " done" : ""}">
       <div class="alert-what">
-        ${tags ? `<div class="alert-top">${tags}</div>` : ""}
         <h4>${a.title}</h4>
         <p>${a.detail}</p>
-        <dl class="alert-meta">
-          ${a.notify ? `<div><dt>Told</dt><dd>${a.notify}</dd></div>` : ""}
-          ${chips ? `<div><dt>From</dt><dd class="chips">${chips}</dd></div>` : ""}
-        </dl>
-        ${a.rules && a.rules.length ? `<details class="alert-why">
-          <summary>${ic("chevron-right")}Why this was flagged<span class="alert-why-n">${a.rules.length} rule${a.rules.length === 1 ? "" : "s"}</span></summary>
-          <ul class="alert-rules">${a.rules.map((r) => `<li><span>${r.text}</span><span class="rule-src">${r.status}</span></li>`).join("")}</ul>
-        </details>` : ""}
       </div>
       <div class="alert-do">
         <div class="alert-steps">
@@ -949,7 +936,7 @@ window.HEALTH_READY.then(function () {
     mind: ["Mind", "How you're doing mentally, from 0 to 100. Mostly your daily mood check-in, plus how well you slept. Isolation and confinement are real risks on long missions. (Placeholder formula for the demo.)"],
     bodymap: ["Body map", "A 3D body with a label for each health area. The line shows where on the body it is. Orange marks an area that needs attention. Click a label to open its details. Drag to turn the body."],
     contributors: ["Overview", "The pieces that make up the score selected above, and which device or check-in each one comes from. This is the hub at work: one score built from several devices. Click Recovery, Radiation or Mind to switch."],
-    alerts: ["Alerts", "How many things need your attention and how serious they are. Open the card to see what changed and what to do about it. Each alert has a tier from 0 (Nominal) to 4 (Emergency) and says who is told. Two or more Tier 1 signs at once make Tier 2, which is how combining devices catches things one device would miss. Each rule shows where its number comes from: Published (a guideline or NASA document), Adapted (a published number fitted to our tiers) or Design (our own choice, for a flight surgeon to review)."],
+    alerts: ["Alerts", "How many things need your attention and how serious they are. Open the card to see what changed and what to do about it."],
     week: ["This week", "Seven days at a glance: two days back, today and four days ahead. An orange dot means something needs attention that day, a light dot means a health check is planned. Click a day to see its list. Calendar opens the whole month."],
     calendar: ["Calendar", "Each day gathers three things: alerts, health checks (due, overdue or planned) and that day's readings. Past days show the recovery score, in orange if it was below Steady. Use the buttons at the top to show only one kind or one health area. Click a day to see its details."],
     due: ["Due today", "Health checks you type in yourself, like blood pressure or a mood check, plus any device that hasn't synced for 24 hours. Click Log to add a result."],
