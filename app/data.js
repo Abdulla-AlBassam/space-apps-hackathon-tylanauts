@@ -376,6 +376,9 @@
     "radiation-dose": "radiation_dose",
     "mood": "mood",
   };
+  // The backend's newer simulator names its devices differently; point those names at
+  // the devices the pages know, so every reading still shows the right device.
+  const DEVICE_ALIASES = { "sim-watch-01": "watch-01", "sim-shirt-01": "shirt-01", "sim-badge-01": "dosi-01" };
   // The backend spells some units the standard's way; show them the way the pages do.
   const UNITS = { "beats/min": "bpm", C: "°C", score: "/5" };
 
@@ -394,7 +397,7 @@
         if (!metric || typeof rec.values.value !== "number") continue; // not used by the pages yet
         const body = rec.data_point.body;
         const unit = Object.values(body).find((v) => v && typeof v === "object" && "unit" in v)?.unit;
-        const deviceId = rec.device_id || "typed";
+        const deviceId = DEVICE_ALIASES[rec.device_id] || rec.device_id || "typed";
         rows.push({
           astronaut_id: rec.subject_id,
           device_id: deviceId,

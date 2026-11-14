@@ -198,7 +198,7 @@ window.HEALTH_READY.then(function () {
     ];
   }
   // A small icon for where a number came from (hover it for the device's name)
-  const srcIcon = (id) => `<span title="${id === "typed" ? "Typed in" : deviceLabel(id)}">${ic(id === "typed" ? "clipboard-pen" : device(id).icon)}</span>`;
+  const srcIcon = (id) => `<span title="${id === "typed" ? "Typed in" : deviceLabel(id)}">${ic(id === "typed" ? "clipboard-pen" : (device(id) || {}).icon || "activity")}</span>`;
   function renderContributors() {
     const s = SCORES.find((x) => x.key === selectedScore);
     $("contrib-title").innerHTML = ic(s.icon) + `${s.title} overview`;
@@ -815,7 +815,7 @@ window.HEALTH_READY.then(function () {
       const b = baseline[v.metric];
       const out = b && (value < b.low || value > b.high);
       const shown = v.signed && value > 0 ? "+" + value : value;
-      const src = device(today.sources[v.metric]);
+      const src = device(today.sources[v.metric]) || { label: "device" }; // an unknown device must never blank the page
       return `<div class="vital ${out ? "out" : ""}">
         <div class="vital-name"><span class="vital-ico">${ic(v.icon)}</span>${v.name} ${helpBtn(v.help)}</div>
         <div class="vital-value">${shown}<small>${v.unit}</small></div>
