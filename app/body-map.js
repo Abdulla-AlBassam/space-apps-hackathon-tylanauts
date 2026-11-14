@@ -420,7 +420,7 @@ const markers = AREAS.map((a) => {
 const view = { yaw: 0.35, pitch: 0, dist: 4.0, lookY: 0.9 }; // where we are now
 const goal = { ...view }; // where we're easing towards
 const HOME = { ...view };
-let spinning = !reduceMotion;
+const spinning = !reduceMotion;
 let lastTouch = 0;
 let selectedId = null;
 
@@ -474,10 +474,8 @@ stage.addEventListener("keydown", (e) => {
   if (e.key === "-") goal.dist = Math.min(7.5, goal.dist * 1.1);
 });
 document.addEventListener("keydown", (e) => { if (e.key === "Escape") { pinned = null; hideHelp(); select(null); } });
-$("bm-reset").addEventListener("click", () => { select(null); Object.assign(goal, HOME, { yaw: view.yaw + Math.atan2(Math.sin(HOME.yaw - view.yaw), Math.cos(HOME.yaw - view.yaw)) }); });
-const spinBtn = $("bm-spin");
-spinBtn.setAttribute("aria-pressed", String(spinning));
-spinBtn.addEventListener("click", () => { spinning = !spinning; spinBtn.setAttribute("aria-pressed", String(spinning)); lastTouch = 0; });
+// There are no view buttons: the body turns slowly by itself, pauses while you drag it or
+// have a label open, and Escape closes the open label and zooms back out.
 
 
 // Thin lines from each label to its glowing point: out from the label, then an angled

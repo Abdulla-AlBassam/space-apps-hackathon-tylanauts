@@ -1,9 +1,10 @@
 /*
  * Draws the whole dashboard from window.HEALTH_DATA (made in data.js).
  * Pages (switched with the left rail, using the address bar's #):
- *   #today   – scores, 3D body map (body-map.js), a small alerts card, AI doctor, vitals, trends
+ *   #today   – scores, 3D body map (body-map.js), a small alerts card, what's due, vitals, trends
  *   #alerts  – every alert in full: what changed and what to do
- *   #log     – health check log: categories, what's due, schedule, history, "Log a result"
+ *   #log     – health log: what's due, what's coming up, latest results, "Log a result"
+ * The AI doctor is a round button in the corner of every page that opens a chat box.
  *   #devices – my devices, how data flows, "Connect a device" walkthrough (a mock)
  * Every icon comes from icons.js (Lucide). All data is simulated.
  */
@@ -81,7 +82,6 @@
     $("view-astro").setAttribute("aria-pressed", !surgeon);
     $("view-surgeon").setAttribute("aria-pressed", surgeon);
     $("raw-panel").hidden = !surgeon;
-    renderDoctor();
   }
   $("view-astro").addEventListener("click", () => setView(false));
   $("view-surgeon").addEventListener("click", () => setView(true));
@@ -135,13 +135,13 @@
     </svg>`;
   }
 
-  let selectedScore = "recovery";
+  let selectedScore = "recovery"; // which score the Overview card (beside the body map) is showing
   function renderScores() {
     $("scores").innerHTML = SCORES.map(
       (s) => `
       <div class="score${s.key === selectedScore ? " selected" : ""}" role="button" tabindex="0"
            data-score="${s.key}" aria-pressed="${s.key === selectedScore}"
-           aria-label="${s.title} ${s.value} ${s.unit}. Show what's behind it">
+           aria-label="${s.title} ${s.value} ${s.unit}. Show its overview">
         ${ring(s)}
         <div class="score-text">
           <div class="score-title"><span class="title-ico is-${s.level}">${ic(s.icon)}</span>${s.title} ${helpBtn(s.key)}</div>
@@ -163,6 +163,7 @@
       selectScore(card.dataset.score);
     }
   });
+  // Clicking a score swaps the Overview card to that score straight away (and the trend chart too).
   function selectScore(key) {
     selectedScore = key;
     document.querySelectorAll("[data-score]").forEach((el) => {
@@ -173,7 +174,7 @@
     selectTrend({ recovery: "recovery", radiation: "doseTotal", mind: "mindScore" }[key]);
   }
 
-  /* ---------- What's behind each score ---------- */
+  /* ---------- Overview of the selected score: what it is made of ---------- */
   function contributorRows(key) {
     const b = baseline;
     if (key === "recovery") {
@@ -195,15 +196,17 @@
       { icon: "message-circle", q: "When is your next private psych conference?", v: 64, note: "In 5 days (every 2 weeks)", src: "typed", neutral: true, pctLabel: "5 d" },
     ];
   }
+  // A small icon for where a number came from (hover it for the device's name)
+  const srcIcon = (id) => `<span title="${id === "typed" ? "Typed in" : deviceLabel(id)}">${ic(id === "typed" ? "clipboard-pen" : device(id).icon)}</span>`;
   function renderContributors() {
     const s = SCORES.find((x) => x.key === selectedScore);
-    $("contrib-title").innerHTML = ic(s.icon) + `What's behind ${s.title}`;
+    $("contrib-title").innerHTML = ic(s.icon) + `${s.title} overview`;
     $("contrib").innerHTML = contributorRows(selectedScore)
       .map((r) => {
         const level = r.neutral ? "good" : band(r.v);
         return `<div class="contrib-row">
           <span class="contrib-ico is-${level}">${ic(r.icon)}</span>
-          <div>${r.q}<div class="contrib-note">${r.note} · ${deviceChip(r.src)}</div></div>
+          <div>${r.q}<div class="contrib-note">${srcIcon(r.src)}${r.note}</div></div>
           <div class="contrib-bar is-${level}"><span style="width:0%" data-w="${Math.min(100, r.v)}%"></span></div>
           <div class="contrib-num is-${level}">${r.pctLabel || r.v}</div>
         </div>`;
@@ -286,26 +289,93 @@
     renderAlerts();
   });
 
-  /* ---------- AI doctor (idea preview, scripted) ---------- */
-  let doctorState = { sent: false, asked: false };
-  function renderDoctor() {
-    const d = doctor;
-    $("doctor").innerHTML = `
-      <div class="panel-head"><h2>${ic("bot")}AI doctor</h2>${helpBtn("doctor")}<span class="spacer"></span><span class="badge">${ic("sparkles")}Idea preview</span></div>
-      <div class="doc-tier">${pill(d.tier.level, `Tier ${d.tier.n} · ${d.tier.word}`)}<span class="doc-based">Based on ${d.basedOn.map((id) => `<span title="${deviceLabel(id)}">${ic(device(id).icon)}</span>`).join("")}</span></div>
-      <div class="bubble">${ic("bot", "bubble-ico")}<p>${d.message}</p></div>
-      ${doctorState.asked ? `<div class="bubble me"><p>Should I skip today's run?</p></div>
-        <div class="bubble">${ic("bot", "bubble-ico")}<p>Swap it for a light bike session. Your heart needs an easier day, and you'll still protect your bones and muscles.</p></div>` : ""}
-      <div class="doc-actions">
-        <button type="button" class="btn-ghost" id="doc-ask" ${doctorState.asked ? "disabled" : ""}>${ic("message-circle")}Should I skip my run?</button>
-        <button type="button" class="btn-primary small" id="doc-send" ${doctorState.sent ? "disabled" : ""}>${ic(doctorState.sent ? "check" : "send")}${doctorState.sent ? "Summary sent" : "Send to flight surgeon"}</button>
-      </div>
-      ${doctorState.sent ? `<p class="doc-note">${ic("satellite")}Sent to ${surgeon ? "you (flight surgeon)" : "your flight surgeon"}. From the Moon a message takes about 1.3 seconds each way; from Mars it can take up to 22 minutes.</p>` : ""}
-      <p class="doc-disclaimer">${ic("shield-check")}Suggestions only. Not a medical device. Serious issues go to a real doctor.</p>`;
+  /* ---------- AI doctor: a round button that opens a chat box ----------
+   * An idea preview. Nothing here talks to a real AI: answer() below picks a reply by
+   * looking for key words in the question, and fills it in with today's simulated numbers.
+   */
+  const fab = $("doc-fab"), chat = $("doc-chat");
+  fab.innerHTML = ic("bot");
+  const QUICK = ["How am I doing?", "What should I do today?", "Why is my recovery low?"];
+  const chatLog = [{ me: false, text: doctor.message }]; // the conversation so far
+  let summarySent = false;
+
+  function answer(question) {
+    const q = question.toLowerCase();
+    const has = (...words) => words.some((w) => q.includes(w));
+    const open = alerts.filter((a) => !a.done && a.level !== "info");
+    const top = open[0];
+    const usual = (m) => Math.round(baseline[m].mean);
+    if (has("surgeon", "summary", "send"))
+      return sendSummary();
+    if (has("what should", "what do i", "to do", "today", "advice", "help"))
+      return top
+        ? `Three things for today:<ul>${top.actions.map((x) => `<li>${x}</li>`).join("")}</ul>${dueItems().length ? `You also have ${dueItems().length} health checks due in your log.` : ""}`
+        : "Nothing urgent today. Keep to your normal exercise and sleep plan.";
+    if (has("why", "recovery", "tired", "fatigue"))
+      return `Recovery is ${today.recovery}% because three things moved together: resting heart rate ${today.resting_hr} bpm (usual ${usual("resting_hr")}), heart rate variability ${today.hrv_rmssd} ms (usual ${usual("hrv_rmssd")}) and ${today.sleep_hours} h of sleep. That pattern usually means you need rest, not that you are ill.`;
+    if (has("sleep", "rest"))
+      return `You slept ${today.sleep_hours} h last night; your normal is about ${usual("sleep_hours")} h. Aim for 8 hours in your sleep station tonight.`;
+    if (has("heart", "hrv", "pulse"))
+      return `Resting heart rate is ${today.resting_hr} bpm (usual ${usual("resting_hr")}) and heart rate variability is ${today.hrv_rmssd} ms (usual ${usual("hrv_rmssd")}). Both point to fatigue. I'll check again tomorrow morning.`;
+    if (has("radiation", "dose"))
+      return `${today.radiation_dose} mSv today and ${today.doseTotal} mSv this mission, which is ${today.doseLimitPct}% of the ${H.careerLimit} mSv career limit. Nothing to do.`;
+    if (has("mood", "mind", "stress", "feel"))
+      return `Your Mind score is ${today.mindScore}%, with mood ${today.mood}/5 in today's check-in and short sleep. Worth raising at your next private talk with the flight surgeon.`;
+    if (has("run", "exercise", "train", "workout", "gym"))
+      return "Swap it for a light bike session. Your heart needs an easier day, and you'll still protect your bones and muscles.";
+    if (has("how am i", "doing", "status", "overview", "ok", "okay"))
+      return `Recovery ${today.recovery}%, Mind ${today.mindScore}%, radiation at ${today.doseLimitPct}% of your limit. ${open.length ? `${open.length} thing${open.length === 1 ? "" : "s"} need your attention; the main one: ${top.title.toLowerCase()}.` : "Everything is in your normal range."}`;
+    return "In this demo I can talk about how you're doing, your recovery, sleep, heart, mood, radiation, and what to do today.";
   }
-  $("doctor").addEventListener("click", (e) => {
-    if (e.target.closest("#doc-send")) { doctorState.sent = true; renderDoctor(); toast("Summary sent to the flight surgeon"); }
-    if (e.target.closest("#doc-ask")) { doctorState.asked = true; renderDoctor(); }
+  function sendSummary() {
+    summarySent = true;
+    toast("Summary sent to the flight surgeon");
+    return `Sent to ${surgeon ? "you (flight surgeon)" : "your flight surgeon"}. From the Moon a message takes about 1.3 seconds each way; from Mars it can take up to 22 minutes.`;
+  }
+  function ask(question) {
+    if (!question) return;
+    chatLog.push({ me: true, text: question });
+    chatLog.push({ me: false, text: answer(question) });
+    renderDoctor();
+  }
+  function renderDoctor() {
+    const esc = (t) => t.replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
+    chat.innerHTML = `
+      <header class="doc-head">
+        <span class="doc-avatar">${ic("bot")}</span>
+        <div><h2>AI doctor ${helpBtn("doctor")}</h2><p>${pill(doctor.tier.level, `Tier ${doctor.tier.n} · ${doctor.tier.word}`)}</p></div>
+        <button type="button" class="icon-btn" id="doc-close" aria-label="Close the AI doctor">${ic("x")}</button>
+      </header>
+      <div class="doc-msgs" id="doc-msgs">${chatLog.map((m) => `<div class="bubble${m.me ? " me" : ""}">${m.me ? esc(m.text) : m.text}</div>`).join("")}</div>
+      <div class="doc-quick">
+        ${QUICK.map((x) => `<button type="button" class="btn-ghost small" data-ask="${x}">${x}</button>`).join("")}
+        <button type="button" class="btn-ghost small" data-ask="Send a summary to my flight surgeon" ${summarySent ? "disabled" : ""}>${ic(summarySent ? "check" : "send")}${summarySent ? "Summary sent" : "Send to flight surgeon"}</button>
+      </div>
+      <form class="doc-form" id="doc-form">
+        <input id="doc-input" autocomplete="off" placeholder="Ask about your health" aria-label="Ask the AI doctor">
+        <button type="submit" class="doc-send" aria-label="Send">${ic("send")}</button>
+      </form>
+      <p class="doc-disclaimer">${ic("shield-check")}Idea preview with scripted answers. Not a medical device.</p>`;
+    const msgs = $("doc-msgs");
+    msgs.scrollTop = msgs.scrollHeight;
+  }
+  function toggleDoctor(open) {
+    chat.hidden = !open;
+    fab.setAttribute("aria-expanded", open);
+    fab.classList.toggle("open", open);
+    fab.innerHTML = ic(open ? "x" : "bot");
+    if (open) { renderDoctor(); $("doc-input").focus(); }
+  }
+  fab.addEventListener("click", () => toggleDoctor(chat.hidden));
+  chat.addEventListener("click", (e) => {
+    if (e.target.closest("#doc-close")) return toggleDoctor(false);
+    const b = e.target.closest("[data-ask]");
+    if (b) { ask(b.dataset.ask); $("doc-input").focus(); }
+  });
+  chat.addEventListener("submit", (e) => {
+    e.preventDefault();
+    ask($("doc-input").value.trim());
+    $("doc-input").focus();
   });
 
   /* ---------- Health log: what's due ---------- */
@@ -320,28 +390,36 @@
   function renderDue() {
     const items = dueItems();
     const unsynced = devices.filter((d) => d.lastSyncHours >= 24);
-    const html =
-      items
-        .map(({ t, level, word }) => `<div class="due">
+    const rows = items
+      .map(({ t, level, word }) => `<div class="due">
           <span class="due-ico is-good">${ic(catOf(t.cat).icon)}</span>
-          <div class="due-text"><b>${t.name}</b><span>${catOf(t.cat).name} · ${t.every}</span></div>
-          ${pill(level, word)}
+          <div class="due-text"><b>${t.name}</b>${pill(level, word)}</div>
           ${t.how === "reminder" ? "" : `<button type="button" class="btn-ghost small" data-log="${t.id}">${ic("plus")}Log</button>`}
         </div>`)
-        .join("") +
-      unsynced
-        .map((d) => `<div class="due">
+      .concat(unsynced.map((d) => `<div class="due">
           <span class="due-ico is-good">${ic(d.icon)}</span>
-          <div class="due-text"><b>${d.label} not synced</b><span>Last reading ${Math.round(d.lastSyncHours)} h ago</span></div>
-          ${pill("watch", "24 h+")}
+          <div class="due-text"><b>${d.label} not synced</b>${pill("watch", `${Math.round(d.lastSyncHours)} h ago`)}</div>
           <a class="btn-ghost small" href="#devices">${ic("wifi-off")}Check</a>
-        </div>`)
-        .join("");
+        </div>`));
     const empty = `<p class="empty">${ic("circle-check")}Nothing due. You're all caught up.</p>`;
-    $("due-today").innerHTML = html || empty;
-    $("due-full").innerHTML = html || empty;
+    // Today shows the three most urgent; the Health log shows them all.
+    const TOP = 3;
+    $("due-today").innerHTML = rows.length
+      ? rows.slice(0, TOP).join("") + (rows.length > TOP ? `<p class="due-more">+ ${rows.length - TOP} more in the health log</p>` : "")
+      : empty;
+    $("due-full").innerHTML = rows.join("") || empty;
     head("due-heading", "calendar-clock", `Due today <span class="count">${items.length + unsynced.length}</span>`);
-    head("log-due-heading", "calendar-clock", `Due and overdue <span class="count">${items.length + unsynced.length}</span>`);
+    head("log-due-heading", "calendar-clock", `To do <span class="count">${items.length + unsynced.length}</span>`);
+
+    // Coming up: the next few checks that aren't due yet
+    const next = typedTests().filter((t) => t.dueInDays > 0).sort((a, b) => a.dueInDays - b.dueInDays).slice(0, 5);
+    $("next-list").innerHTML = next
+      .map((t) => `<div class="due">
+        <span class="due-ico is-good">${ic(catOf(t.cat).icon)}</span>
+        <div class="due-text"><b>${t.name}</b><span>${t.every}</span></div>
+        <span class="due-when">${t.dueInDays === 1 ? "Tomorrow" : `In ${t.dueInDays} days`}</span>
+      </div>`)
+      .join("");
     $("due-all").innerHTML = ic("clipboard-list") + "Health log";
   }
   document.addEventListener("click", (e) => {
@@ -353,49 +431,16 @@
   head("log-title", "clipboard-list", "Health log");
   $("log-new").innerHTML = ic("plus") + "Log a result";
   $("log-new").addEventListener("click", () => openLogModal());
-  head("sched-heading", "calendar", "Schedule");
-  head("hist-heading", "history", "History");
+  head("next-heading", "calendar", "Coming up");
+  head("hist-heading", "history", "Latest results");
 
-  function catStatus(cat) {
-    const ts = typedTests().filter((t) => t.cat === cat.id);
-    if (ts.some((t) => t.dueInDays < 0)) return "act";
-    if (ts.some((t) => t.dueInDays === 0)) return "watch";
-    if (history.some((h) => h.cat === cat.id && h.out)) return "watch";
-    return "good";
-  }
-  function renderCategories() {
-    $("cat-grid").innerHTML = categories
-      .map((c) => {
-        const ts = tests.filter((t) => t.cat === c.id);
-        const auto = ts.filter((t) => t.how === "auto").length;
-        const next = typedTests().filter((t) => t.cat === c.id).sort((a, b) => a.dueInDays - b.dueInDays)[0];
-        const last = history.find((h) => h.cat === c.id);
-        const st = catStatus(c);
-        return `<div class="card cat">
-          <div class="cat-top"><span class="cat-ico is-${st}">${ic(c.icon)}</span>${pill(st)}</div>
-          <h3>${c.name}</h3>
-          <p>${ic("history")}Last: ${last ? `${last.test}, ${last.when.toLowerCase()}` : "nothing yet"}</p>
-          <p>${ic("calendar-clock")}Next: ${next ? (next.dueInDays <= 0 ? `${next.name} (${next.dueInDays < 0 ? "overdue" : "today"})` : `${next.name} in ${next.dueInDays} d`) : "–"}</p>
-          <p>${ic("plug")}${auto} from devices · ${ts.length - auto} typed in</p>
-        </div>`;
-      })
-      .join("");
-  }
-  function renderSchedule() {
-    $("schedule").innerHTML = `<thead><tr><th>Test</th><th>How</th><th>How often</th><th>Next</th></tr></thead><tbody>${tests
-      .map((t) => {
-        const how = t.how === "auto" ? deviceChip(t.device) : t.how === "reminder" ? `<span class="chip">${ic("bell")}Reminder</span>` : deviceChip("typed");
-        const next = t.dueInDays == null ? "Automatic" : t.dueInDays < 0 ? `<span class="is-watch">Overdue</span>` : t.dueInDays === 0 ? "Today" : `In ${t.dueInDays} d`;
-        return `<tr><td><span class="td-ico">${ic(catOf(t.cat).icon)}</span>${t.name}</td><td>${how}</td><td>${t.every}</td><td>${next}</td></tr>`;
-      })
-      .join("")}</tbody>`;
-  }
   function renderHistory() {
-    $("history").innerHTML = `<thead><tr><th>When</th><th>Test</th><th>Result</th><th>Source</th><th>Note</th></tr></thead><tbody>${history
+    $("history").innerHTML = `<thead><tr><th>Test</th><th>Result</th><th>When</th><th>From</th></tr></thead><tbody>${history
+      .slice(0, 6)
       .map(
-        (h) => `<tr><td>${h.when}</td><td><span class="td-ico">${ic(catOf(h.cat).icon)}</span>${h.test}</td>
+        (h) => `<tr><td><span class="td-ico">${ic(catOf(h.cat).icon)}</span>${h.test}</td>
           <td class="num ${h.out ? "is-watch" : ""}">${h.out ? ic("triangle-alert") : ""}${h.value}</td>
-          <td>${deviceChip(h.source)}</td><td class="dim">${h.note || ""}</td></tr>`
+          <td class="dim">${h.when}</td><td>${deviceChip(h.source)}</td></tr>`
       )
       .join("")}</tbody>`;
   }
@@ -444,7 +489,7 @@
       t.lastDays = 0;
       t.dueInDays = { Daily: 1, Weekly: 7, Monthly: 30, "Every 2 weeks": 14 }[t.every] || 30;
       closeModal();
-      renderDue(); renderCategories(); renderSchedule(); renderHistory();
+      renderDue(); renderHistory();
       toast(`${t.name.replace(/ \(1-5\)$/, "")} saved${out ? ", flagged as outside the healthy range" : ""}`);
     });
   }
@@ -725,13 +770,13 @@
     recovery: ["Recovery", "How ready your body is today, from 0 to 100%. It compares last night's heart rate variability, resting heart rate and sleep with your own normal, using three different devices. 67% and up is Normal, 34 to 66% is Watch, 33% and below is Act now. (Placeholder formula for the demo.)"],
     radiation: ["Radiation", "Your total radiation dose this mission, from your radiation badge, and how much of NASA's 600 mSv career limit that is. The ring shows the share of the limit used."],
     mind: ["Mind", "How you're doing mentally, from 0 to 100%. Mostly your daily mood check-in, plus how well you slept. Isolation and confinement are real risks on long missions. (Placeholder formula for the demo.)"],
-    bodymap: ["Body map", "A 3D body with a label for each health area. The line shows where on the body it is. Colours show today's status. Click a label to open its details. Drag to turn the body. Full screen also lets you zoom."],
-    contributors: ["What's behind the score", "The pieces that make up the score you selected, and which device or check-in each one comes from. Click a different score card to switch."],
+    bodymap: ["Body map", "A 3D body with a label for each health area. The line shows where on the body it is. Colours show today's status. Click a label to open its details. Drag to turn the body."],
+    contributors: ["Overview", "The pieces that make up the score selected above, and which device or check-in each one comes from. This is the hub at work: one score built from several devices. Click Recovery, Radiation or Mind to switch."],
     alerts: ["Alerts", "How many things need your attention and how serious they are. Open the card to see what changed and what to do about it. Some warnings only appear when two devices are combined, which is the point of the hub. Act now is shown only when several signals agree."],
-    doctor: ["AI doctor (idea)", "A preview of an idea we're exploring: an assistant that explains your data in plain words, suggests simple actions, and sends a summary to a real flight surgeon when something is serious. These messages are scripted for the demo."],
+    doctor: ["AI doctor (idea)", "A preview of an idea we're exploring: an assistant that explains your data in plain words, suggests simple actions, and sends a summary to a real flight surgeon when something is serious. The answers are scripted for the demo. Serious issues go to a real doctor."],
     due: ["Due today", "Health checks you type in yourself, like blood pressure or a mood check, plus any device that hasn't synced for 24 hours. Click Log to add a result."],
-    schedule: ["Schedule", "Every test in the health log and how often it happens. Device readings fill in automatically. Most frequencies are our own proposal; NASA's documents list the tests but not always how often."],
-    history: ["History", "Device readings and typed-in results together, newest first, with where each one came from. Results outside the healthy range are flagged."],
+    next: ["Coming up", "The next health checks on your schedule. How often each one happens is our own proposal; NASA's documents list the tests but not always how often."],
+    history: ["Latest results", "The newest device readings and typed-in results, with where each one came from. Results outside the healthy range are marked in yellow."],
     flow: ["How data flows", "Each wearable sends readings to its own web address (a webhook). The hub turns them into one common format and combines them, so it can spot patterns no single device could."],
     vitals: ["Vitals", "Overnight readings from your devices. The shaded strip in each mini chart is your normal range. A reading outside it is marked in yellow."],
     trend: ["30-day trend", "The line shows the last 30 days. The shaded band is your normal range, worked out from your own earlier days. Yellow dots mark days outside it."],
@@ -821,10 +866,7 @@
   renderScores();
   renderContributors();
   renderAlerts();
-  renderDoctor();
   renderDue();
-  renderCategories();
-  renderSchedule();
   renderHistory();
   renderDevices();
   renderVitals();
