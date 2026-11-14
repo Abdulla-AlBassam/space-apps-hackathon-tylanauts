@@ -15,7 +15,7 @@ python3 -m http.server 8000
 
 | File | What it does |
 | --- | --- |
-| `index.html` | The page layout: left rail, header, and four pages switched by the rail: Today (scores, body map, alerts card, AI doctor, vitals, trend), Alerts, Health log and Devices. |
+| `index.html` | The page layout: left rail, header, and five pages switched by the rail: Today (scores, body map, alerts card, vitals, this week, trend), Alerts, Calendar, Health log and Devices. |
 | `sirius.css` | **The Sirius visual identity**, shared by every page: the four colours, the two fonts, the logo and the health dial. Change a brand colour here and it changes everywhere. |
 | `sirius.js` | Draws the brand pieces: the logo (`SIRIUS.mark`), the health dial used as the score meter (`SIRIUS.dial`), the moving logo for loading (`SIRIUS.loading`) and the intro video. |
 | `brand/` | Logo files (`sirius-mark.svg`, `favicon.svg`) and the designer's motion logo video (`sirius-motion.mp4`). |
@@ -50,6 +50,21 @@ The look follows the designer's guide: `docs/design/sirius-identity/Sirius_visua
   shows while the 3D body loads and while a new device is being tested. Motion is calm:
   colours fade, nothing bounces, spins or glows.
 - **Still true:** we can't use the NASA logo.
+
+## Calendar
+
+The calendar brings together things that used to be in separate places: what is due today,
+what is coming up, the alerts, and each day's readings. It is not new data, just one view of it.
+
+- **This week (on Today):** seven days in a row (two back, today, four ahead). An orange dot means
+  something needs attention that day; a light dot means a health check is planned. Click a day to
+  see its list. This replaced the old "Due today" list.
+- **Calendar page (left rail):** one month at a time. Past days show that day's recovery score.
+  The buttons at the top show only alerts, checks, readings, or one health area. Click a day to
+  see everything for it in the card on the right, and log a result from there.
+- **In the code:** `eventsOn(date)` in `app.js` builds the list for one day from the alerts, the
+  health check schedule (`tests` in `data.js`) and the daily readings. Both views use it.
+  Daily checks are folded into one line on future days so they don't fill the month.
 
 ## How the pages are laid out
 

@@ -287,6 +287,13 @@
   const days = groupByDay(readings);
   const baseline = addScores(days);
   const alerts = buildAlerts(days, baseline);
+  // For the calendar: the day each alert belongs to, and its health category.
+  const spikeDay = days.find((d) => d.radiation_dose > 1);
+  for (const a of alerts) {
+    const isSpike = a.level === "info" && a.signals.includes("radiation_dose");
+    a.date = isSpike && spikeDay ? spikeDay.date : days[days.length - 1].date;
+    a.cat = a.device ? "device" : isSpike ? "radiation" : a.combined ? "sleep" : "heart";
+  }
 
   // Recent log entries: device readings and typed-in results in one history.
   const todayRow = days[days.length - 1];

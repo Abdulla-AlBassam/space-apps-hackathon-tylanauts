@@ -73,8 +73,12 @@
           <div class="panel-head"><h2 id="vitals-heading"></h2><button type="button" class="help" data-help="vitals" aria-label="What is this?">?</button></div>
           <div class="vitals" id="vitals"></div>
         </section>
+        <!-- This week: a strip of seven days that brings together what is due, what is coming up
+             and the alerts. Click a day to see it; "Calendar" opens the full month. -->
         <section class="panel">
-          <div class="panel-head"><h2 id="due-heading"></h2><button type="button" class="help" data-help="due" aria-label="What is this?">?</button><span class="spacer"></span><a class="link-btn" href="#log" id="due-all"></a></div>
+          <div class="panel-head"><h2 id="due-heading"></h2><button type="button" class="help" data-help="week" aria-label="What is this?">?</button><span class="spacer"></span><a class="link-btn" href="#calendar" id="due-all"></a></div>
+          <div class="week" id="week-strip" role="group" aria-label="This week"></div>
+          <p class="label agenda-date" id="week-date"></p>
           <div class="due-list" id="due-today"></div>
         </section>
       </div>
@@ -106,6 +110,27 @@
         <div class="alert-counts" id="alert-counts"></div>
       </div>
       <div class="alert-list" id="alert-list"></div>
+    </section>
+
+    <!-- ================= CALENDAR ================= -->
+    <!-- One month at a time. Each day gathers that day's alerts, health checks and readings. -->
+    <section class="view" id="view-calendar" aria-label="Calendar" hidden>
+      <div class="view-head">
+        <div><h2 class="view-title" id="cal-title"></h2><p class="view-sub">Alerts, health checks and readings, day by day.</p></div>
+        <div class="tabs" id="cal-filters" role="group" aria-label="Show"></div>
+      </div>
+      <div class="layout cal-layout">
+        <section class="panel">
+          <div class="panel-head">
+            <h2 id="cal-month"></h2><button type="button" class="help" data-help="calendar" aria-label="What is this?">?</button>
+            <span class="spacer"></span>
+            <div class="cal-nav" id="cal-nav"></div>
+          </div>
+          <div class="cal-grid" id="cal-grid"></div>
+          <div class="chart-legend" id="cal-legend"></div>
+        </section>
+        <aside class="card cal-day" id="cal-day" aria-live="polite"></aside>
+      </div>
     </section>
 
     <!-- ================= HEALTH LOG ================= -->
