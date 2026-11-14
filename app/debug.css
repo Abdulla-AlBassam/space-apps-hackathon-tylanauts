@@ -86,7 +86,12 @@ body {
   font: 400 10px/1.5 var(--font-mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--bone);
 }
 .live-tag .ico { width: 13px; height: 13px; }
-.db-table .sample-tag { margin-left: 0; }
+.builtin-tag {
+  display: inline-flex; align-items: center; padding: 1px 7px;
+  border: 1px dashed var(--slate); border-radius: 999px;
+  font: 400 10px/1.5 var(--font-mono); letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--muted); white-space: nowrap;
+}
 
 /* ---------- 3. Test request form ---------- */
 .tester { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 14px 18px; margin-bottom: 10px; }

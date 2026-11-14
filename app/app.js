@@ -9,7 +9,8 @@
  * The Sirius voice (voice.js) reads out today's summary and answers spoken questions.
  *   #devices – my devices, how data flows, "Connect a device" walkthrough (a mock)
  * Every icon comes from icons.js (Lucide). No real astronaut data: readings come from our
- * device simulator through the backend, and anything still made up wears a "Sample data" tag.
+ * device simulator through the backend or are made up in data.js. The footer says so once,
+ * for the whole site, so nothing is tagged one by one.
  * data.js loads the readings first; drawing starts once window.HEALTH_READY is done.
  */
 window.APP_HANDLES_HELP = true; // tells body-map.js that this file shows the "?" pop-ups
@@ -34,10 +35,7 @@ window.HEALTH_READY.then(function () {
     const d = device(id);
     return d ? `<span class="chip">${ic(d.icon)}${d.label}</span>` : "";
   };
-  // "Sample data" tag: shown beside anything that still uses made-up numbers.
-  const SAMPLE_TIP = "Made-up numbers for the demo. Real readings will replace them once the backend stores this.";
-  const sampleTag = () => `<span class="sample-tag" title="${SAMPLE_TIP}">Sample data</span>`;
-  const head = (id, iconName, text, sample) => { const el = $(id); if (el) el.innerHTML = ic(iconName) + text + (sample ? sampleTag() : ""); };
+  const head = (id, iconName, text) => { const el = $(id); if (el) el.innerHTML = ic(iconName) + text; };
   const fmtDate = (iso) =>
     new Date(iso + "T00:00:00Z").toLocaleDateString("en-GB", { day: "numeric", month: "short", timeZone: "UTC" });
   const helpBtn = (key) => `<button type="button" class="help" data-help="${key}" aria-label="What is this?">?</button>`;
@@ -361,7 +359,7 @@ window.HEALTH_READY.then(function () {
         </div>`));
     const empty = `<p class="empty">${ic("circle-check")}Nothing due. You're all caught up.</p>`;
     $("due-full").innerHTML = rows.join("") || empty;
-    head("log-due-heading", "calendar-clock", `To do <span class="count">${items.length + unsynced.length}</span>`, true);
+    head("log-due-heading", "calendar-clock", `To do <span class="count">${items.length + unsynced.length}</span>`);
 
     // Coming up: the next few checks that aren't due yet
     const next = typedTests().filter((t) => t.dueInDays > 0).sort((a, b) => a.dueInDays - b.dueInDays).slice(0, 5);
@@ -474,7 +472,7 @@ window.HEALTH_READY.then(function () {
 
   /* "This week" on Today: two days back, today, four days ahead */
   function renderWeek() {
-    head("due-heading", "calendar-days", "This week", true);
+    head("due-heading", "calendar-days", "This week");
     $("due-all").innerHTML = "Calendar" + ic("chevron-right");
     let html = "";
     for (let n = -2; n <= 4; n++) {
@@ -518,7 +516,7 @@ window.HEALTH_READY.then(function () {
   });
 
   /* The Calendar page */
-  head("cal-title", "calendar", "Calendar", true);
+  head("cal-title", "calendar", "Calendar");
   const FILTERS = [
     { id: "all", label: "All" },
     { id: "alert", label: "Alerts", icon: "bell" },
@@ -596,8 +594,8 @@ window.HEALTH_READY.then(function () {
   head("log-title", "clipboard-list", "Health log");
   $("log-new").innerHTML = ic("plus") + "Log a result";
   $("log-new").addEventListener("click", () => openLogModal());
-  head("next-heading", "calendar", "Coming up", true);
-  head("hist-heading", "history", "Latest results", true);
+  head("next-heading", "calendar", "Coming up");
+  head("hist-heading", "history", "Latest results");
 
   function renderHistory() {
     $("history").innerHTML = `<thead><tr><th>Test</th><th>Result</th><th>When</th><th>From</th></tr></thead><tbody>${history
@@ -660,7 +658,7 @@ window.HEALTH_READY.then(function () {
   }
 
   /* ---------- Devices page ---------- */
-  head("dev-title", "watch", "My devices", true);
+  head("dev-title", "watch", "My devices");
   $("dev-connect").innerHTML = ic("plus") + "Connect a device";
   $("dev-connect").addEventListener("click", () => openWizard());
 
@@ -810,7 +808,7 @@ window.HEALTH_READY.then(function () {
       return `<div class="vital ${out ? "out" : ""}">
         <div class="vital-name"><span class="vital-ico">${ic(v.icon)}</span>${v.name} ${helpBtn(v.help)}</div>
         <div class="vital-value">${shown}<small>${v.unit}</small></div>
-        <div class="vital-flag">${out ? pill("watch", "Outside normal") : pill("good")}${H.isSample(v.metric) ? sampleTag() : ""}</div>
+        <div class="vital-flag">${out ? pill("watch", "Outside normal") : pill("good")}</div>
         <div class="${out ? "is-watch" : "is-good"}" title="Last 14 days, from your ${src.label.toLowerCase()}">${sparkline(days.slice(-14).map((d) => d[v.metric]), b ? b.low : null, b ? b.high : null)}</div>
       </div>`;
     }).join("");
@@ -929,7 +927,7 @@ window.HEALTH_READY.then(function () {
       <tbody>${rows.map(([name, key, unit]) => {
         const b = baseline[key];
         const cells = last5.map((d) => `<td class="num ${b && (d[key] < b.low || d[key] > b.high) ? "is-watch" : ""}">${d[key]}</td>`).join("");
-        return `<tr><td>${name} <span class="dim">${unit}</span>${H.isSample(key) ? sampleTag() : ""}</td><td>${deviceChip(today.sources[key])}</td>${cells}<td class="num">${b ? `${b.low.toFixed(1)}–${b.high.toFixed(1)}` : "–"}</td></tr>`;
+        return `<tr><td>${name} <span class="dim">${unit}</span></td><td>${deviceChip(today.sources[key])}</td>${cells}<td class="num">${b ? `${b.low.toFixed(1)}–${b.high.toFixed(1)}` : "–"}</td></tr>`;
       }).join("")}</tbody>`;
   }
 
@@ -980,10 +978,10 @@ window.HEALTH_READY.then(function () {
   }, true);
   window.addEventListener("scroll", () => !pinned && hideHelp(), { passive: true });
 
-  /* ---------- No live data at all: say so once, at the top ---------- */
+  /* ---------- Backend not reached: say so once, at the top ---------- */
   if (H.live.source === "sample") {
     document.querySelector(".main").insertAdjacentHTML("afterbegin",
-      `<p class="sample-banner" role="status">${ic("info")}Showing sample data only: ${H.live.reason}.</p>`);
+      `<p class="sample-banner" role="status">${ic("info")}Showing built-in readings: ${H.live.reason}.</p>`);
   }
 
   /* ---------- First draw ---------- */

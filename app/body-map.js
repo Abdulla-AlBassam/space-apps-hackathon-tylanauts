@@ -170,9 +170,6 @@ leaderSvg.setAttribute("class", "bm-leaders");
 leaderSvg.setAttribute("aria-hidden", "true");
 stageEl.append(leaderSvg, cols.left, cols.right);
 
-// A reading is sample data if it has no live metric behind it (typed-in results and
-// reminders aren't stored by the backend yet) or its metric has no live data today.
-const isSample = (r) => !r.metric || H.isSample(r.metric);
 
 function tagSummary(a) {
   const out = a.readings.filter((r) => r.out).length;
@@ -185,7 +182,7 @@ function tagHtml(a, open) {
       (r) => `<div class="bm-reading${r.out ? " out" + (a.status === "act" ? " act" : "") : ""}">
         <span class="name">${r.name}</span>
         <span class="val">${r.value}${r.unit ? `<small>${r.unit}</small>` : ""}</span>
-        <span class="meta">Normal: ${r.normal}  •  ${r.source}${isSample(r) ? ` <span class="sample-tag">Sample data</span>` : ""}</span>
+        <span class="meta">Normal: ${r.normal}  •  ${r.source}</span>
       </div>`
     )
     .join("");

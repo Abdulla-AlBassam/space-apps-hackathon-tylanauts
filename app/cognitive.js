@@ -6,7 +6,7 @@
  *   - Opening the app counts as that day's check-in (the streak). Nothing to press.
  *   - Each test saves its score for the astronaut who is selected (SIRIUS_CREW.current).
  *   - Results are kept in this browser only (localStorage, one saved record per astronaut).
- *     A new browser starts with made-up history, tagged "Sample data", so the demo has a
+ *     A new browser starts with made-up history, so the demo has a
  *     streak and trends to show. "Clear sample history" removes it.
  *   - Address bar option: ?cog=reset throws away this astronaut's saved Train data and starts
  *     from the made-up history again (handy before a demo).
@@ -41,8 +41,6 @@ window.HEALTH_READY.then(function () {
   const LEVEL_WORD = { good: "Steady", watch: "Watch", act: "Alert" };
   const pill = (level) => `<span class="pill is-${level}">${ic(LEVEL_ICON[level])}${LEVEL_WORD[level]}</span>`;
   const plural = (n, one, many) => n + " " + (n === 1 ? one : many);
-  const SAMPLE_TIP = "Made-up numbers for the demo. Your own results are added to them, or use Clear sample history to start fresh.";
-  const sampleTag = () => `<span class="sample-tag" title="${SAMPLE_TIP}">Sample data</span>`;
   const WORDS = { lower: ["faster", "slower"], higher: ["higher", "lower"] }; // [better, worse]
 
   function toast(text, icon) {
@@ -143,7 +141,7 @@ window.HEALTH_READY.then(function () {
       </div>
       <div class="cog-stats">${streakStat(S)}${levelStat(S)}${missionStat(S)}</div>
       <section class="panel" aria-label="Tests">
-        <div class="panel-head"><h2>${ic("gauge")}Tests</h2>${S.sample ? sampleTag() : ""}</div>
+        <div class="panel-head"><h2>${ic("gauge")}Tests</h2></div>
         <div class="cog-tests">${S.tests.map(testTile).join("")}</div>
       </section>
       <section class="panel" aria-label="Badges">
