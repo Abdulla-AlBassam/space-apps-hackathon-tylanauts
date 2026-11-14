@@ -64,9 +64,7 @@ window.HEALTH_READY.then(function () {
     // The white "Log" button comes first: it opens the Health log page, where results are typed in
     `<a class="rail-link rail-log" href="#log" data-page="log" title="Log your results"><i>${ic("plus")}</i><span>Log</span></a>` +
     PAGES.filter((p) => p.id !== "log").map((p) => `<a class="rail-link" href="#${p.id}" data-page="${p.id}" title="${p.label}">${ic(p.icon)}<span>${p.label}</span>${p.id === "alerts" ? `<i class="rail-count" id="rail-count"></i>` : ""}</a>`).join("") +
-    `<a class="rail-link" href="crew.html" title="Crew overview">${ic("users")}<span>Crew</span></a>` +
-    // Pinned to the bottom of the rail: the Debug page (backend status and every API call)
-    `<a class="rail-link rail-debug" href="debug.html" title="Debug: backend status and API calls">${ic("bug")}<span>Debug</span></a>`;
+    `<a class="rail-link" href="crew.html" title="Crew overview">${ic("users")}<span>Crew</span></a>`;
 
   function showPage() {
     const id = (location.hash || "#today").slice(1);

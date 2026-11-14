@@ -92,9 +92,6 @@ body {
   box-shadow: 0 0 0 2px var(--ink);
 }
 .rail-count.is-good { background: var(--bone); }
-/* The Debug button sits on its own at the bottom of the rail, quieter than the pages above it */
-.rail-debug { margin-top: auto; opacity: 0.75; }
-.rail-debug:hover, .rail-debug:focus-visible { opacity: 1; }
 .rail-count[hidden] { display: none; }
 
 /* ---------- Main area ---------- */
@@ -818,7 +815,6 @@ td .chip { font-size: 12px; }
   .app { grid-template-columns: minmax(0, 1fr); }
   .rail { position: static; height: auto; flex-direction: row; justify-content: center; padding: 12px 8px 0; }
   .brand { display: none; }
-  .rail-debug { margin-top: 0; }
   .rail-log { margin-bottom: 0; }
   .rail-log i { width: 28px; height: 28px; }
   .rail-log i svg { width: 18px; height: 18px; }
