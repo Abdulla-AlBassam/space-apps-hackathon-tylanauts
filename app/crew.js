@@ -42,6 +42,11 @@
     { id: "crew-05", name: "A. Moreau", role: "Science officer", initials: "AM" },
     { id: "crew-06", name: "J. Reyes", role: "Medical officer", initials: "JR" },
   ];
+  // "You" follows the astronaut picked on the Today page's name card (crew-switch.js).
+  try {
+    const picked = localStorage.getItem("sirius.crew");
+    if (CREW.some((c) => c.id === picked)) CREW.forEach((c) => (c.you = c.id === picked));
+  } catch (e) { /* storage blocked: keep the commander */ }
 
   // Line icons in the Feather style the brand guide recommends.
   const CAT_ICONS = {

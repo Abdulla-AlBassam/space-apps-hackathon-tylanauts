@@ -44,9 +44,27 @@ const outside = (metric) => today[metric] < base[metric].low || today[metric] > 
 const range = (metric, d = 0) => `${round(base[metric].low, d)}–${round(base[metric].high, d)}`;
 
 // The heart's status comes from the dashboard's own alert, so both pages agree.
-const recoveryAlert = H.alerts.find((a) => a.signals.includes("resting_hr"));
+const recoveryAlert = H.alerts.find((a) => a.signals.includes("resting_hr")) || H.alerts.find((a) => a.cat === "heart");
 const heartStatus = recoveryAlert ? recoveryAlert.level : outside("hrv_rmssd") ? "watch" : "good";
-const doseSpike = H.days.find((d) => d.radiation_dose > 1);
+const doseSpike = [...H.days].reverse().find((d) => d.radiation_dose > 1); // the most recent one
+
+// The short sentences under each area, written from this astronaut's own numbers
+// (the name card on Today switches between astronauts).
+const last4 = H.days.slice(-4).map((d) => d.recovery);
+const fellThreeDays = last4.every((v, i) => i === 0 || v < last4[i - 1]);
+const rhrUp = today.resting_hr > base.resting_hr.high, hrvDown = today.hrv_rmssd < base.hrv_rmssd.low;
+const bpHigh = today.bp_systolic >= 130 || today.bp_diastolic >= 80;
+const heartSummary = [
+  rhrUp && hrvDown ? "Resting heart rate is up and heart rate variability is down." : rhrUp ? "Resting heart rate is above your normal." : hrvDown ? "Heart rate variability is below your normal." : "",
+  bpHigh ? `Blood pressure is ${today.bp_systolic}/${today.bp_diastolic}, above 130/80.` : "",
+  fellThreeDays ? "Recovery has fallen 3 days in a row." : "",
+].filter(Boolean).join(" ") || "Heart readings are within your normal range.";
+const sleepShort = today.sleep_hours < base.sleep_hours.low, moodLow = today.mood < 4;
+const mindStatus = sleepShort || H.band(today.mindScore) !== "good" ? "watch" : "good";
+const mindSummary = sleepShort && moodLow ? "Short sleep for several nights and a lower mood score today. Worth keeping an eye on."
+  : sleepShort ? "Sleep was short last night. Worth keeping an eye on."
+  : moodLow ? `Mood was ${today.mood}/5 in today's check-in, lower than usual. Worth keeping an eye on.`
+  : "Sleep and mood are in your normal range.";
 const CAREER_LIMIT_MSV = 600; // NASA's career radiation limit (NASA-STD-3001)
 
 /*
@@ -64,7 +82,7 @@ const AREAS = [
     status: heartStatus,
     point: [0.025, 1.29, 0.128],
     facing: [0, 0, 1],
-    summary: "Resting heart rate is up and heart rate variability is down. Recovery has fallen 3 days in a row.",
+    summary: heartSummary,
     readings: [
       { name: "Resting heart rate", value: round(today.resting_hr), unit: "bpm", normal: range("resting_hr"), out: outside("resting_hr"), source: deviceLabel(today.sources.resting_hr), metric: "resting_hr" },
       { name: "Heart rate variability", value: today.hrv_rmssd, unit: "ms", normal: range("hrv_rmssd"), out: outside("hrv_rmssd"), source: deviceLabel(today.sources.hrv_rmssd), metric: "hrv_rmssd" },
@@ -80,10 +98,10 @@ const AREAS = [
     icon: "brain",
     name: "Mind, mood & sleep",
     category: "Mind & mood, Sleep",
-    status: outside("sleep_hours") ? "watch" : "good",
+    status: mindStatus,
     point: [0, 1.735, -0.01],
     facing: [0, 0.7, 0.7],
-    summary: "Short sleep for several nights and a lower mood score today. Worth keeping an eye on.",
+    summary: mindSummary,
     readings: [
       { name: "Sleep last night", value: today.sleep_hours, unit: "h", normal: range("sleep_hours", 1), out: outside("sleep_hours"), source: deviceLabel(today.sources.sleep_hours), metric: "sleep_hours" },
       { name: "Mood check", value: today.mood, unit: "/ 5", normal: "4–5", out: today.mood < 4, source: "Hand-entered, today", metric: "mood" },
