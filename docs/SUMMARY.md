@@ -37,7 +37,7 @@ to **real web addresses on a small server**, so the data really flows through th
 | Headline scores | **Recovery, Radiation, Mind.** The formulas in the app are placeholders. | [design/DESIGN_BRIEF.md](design/DESIGN_BRIEF.md) |
 | Who it's for | The astronaut, plus a flight surgeon view (a switch in the header). | DESIGN_BRIEF.md |
 | Look | Desktop screen. The **Sirius visual identity**: its own logo, four colours (Ink, Bone, Slate, Ember) and IBM Plex fonts. **No NASA logo**, icons everywhere, `?` help pop-ups. | [design/sirius-identity](design/sirius-identity/Sirius_visual_identity.pdf) |
-| Health log | 5 categories (Heart, Sleep, Mind & mood, Radiation, Bone & muscle), one astronaut's own view. | [HEALTH_LOG.md](HEALTH_LOG.md) |
+| Health log | 4 categories (Heart, Sleep, Mind & mood, Radiation), one astronaut's own view. Bone density and muscle are not tracked. | [HEALTH_LOG.md](HEALTH_LOG.md) |
 | Device vs typed in | Devices fill in heart, sleep, activity and radiation dose. Blood/urine, eyes, hearing, mood and symptoms are typed in. | HEALTH_LOG.md |
 | Warnings | Some warnings come from combining devices (e.g. bad sleep from the headband plus a high resting heart rate from the watch). | HEALTH_LOG.md |
 | Reminders | For typed-in tests, plus a "device not synced in 24 hours" alert. | HEALTH_LOG.md |
@@ -186,7 +186,7 @@ Plain HTML, CSS and JavaScript in `app/` (no build step). Live at
 | Page | What's on it | State |
 | --- | --- | --- |
 | **Today** | Three score cards (Recovery, Radiation, Mind), the 3D body map in the centre with labelled lines to body areas, alerts, what's due, vitals, trend chart, and a raw-readings table in the flight surgeon view | Built (#7) |
-| **Body map** (`body-map.html`) | Full-size 3D skeleton and organs (BodyParts3D, CC BY 4.0) that you can turn; six areas glow in their status colour | Built |
+| **Body map** (`body-map.html`) | Full-size 3D skeleton and organs (BodyParts3D, CC BY 4.0) that you can turn; four areas glow in their status colour | Built |
 | **Health log** (`#log`) | Category cards, what's due and overdue, schedule, history, "Log a result" form | Built in the app with sample data; Issues #24, #25, #26 cover the rest |
 | **My devices** (`#devices`) | Device cards (status, battery, last sync) and the mock Connect a device walkthrough | Built in the app; Issues #41, #42 |
 | **Crew overview** (`crew.html`) | One crew score, astronaut-by-category grid, "crew patterns" shared by 3+ people | Mock built; feature itself not decided yet |

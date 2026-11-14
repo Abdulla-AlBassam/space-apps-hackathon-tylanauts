@@ -21,8 +21,8 @@ end up in the same history.
 4. **Reminders:** in the app, for the hand-entered tests, plus a
    "device not synced in 24 hours" alert so missing data is never silent.
 5. **Scope of the first version:** one astronaut's own view (no crew-doctor
-   view yet) and five categories: Heart, Sleep, Mind & mood, Radiation,
-   Bone & muscle.
+   view yet) and four categories: Heart, Sleep, Mind & mood, Radiation.
+   Bone density and muscle were dropped on 14 Nov 2026: we will not track them.
 
 ## Categories for the first version
 
@@ -41,9 +41,6 @@ list these activities but do not say how often they happen.
 | Mind & mood | Private psychological conference | Reminder only | Every 2 weeks (ours) |
 | Radiation | Personal dose | Device (simulated dosimeter) | Daily |
 | Radiation | Dose before and after a spacewalk | Hand-entered | Each spacewalk (NASA does this) |
-| Bone & muscle | Exercise session (type, minutes) | Device (watch) | Daily |
-| Bone & muscle | Body mass | Hand-entered | Weekly (ours) |
-| Bone & muscle | Fitness test (treadmill or bike) | Hand-entered | Monthly (ours) |
 
 **Later categories** (not in the first version): Blood & immune (hematocrit,
 urine test), Eyes (eye chart, grid test, eye scans: NASA schedules these on

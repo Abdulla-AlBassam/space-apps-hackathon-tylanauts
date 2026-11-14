@@ -99,7 +99,7 @@ what is coming up, the alerts, and each day's readings. It is not new data, just
 
 ## Body map
 
-- **The 3D body is a real anatomy model** (skeleton, heart, brain, eyes, thigh muscles and a faint
+- **The 3D body is a real anatomy model** (skeleton, heart, brain, eyes and a faint
   skin outline) drawn in an X-ray style. It comes from **BodyParts3D**, © The Database Center for
   Life Science, licensed under CC BY 4.0. We must keep the credit shown at the bottom of the page.
   Details and how to rebuild it: `models/README.md`.
@@ -107,8 +107,9 @@ what is coming up, the alerts, and each day's readings. It is not new data, just
   body map needs an internet connection. The model itself (`models/body.glb`, about 3.8 MB) ships
   with the app, so open the page through a local server (see the top of this file), not by
   double-clicking the HTML file.
-- **Six body areas:** heart, mind/mood/sleep, eyes (SANS), radiation dose, bones (spine and hips)
-  and leg muscles. The matching part of the model glows in that area's status colour. Each area has
+- **Four body areas:** heart, mind/mood/sleep, eyes (SANS) and radiation dose. Bone density and
+  muscle are not tracked (removed on 14 Nov 2026), so the skeleton is only the picture of the body
+  and the thigh muscles in the model file are not drawn. The matching part of the model glows in that area's status colour. Each area has
   readings with normal ranges, a `?` explaining why it matters in space, and what to do. The list
   lives in `AREAS` at the top of `body-map.js`.
 - **Moving it into the main dashboard later:** copy the three parts of `body-map.html`

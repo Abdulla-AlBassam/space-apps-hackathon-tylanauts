@@ -3,12 +3,12 @@
  * SIMULATED DATA. Nothing here is a real astronaut's reading.
  *
  * What this file does, in plain English:
- * 1. Builds a list of body areas (heart, mind & sleep, eyes, radiation, bones, muscles).
+ * 1. Builds a list of body areas (heart, mind & sleep, eyes, radiation).
  *    Numbers that the dashboard already simulates (heart rate, sleep, radiation, exercise)
  *    are read from window.HEALTH_DATA (data.js) so both pages tell the same story.
  *    The rest (mood score, eye exam, exercise plan) are made-up "hand-entered" results.
- * 2. Draws an X-ray style anatomy model with three.js: skeleton, heart, brain, eyes, thigh
- *    muscles and a faint skin outline. The model (models/body.glb) is made from BodyParts3D,
+ * 2. Draws an X-ray style anatomy model with three.js: skeleton, heart, brain, eyes
+ *    and a faint skin outline. The model (models/body.glb) is made from BodyParts3D,
  *    © The Database Center for Life Science, licensed under CC BY 4.0 (see models/README.md).
  *    three.js itself is MIT-licensed and loaded from a CDN.
  * 3. Puts a clickable glowing point on the body for each area. Its colour is the status
@@ -95,7 +95,7 @@ const AREAS = [
   },
   {
     id: "eyes",
-    side: "left",
+    side: "right",
     icon: "eye",
     name: "Eyes (SANS)",
     category: "Eyes",
@@ -130,42 +130,6 @@ const AREAS = [
     actions: ["No action needed now. Your flight surgeon can see these numbers."],
     link: null,
     help: "Outside Earth's protective magnetic field, astronauts get much more radiation than on the ground, which raises long-term health risks such as cancer. The badge on your chest measures the dose. NASA limits an astronaut's career total to 600 mSv.",
-  },
-  {
-    id: "bone",
-    side: "right",
-    icon: "bone",
-    name: "Bones (spine & hips)",
-    category: "Bone & muscle",
-    status: "watch",
-    point: [0, 1.0, -0.108],
-    facing: [0, 0, -1],
-    summary: "Two resistance-exercise sessions were missed this week. These sessions are the main way to protect bone in space.",
-    readings: [
-      { name: "Resistance sessions this week", value: "4 of 6", unit: "", normal: "6 of 6", out: true, source: "Hand-entered" },
-      { name: "Body mass", value: 78.4, unit: "kg", normal: "77–80", out: false, source: "Hand-entered, 3 days ago" },
-    ],
-    actions: ["Fit in the missed resistance session today or tomorrow", "Keep heavy lifting to the planned weights"],
-    link: null,
-    help: "Without gravity loading the skeleton, astronauts can lose about 1 to 1.5% of bone mass in the hips and spine each month. Bone density is scanned before and after the mission; during the mission, daily resistance exercise is the main protection, so it is tracked here.",
-  },
-  {
-    id: "muscle",
-    side: "right",
-    icon: "dumbbell",
-    name: "Leg muscles",
-    category: "Bone & muscle",
-    status: "good",
-    point: [-0.09, 0.68, 0.082],
-    facing: [0, 0, 1],
-    summary: "Leg strength is holding close to your pre-flight level.",
-    readings: [
-      { name: "Exercise today", value: Math.round(today.exercise_minutes), unit: "min", normal: "daily", out: false, source: deviceLabel(today.sources.exercise_minutes) },
-      { name: "Leg strength test", value: 97, unit: "% of pre-flight", normal: "90% or more", out: false, source: "Hand-entered, monthly" },
-    ],
-    actions: ["No action needed. Keep up the daily treadmill and bike sessions."],
-    link: null,
-    help: "Leg and back muscles shrink when they aren't used, and in microgravity they barely work to hold you up. Daily treadmill, bike and resistance exercise keeps them strong for the return to gravity.",
   },
 ];
 
@@ -337,19 +301,17 @@ const statusOf = (id) => AREAS.find((a) => a.id === id).status;
 const MATERIALS = {
   skin: xray(SLATE, 0.0, 0.5),
   skeleton: xray(BONE, 0.03, 0.42),
-  spine: xray(STATUS_COLOUR[statusOf("bone")], 0.05, 0.6),
   heart: xray(STATUS_COLOUR[statusOf("heart")], 0.12, 0.9, { onTop: true }),
   brain: xray(STATUS_COLOUR[statusOf("mind")], 0.05, 0.6, { onTop: true }),
   eyes: xray(STATUS_COLOUR[statusOf("eyes")], 0.15, 0.9, { onTop: true }),
-  muscle: xray(STATUS_COLOUR[statusOf("muscle")], 0.02, 0.35),
 };
+// The spine and hips are drawn like the rest of the skeleton.
+MATERIALS.spine = MATERIALS.skeleton;
 // Which body area lights up which part of the model (used for pulsing and selecting)
 const organs = {
   heart: [MATERIALS.heart],
   mind: [MATERIALS.brain],
   eyes: [MATERIALS.eyes],
-  bone: [MATERIALS.spine],
-  muscle: [MATERIALS.muscle],
 };
 
 // Radiation badge: a small card clipped on the chest (not part of the anatomy model)
@@ -362,7 +324,7 @@ organs.radiation = [badgeMat];
 /*
  * The anatomy model (models/body.glb). It comes from BodyParts3D, a free 3D atlas of an
  * adult male body: © The Database Center for Life Science, licensed under CC BY 4.0.
- * tools/build_body_model.py picks the bones, heart, brain, eyes, thigh muscles and skin
+ * tools/build_body_model.py picks the bones, heart, brain, eyes and skin
  * out of it, makes them lighter for the web, and saves them as named parts.
  */
 const loader = new GLTFLoader();
@@ -371,6 +333,7 @@ loader.load(
   (gltf) => {
     gltf.scene.traverse((o) => {
       if (!o.isMesh) return;
+      if (o.name === "muscle") { o.visible = false; return; } // muscles are not tracked, so they are not drawn
       const mat = MATERIALS[o.name];
       if (!mat) return;
       if (!o.geometry.attributes.normal) o.geometry.computeVertexNormals();

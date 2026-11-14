@@ -251,13 +251,12 @@
   }
 
   /* ---------- Health check log (see docs/HEALTH_LOG.md) ---------- */
-  // Five categories for the first version. "auto" = filled in by a device.
+  // Four categories for the first version. "auto" = filled in by a device.
   const CATEGORIES = [
     { id: "heart", name: "Heart", icon: "heart-pulse" },
     { id: "sleep", name: "Sleep", icon: "moon" },
     { id: "mind", name: "Mind & mood", icon: "brain" },
     { id: "radiation", name: "Radiation", icon: "radiation" },
-    { id: "bone", name: "Bone & muscle", icon: "bone" },
   ];
   // How often each test happens. Most frequencies are our own proposal (see HEALTH_LOG.md).
   const TESTS = [
@@ -271,9 +270,6 @@
     { id: "psych", cat: "mind", name: "Private psychological conference", how: "reminder", every: "Every 2 weeks", lastDays: 9 },
     { id: "dose", cat: "radiation", name: "Personal dose", how: "auto", every: "Daily", device: "dosi-01" },
     { id: "eva", cat: "radiation", name: "Dose before & after a spacewalk", how: "typed", every: "Each spacewalk", unit: "mSv", normal: "below 1 per walk", lastDays: 20 },
-    { id: "exercise", cat: "bone", name: "Exercise session", how: "auto", every: "Daily", device: "watch-01" },
-    { id: "mass", cat: "bone", name: "Body mass", how: "typed", every: "Weekly", unit: "kg", normal: "77-80", lastDays: 8 },
-    { id: "fitness", cat: "bone", name: "Fitness test (treadmill or bike)", how: "typed", every: "Monthly", unit: "% of pre-flight", normal: "90% or more", lastDays: 22 },
   ];
   const PERIOD_DAYS = { Daily: 1, Weekly: 7, Monthly: 30, "Every 2 weeks": 14 };
   for (const t of TESTS) {
@@ -304,8 +300,6 @@
     { when: "Today 07:00", test: "Personal dose", cat: "radiation", value: `${todayRow.radiation_dose} mSv`, source: "dosi-01", out: false },
     { when: "Yesterday 21:10", test: "Mood check", cat: "mind", value: `${yRow.mood} / 5`, source: "typed", note: "Tired, slight headache", out: yRow.mood < 3 },
     { when: "Yesterday 08:05", test: "Blood pressure", cat: "heart", value: "118/76 mmHg", source: "typed", out: false },
-    { when: "Yesterday 16:30", test: "Exercise session", cat: "bone", value: `${Math.round(yRow.exercise_minutes)} min`, source: "watch-01", out: false },
-    { when: "8 days ago", test: "Body mass", cat: "bone", value: "78.4 kg", source: "typed", out: false },
   ];
 
   // The AI doctor (idea only, see docs/AI_DOCTOR.md). Scripted messages for the demo.

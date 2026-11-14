@@ -2,8 +2,8 @@
  * Crew overview page. SIMULATED DATA: none of these people or readings are real.
  *
  * What this file does, in plain English:
- * 1. Makes up 14 days of daily scores (0 to 100) for a crew of six, in the five
- *    health-log categories: heart, sleep, mood, radiation, bone & muscle.
+ * 1. Makes up 14 days of daily scores (0 to 100) for a crew of six, in the four
+ *    health-log categories: heart, sleep, mood, radiation.
  * 2. Rolls everyone into one crew score, and works out a crew average per category.
  * 3. Looks for "crew patterns": the same category dropping for 3 or more people
  *    over the same days. One or two people dropping is shown separately, because
@@ -17,8 +17,7 @@
  * - Day 135: the comms window for private family calls is lost; mood slips for 3 crew.
  * - Day 139: the sleep schedule moves 2 hours earlier for docking; sleep drops for 4 crew.
  * - Day 140: two crew do a spacewalk and pick up extra radiation (just two, so not a pattern).
- * - The commander's heart readings drift (matches the story on the main dashboard),
- *   and one person slowly skips exercise (bone & muscle).
+ * - The commander's heart readings drift (matches the story on the main dashboard).
  *
  * When the real backend exists, replace makeCrewData() with a request to it.
  */
@@ -50,7 +49,6 @@
     sleep: '<path d="M19 14.5A7.5 7.5 0 0 1 9.5 5a7.5 7.5 0 1 0 9.5 9.5z"/>',
     mood: '<circle cx="12" cy="12" r="8"/><path d="M8.8 14.2a4 4 0 0 0 6.4 0M9.5 9.8v.3M14.5 9.8v.3"/>',
     radiation: '<circle cx="12" cy="12" r="1.8"/><path d="M12 3.5a8.5 8.5 0 0 1 7.4 4.3l-4.6 2.6M4.6 7.8A8.5 8.5 0 0 1 12 3.5M4.6 7.8l4.6 2.6M12 20.5v-5.2M12 20.5a8.5 8.5 0 0 0 7.4-4.3M12 20.5a8.5 8.5 0 0 1-7.4-4.3"/>',
-    bone: '<path d="M6.5 6.5l11 11M4 9l5-5M15 20l5-5M2.5 10.5l1.5-1.5M20 15l1.5-1.5M10.5 2.5L9 4M13.5 21.5L15 20"/>',
   };
   const icon = (key, cls = "cat-ico") =>
     `<svg class="${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${CAT_ICONS[key]}</svg>`;
@@ -60,7 +58,6 @@
     { key: "sleep", name: "Sleep", help: "c-sleep" },
     { key: "mood", name: "Mood", help: "c-mood" },
     { key: "radiation", name: "Radiation", help: "c-radiation" },
-    { key: "bone", name: "Bone & muscle", help: "c-bone" },
   ];
 
   // Things that happened to the whole crew (or part of it). Simulated mission log.
@@ -77,10 +74,9 @@
     sleep: "Review the sleep schedule with mission control, and keep hard tasks out of tomorrow morning.",
     mood: "Plan a shared crew meal, and ask the ground team for family calls as soon as comms allow.",
     radiation: "Nothing to do now. The doses are logged in each person's mission total.",
-    bone: "Check the exercise equipment and make room for it in the schedule.",
   };
   // Used as "Sleep is down for 4 of 6".
-  const ISSUE_WORDS = { heart: "Heart scores are down", sleep: "Sleep is down", mood: "Mood is down", radiation: "Radiation dose is up", bone: "Exercise is down" };
+  const ISSUE_WORDS = { heart: "Heart scores are down", sleep: "Sleep is down", mood: "Mood is down", radiation: "Radiation dose is up" };
 
   /* ---------- Status helpers (same cut-offs as the main dashboard) ---------- */
   const band = (score) => (score >= 67 ? "good" : score >= 34 ? "watch" : "act");
@@ -119,12 +115,11 @@
       return solar + eva;
     }
     if (cat === "heart" && id === "crew-01" && day >= 139) return -[10, 22, 33, 44][day - 139];
-    if (cat === "bone" && id === "crew-06") return -1.6 * (day - FIRST_DAY);
     return 0;
   }
 
   function makeCrewData() {
-    const typical = { heart: 82, sleep: 80, mood: 81, radiation: 86, bone: 80 };
+    const typical = { heart: 82, sleep: 80, mood: 81, radiation: 86 };
     return CREW.map((person) => {
       const scores = {};
       for (const c of CATS) {
@@ -146,7 +141,7 @@
   for (const p of crew) {
     p.normal = {};
     for (const c of CATS) p.normal[c.key] = Math.round(average(p.scores[c.key].slice(0, BASE_DAYS)));
-    // Each person's overall score today: the average of their five categories.
+    // Each person's overall score today: the average of their four categories.
     p.overall = Math.round(average(CATS.map((c) => p.scores[c.key][T])));
   }
   const crewAvg = (cat, i) => Math.round(average(crew.map((p) => p.scores[cat][i])));
@@ -303,7 +298,7 @@
   /* ---------- "?" help pop-ups ---------- */
   const HELP = {
     view: ["Who is viewing", "Flight surgeon view shows everyone's name. Astronaut view keeps your own name and shows crewmates as \"Crewmate B\" and so on, so people can see the crew picture without seeing each other's private health details. (An idea for the team to decide.)"],
-    "crew-score": ["Crew score", "Everyone's health rolled into one number, from 0 to 100: the average of each person's five health areas. One number can hide one person struggling, so the table below always shows everyone. Placeholder formula for the demo."],
+    "crew-score": ["Crew score", "Everyone's health rolled into one number, from 0 to 100: the average of each person's four health areas. One number can hide one person struggling, so the table below always shows everyone. Placeholder formula for the demo."],
     patterns: ["Where the crew lines up", `When ${CREW_MIN} or more people drop in the same health area over the same days (at least ${DROP} points under their own normal), it usually points to a shared cause, like the schedule or a stressful event, rather than one person's health. Click a row to highlight those people in the table below.`],
     grid: ["Everyone today", "Each row is one astronaut and each column is one health area. The number is today's score from 0 to 100. Orange text means Watch and a solid orange tag means Alert. A score on its own, like one person's heart, is personal rather than crew-wide."],
   };

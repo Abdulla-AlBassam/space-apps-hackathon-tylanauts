@@ -319,7 +319,7 @@
     if (has("mood", "mind", "stress", "feel"))
       return `Your Mind score is ${today.mindScore}%, with mood ${today.mood}/5 in today's check-in and short sleep. Worth raising at your next private talk with the flight surgeon.`;
     if (has("run", "exercise", "train", "workout", "gym"))
-      return "Swap it for a light bike session. Your heart needs an easier day, and you'll still protect your bones and muscles.";
+      return "Swap it for a light bike session. Your heart needs an easier day, and you'll still keep up your fitness.";
     if (has("how am i", "doing", "status", "overview", "ok", "okay"))
       return `Recovery ${today.recovery}%, Mind ${today.mindScore}%, radiation at ${today.doseLimitPct}% of your limit. ${open.length ? `${open.length} thing${open.length === 1 ? "" : "s"} need your attention; the main one: ${top.title.toLowerCase()}.` : "Everything is in your normal range."}`;
     return "In this demo I can talk about how you're doing, your recovery, sleep, heart, mood, radiation, and what to do today.";
