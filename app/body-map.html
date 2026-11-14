@@ -34,27 +34,17 @@
 </header>
 
 <div class="bm-layout">
-  <aside class="panel bm-list-panel">
-    <div class="panel-head">
-      <h2>Body areas</h2>
-      <button type="button" class="help" data-help="bm-areas" aria-label="What is this?">?</button>
-    </div>
-    <div class="bm-list" id="bm-list" role="list"></div>
-  </aside>
-
-  <section class="bm-stage" id="bm-stage" aria-label="3D body. Drag to turn it, scroll to zoom.">
-    <!-- body-map.js adds the 3D canvas and the clickable glowing points here -->
+  <section class="bm-stage" id="bm-stage" aria-label="3D body. Drag to turn it, scroll to zoom. Click a label for details.">
+    <!-- body-map.js adds the 3D canvas, the glowing points, and the labels with their lines -->
     <div class="bm-markers" id="bm-markers"></div>
     <div class="bm-controls">
       <button type="button" id="bm-reset">Reset view</button>
       <button type="button" id="bm-spin" aria-pressed="true">Auto-turn</button>
     </div>
-    <p class="bm-hint">Drag to turn&nbsp; • &nbsp;scroll to zoom&nbsp; • &nbsp;click a glowing point</p>
+    <p class="bm-hint">Drag to turn&nbsp; • &nbsp;scroll to zoom&nbsp; • &nbsp;click a label</p>
     <p class="bm-loading" id="bm-loading">Loading the 3D body&hellip;</p>
-    <p class="bm-fallback" id="bm-fallback" hidden>The 3D view couldn&rsquo;t start because this browser has WebGL turned off. The list on the left still works.</p>
+    <p class="bm-fallback" id="bm-fallback" hidden>The 3D view couldn&rsquo;t start because this browser has WebGL turned off. The labels still work.</p>
   </section>
-
-  <aside class="panel bm-detail-panel" id="bm-detail" aria-live="polite"></aside>
 </div>
 
 <p class="footer-note">Simulated data for a demo. Built by Team Tylanauts for NASA Space Apps 2026.<br>
@@ -62,6 +52,7 @@
 
 <div class="help-pop" id="help-pop" role="tooltip"></div>
 
+<script src="icons.js"></script>
 <script src="data.js"></script>
 <script type="importmap">
 { "imports": {

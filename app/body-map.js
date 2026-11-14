@@ -34,11 +34,8 @@ const round = (n, d = 0) => Number(n.toFixed(d));
 // Brand colours for each status (Space Apps brand kit).
 const STATUS_COLOUR = { good: 0x2e96f5, watch: 0xeafe07, act: 0xe43700 };
 const STATUS_WORD = { good: "Normal", watch: "Watch", act: "Act now" };
-const ICONS = {
-  good: '<svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="8" cy="8" r="6.5"/><path d="M5 8.2l2 2 4-4.2"/></svg>',
-  watch: '<svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8 1.8l6.6 12H1.4z" stroke-linejoin="round"/><path d="M8 6.5v3.2M8 11.6v.3"/></svg>',
-  act: '<svg class="ico" viewBox="0 0 16 16" fill="currentColor"><circle cx="8" cy="8" r="7.2"/><path d="M8 4v4.8M8 11v.4" stroke="#07173F" stroke-width="1.9" stroke-linecap="round"/></svg>',
-};
+const ic = (name, cls) => (window.icon ? window.icon(name, cls) : "");
+const ICONS = { good: ic("circle-check"), watch: ic("triangle-alert"), act: ic("octagon-alert") };
 
 // Is a reading outside the astronaut's own normal range?
 const outside = (metric) => today[metric] < base[metric].low || today[metric] > base[metric].high;
@@ -58,6 +55,8 @@ const CAREER_LIMIT_MSV = 600; // NASA's career radiation limit (NASA-STD-3001)
 const AREAS = [
   {
     id: "heart",
+    side: "left",
+    icon: "heart-pulse",
     name: "Heart",
     category: "Heart",
     status: heartStatus,
@@ -75,6 +74,8 @@ const AREAS = [
   },
   {
     id: "mind",
+    side: "left",
+    icon: "brain",
     name: "Mind, mood & sleep",
     category: "Mind & mood, Sleep",
     status: outside("sleep_hours") ? "watch" : "good",
@@ -92,6 +93,8 @@ const AREAS = [
   },
   {
     id: "eyes",
+    side: "left",
+    icon: "eye",
     name: "Eyes (SANS)",
     category: "Eyes",
     status: "good",
@@ -109,6 +112,8 @@ const AREAS = [
   },
   {
     id: "radiation",
+    side: "right",
+    icon: "radiation",
     name: "Radiation dose",
     category: "Radiation",
     status: "good",
@@ -126,6 +131,8 @@ const AREAS = [
   },
   {
     id: "bone",
+    side: "right",
+    icon: "bone",
     name: "Bones (spine & hips)",
     category: "Bone & muscle",
     status: "watch",
@@ -142,6 +149,8 @@ const AREAS = [
   },
   {
     id: "muscle",
+    side: "right",
+    icon: "dumbbell",
     name: "Leg muscles",
     category: "Bone & muscle",
     status: "good",
@@ -160,33 +169,29 @@ const AREAS = [
 
 /* ---------- 2. Side panels (list + details) ---------- */
 
-$("bm-astro").textContent = `${H.astronaut.name}   •   Day ${H.astronaut.missionDay} of ${H.astronaut.missionLength}`;
+const astroEl = $("bm-astro");
+if (astroEl) astroEl.textContent = `${H.astronaut.name}   •   Day ${H.astronaut.missionDay} of ${H.astronaut.missionLength}`;
 
-const listEl = $("bm-list");
-listEl.innerHTML = AREAS.map(
-  (a) => `<button type="button" class="bm-row" role="listitem" data-id="${a.id}" aria-pressed="false">
-      <i class="dot is-${a.status}"></i>${a.name}<small class="is-${a.status}">${STATUS_WORD[a.status]}</small>
-    </button>`
-).join("");
-listEl.addEventListener("click", (e) => {
-  const row = e.target.closest(".bm-row");
-  if (row) select(row.dataset.id === selectedId ? null : row.dataset.id);
-});
+/*
+ * Labels around the body (like an anatomy chart): one tag per area in a column on the
+ * left or right, joined to its glowing point by a thin line that follows the body as it
+ * turns. Clicking a tag (or the point) expands the tag into a card with the details.
+ */
+const stageEl = $("bm-stage");
+const cols = { left: document.createElement("div"), right: document.createElement("div") };
+cols.left.className = "bm-col bm-col-left";
+cols.right.className = "bm-col bm-col-right";
+const leaderSvg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+leaderSvg.setAttribute("class", "bm-leaders");
+leaderSvg.setAttribute("aria-hidden", "true");
+stageEl.append(leaderSvg, cols.left, cols.right);
 
-const detailEl = $("bm-detail");
-function renderOverview() {
-  const count = (s) => AREAS.filter((a) => a.status === s).length;
-  detailEl.innerHTML = `<div class="bm-overview">
-      <div class="panel-head"><h2>Today at a glance</h2></div>
-      <div class="bm-counts">
-        <div class="bm-count"><b class="is-act">${count("act")}</b><span>Act now</span></div>
-        <div class="bm-count"><b class="is-watch">${count("watch")}</b><span>Watch</span></div>
-        <div class="bm-count"><b class="is-good">${count("good")}</b><span>Normal</span></div>
-      </div>
-      <p>Click a glowing point on the body, or a row in the list, to see what's going on and what to do.</p>
-    </div>`;
+function tagSummary(a) {
+  const out = a.readings.filter((r) => r.out).length;
+  return out ? `${out} of ${a.readings.length} readings outside normal` : `${a.readings.length} readings, all normal`;
 }
-function renderDetail(a) {
+
+function tagHtml(a, open) {
   const readings = a.readings
     .map(
       (r) => `<div class="bm-reading${r.out ? " out" + (a.status === "act" ? " act" : "") : ""}">
@@ -196,24 +201,51 @@ function renderDetail(a) {
       </div>`
     )
     .join("");
-  detailEl.innerHTML = `
-    <div class="bm-detail-top">
-      <span class="alert-level is-${a.status}">${ICONS[a.status]}${STATUS_WORD[a.status]}</span>
-      <button type="button" class="bm-close" aria-label="Close details">×</button>
-    </div>
-    <h2 class="bm-title">${a.name} <button type="button" class="help" data-help="${a.id}" aria-label="Why this matters">?</button></h2>
-    <p class="bm-sub">Category: ${a.category}</p>
-    <p class="bm-summary">${a.summary}</p>
-    <div class="bm-readings">${readings}</div>
-    <h3>What to do</h3>
-    <ul class="bm-actions">${a.actions.map((x) => `<li>${x}</li>`).join("")}</ul>
-    ${a.link ? `<a class="bm-link" href="${a.link[0]}">${a.link[1]} →</a>` : ""}`;
-  detailEl.querySelector(".bm-close").addEventListener("click", () => select(null));
+  return `
+    <button type="button" class="bm-tag-head" aria-expanded="${open}">
+      <span class="bm-tag-icon is-${a.status}">${ic(a.icon)}</span>
+      <span class="bm-tag-text">
+        <span class="bm-tag-name">${a.name}</span>
+        <span class="bm-pill is-${a.status}">${ICONS[a.status]}${STATUS_WORD[a.status]}</span>
+        <span class="bm-tag-meta">${tagSummary(a)}</span>
+      </span>
+      <span class="bm-tag-chev">${ic("chevron-right")}</span>
+    </button>
+    ${open ? `<div class="bm-tag-body">
+      <p class="bm-summary">${a.summary} <button type="button" class="help" data-help="${a.id}" aria-label="Why this matters">?</button></p>
+      <div class="bm-readings">${readings}</div>
+      <h3>${ic("clipboard-list")}What to do</h3>
+      <ul class="bm-actions">${a.actions.map((x) => `<li>${x}</li>`).join("")}</ul>
+    </div>` : ""}`;
 }
 
-/* "?" help pop-ups (same look as the dashboard's) */
-const HELP = { "bm-areas": ["Body areas", "Each row is a part of the body we track. Its colour is today's status: blue is Normal, yellow is Watch, red is Act now. The same colours glow on the 3D body."] };
+const tags = {};
+AREAS.forEach((a) => {
+  const el = document.createElement("div");
+  el.className = `bm-tag is-${a.status}`;
+  el.dataset.id = a.id;
+  el.innerHTML = tagHtml(a, false);
+  el.addEventListener("pointerdown", (e) => e.stopPropagation());
+  el.addEventListener("wheel", (e) => e.stopPropagation());
+  el.addEventListener("click", (e) => {
+    if (e.target.closest(".bm-tag-head")) select(a.id === selectedId ? null : a.id);
+  });
+  cols[a.side].appendChild(el);
+  tags[a.id] = el;
+});
+
+function renderTags() {
+  AREAS.forEach((a) => {
+    const open = a.id === selectedId;
+    tags[a.id].classList.toggle("open", open);
+    tags[a.id].innerHTML = tagHtml(a, open);
+  });
+}
+
+/* "?" help texts. On the main dashboard, app.js shows them; on the standalone page, we do. */
+const HELP = {};
 AREAS.forEach((a) => (HELP[a.id] = [`Why ${a.name.toLowerCase()} matters in space`, a.help]));
+window.BM_HELP = HELP;
 const pop = $("help-pop");
 let pinned = null;
 function showHelp(btn) {
@@ -225,14 +257,16 @@ function showHelp(btn) {
   pop.style.left = Math.min(Math.max(12, r.left + r.width / 2 - pw / 2), innerWidth - pw - 12) + "px";
   pop.style.top = (r.bottom + 10 + ph > innerHeight - 12 ? r.top - ph - 10 : r.bottom + 10) + "px";
 }
-const hideHelp = () => pop.classList.remove("show");
-document.addEventListener("mouseover", (e) => { const b = e.target.closest(".help"); if (b && !pinned) showHelp(b); });
-document.addEventListener("mouseout", (e) => { if (e.target.closest(".help") && !pinned) hideHelp(); });
-document.addEventListener("click", (e) => {
-  const b = e.target.closest(".help");
-  if (b) { e.stopPropagation(); pinned = pinned === b ? null : b; pinned ? showHelp(b) : hideHelp(); }
-  else if (pinned) { pinned = null; hideHelp(); }
-});
+const hideHelp = () => { if (!window.APP_HANDLES_HELP) pop.classList.remove("show"); };
+if (!window.APP_HANDLES_HELP) {
+  document.addEventListener("mouseover", (e) => { const b = e.target.closest(".help"); if (b && !pinned) showHelp(b); });
+  document.addEventListener("mouseout", (e) => { if (e.target.closest(".help") && !pinned) hideHelp(); });
+  document.addEventListener("click", (e) => {
+    const b = e.target.closest(".help");
+    if (b) { e.stopPropagation(); pinned = pinned === b ? null : b; pinned ? showHelp(b) : hideHelp(); }
+    else if (pinned) { pinned = null; hideHelp(); }
+  });
+}
 
 /* ---------- 3. The 3D scene ---------- */
 
@@ -387,7 +421,7 @@ const markers = AREAS.map((a) => {
   el.type = "button";
   el.className = `bm-marker is-${a.status}`;
   el.setAttribute("aria-label", `${a.name}: ${STATUS_WORD[a.status]}`);
-  el.innerHTML = `<span class="bm-ring"></span><span class="bm-core"></span><span class="label">${a.name}</span>`;
+  el.innerHTML = `<span class="bm-ring"></span><span class="bm-core"></span>`;
   el.addEventListener("click", (e) => { e.stopPropagation(); select(a.id === selectedId ? null : a.id); });
   el.addEventListener("pointerdown", (e) => e.stopPropagation());
   markerLayer.appendChild(el);
@@ -405,17 +439,15 @@ let selectedId = null;
 
 function select(id) {
   selectedId = id;
-  document.querySelectorAll(".bm-row").forEach((r) => r.setAttribute("aria-pressed", String(r.dataset.id === id)));
   markers.forEach((m) => m.el.classList.toggle("selected", m.area.id === id));
   hideHelp();
   pinned = null;
+  renderTags();
   if (!id) {
-    renderOverview();
     Object.assign(goal, { dist: HOME.dist, lookY: HOME.lookY, pitch: 0 });
     return;
   }
   const m = markers.find((x) => x.area.id === id);
-  renderDetail(m.area);
   // Turn the body so the chosen spot faces the camera (taking the shortest way round)
   const target = -Math.atan2(m.facing.x, m.facing.z);
   goal.yaw = view.yaw + Math.atan2(Math.sin(target - view.yaw), Math.cos(target - view.yaw));
@@ -456,10 +488,36 @@ const spinBtn = $("bm-spin");
 spinBtn.setAttribute("aria-pressed", String(spinning));
 spinBtn.addEventListener("click", () => { spinning = !spinning; spinBtn.setAttribute("aria-pressed", String(spinning)); lastTouch = 0; });
 
+
+// Thin lines from each label to its glowing point: out from the label, then an angled
+// run to the point. Lines to points on the far side of the body are dashed and faint.
+function drawLeaders() {
+  if (!leaderSvg.isConnected || getComputedStyle(cols.left).position !== "absolute") { leaderSvg.innerHTML = ""; return; }
+  const sr = stageEl.getBoundingClientRect();
+  if (!sr.width || !sr.height) return; // the page with the body on it is hidden
+  leaderSvg.setAttribute("viewBox", `0 0 ${sr.width} ${sr.height}`);
+  let html = "";
+  for (const m of markers) {
+    if (!Number.isFinite(m.sx) || !Number.isFinite(m.sy)) continue;
+    const tag = tags[m.area.id];
+    const head = tag.querySelector(".bm-tag-head") || tag;
+    const r = head.getBoundingClientRect();
+    const left = m.area.side === "left";
+    const ax = (left ? r.right : r.left) - sr.left;
+    const ay = r.top + Math.min(r.height, 64) / 2 - sr.top;
+    const elbow = ax + (left ? 26 : -26);
+    const cls = `bm-leader is-${m.area.status}${m.behind && m.area.id !== selectedId ? " behind" : ""}${m.area.id === selectedId ? " selected" : ""}`;
+    html += `<polyline class="${cls}" points="${ax.toFixed(1)},${ay.toFixed(1)} ${elbow.toFixed(1)},${ay.toFixed(1)} ${m.sx.toFixed(1)},${m.sy.toFixed(1)}"/>`;
+    html += `<circle class="${cls}" cx="${ax.toFixed(1)}" cy="${ay.toFixed(1)}" r="2.5"/>`;
+  }
+  leaderSvg.innerHTML = html;
+}
+
 /* ---------- 6. Drawing every frame ---------- */
 
 let width = 0, height = 0;
 function resize() {
+  if (!stage.clientWidth || !stage.clientHeight) return; // hidden: keep the last good size
   width = stage.clientWidth;
   height = stage.clientHeight;
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
@@ -512,11 +570,12 @@ function frame(now) {
     const y = (-tmp.y * 0.5 + 0.5) * height;
     m.el.style.transform = `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px)`;
     m.el.classList.toggle("behind", behind && m.area.id !== selectedId);
+    m.sx = x; m.sy = y; m.behind = behind;
   }
+  drawLeaders();
   requestAnimationFrame(frame);
 }
 
-renderOverview();
 if (renderer) {
   stage.prepend(renderer.domElement);
   resize();
