@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Sirius · Debug</title>
+<link rel="icon" type="image/svg+xml" href="brand/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400&family=IBM+Plex+Sans:wght@400;500&display=swap">
+<!-- sirius.css is the shared brand. debug.css has the rest, so this page doesn't depend on styles.css. -->
+<link rel="stylesheet" href="sirius.css">
+<link rel="stylesheet" href="debug.css">
+</head>
+<body>
+
+<!--
+  Debug page: a look under the bonnet, for the team.
+    1. Is the backend up?
+    2. Which numbers on the dashboard are real (from the backend) and which are still made up?
+    3. A live list of every call the app has made to the backend.
+    4. Buttons to send test requests, one crew member at a time.
+  Read-only: it only ever asks the backend for data (GET). It never sends data and never
+  uses the ingest key. Everything is drawn by debug.js.
+-->
+<main class="db">
+  <header class="db-top">
+    <a class="db-back" href="index.html" aria-label="Back to Sirius">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
+      <span id="db-logo"></span><span class="wordmark">Sirius</span>
+    </a>
+    <div class="db-who">
+      <h1>Debug</h1>
+      <p>Backend calls, live or sample, and test requests</p>
+    </div>
+    <a class="db-link" id="db-docs" target="_blank" rel="noopener">API docs</a>
+  </header>
+
+  <!-- 1. Is the backend up? -->
+  <section aria-label="Backend status">
+    <div class="sec-head"><h2>Backend</h2><span class="spacer"></span><button type="button" class="btn-ghost" id="status-refresh"></button></div>
+    <div class="status" id="status"></div>
+  </section>
+
+  <!-- 2. Live or sample, for the numbers the dashboard shows -->
+  <section aria-label="Live or sample data">
+    <div class="sec-head"><h2>What the dashboard is showing</h2></div>
+    <p class="db-note" id="source-note"></p>
+    <div class="table-wrap"><table class="db-table" id="metrics"></table></div>
+    <p class="db-note small" id="pages-note"></p>
+  </section>
+
+  <!-- 3. Send a test request -->
+  <section aria-label="Test requests">
+    <div class="sec-head"><h2>Send a test request</h2></div>
+    <form class="tester" id="tester">
+      <label>Crew member<select id="t-subject"></select></label>
+      <label>What to ask for<select id="t-endpoint"></select></label>
+      <button type="submit" class="btn-primary" id="t-send"></button>
+    </form>
+    <p class="db-note small mono" id="t-url"></p>
+  </section>
+
+  <!-- 4. Every call to the backend, newest first -->
+  <section aria-label="Call log">
+    <div class="sec-head">
+      <h2>Call log</h2>
+      <span class="count" id="log-count"></span>
+      <span class="spacer"></span>
+      <button type="button" class="btn-ghost" id="log-clear"></button>
+    </div>
+    <p class="db-note small">Calls from any Sirius page in this browser (the last 40). Click a call to see the answer.</p>
+    <div class="log" id="log"></div>
+  </section>
+
+  <p class="footer-note">Read-only: this page only reads from the backend and never sends data. Sirius is built by Team Tylanauts for NASA Space Apps 2026.</p>
+</main>
+
+<script src="api-log.js"></script>
+<script src="sirius.js"></script>
+<script src="icons.js"></script>
+<script src="escalation.js"></script>
+<script src="data.js"></script>
+<script src="debug.js"></script>
+</body>
+</html>
