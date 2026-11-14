@@ -52,7 +52,7 @@ const CAREER_LIMIT_MSV = 600; // NASA's career radiation limit (NASA-STD-3001)
 // Body mass: weighed once a week on the station's mass-measuring device (docs/MONITORING_SCHEDULE.md).
 // Made-up weekly weigh-ins for the demo; scales don't work in weightlessness, so the device
 // works out mass from how fast a known spring force moves the astronaut.
-const MASS = { preflight: 76.0, last: 74.9, previous: 75.1, daysSince: 3 };
+const MASS = { preflight: 76.0, last: 74.9, previous: 75.1, daysSince: 1 }; // last weigh-in matches the scale's last sync in data.js (27 hours ago)
 const massChangePct = ((MASS.last - MASS.preflight) / MASS.preflight) * 100;
 const massDevice = H.devices.find((d) => d.type === "scale");
 
@@ -149,7 +149,7 @@ const AREAS = [
     facing: [0, 0, 1],
     summary: `${MASS.last} kg at this week's weigh-in, ${massChangePct.toFixed(1)}% since launch. Next weigh-in in ${7 - MASS.daysSince} days.`,
     readings: [
-      { name: "This week", value: MASS.last, unit: "kg", normal: `within 3% of pre-flight (${MASS.preflight} kg)`, out: Math.abs(massChangePct) > 3, source: `Hand-entered, ${MASS.daysSince} days ago` },
+      { name: "This week", value: MASS.last, unit: "kg", normal: `within 3% of pre-flight (${MASS.preflight} kg)`, out: Math.abs(massChangePct) > 3, source: `Hand-entered, ${MASS.daysSince === 1 ? "yesterday" : `${MASS.daysSince} days ago`}` },
       { name: "Change since last week", value: (MASS.last - MASS.previous).toFixed(1), unit: "kg", normal: "small week to week", out: false, source: "Hand-entered" },
       { name: "Next weigh-in", value: `In ${7 - MASS.daysSince} days`, unit: "", normal: "weekly", out: false, source: massDevice ? `Reminder · ${massDevice.label}` : "Reminder" },
     ],
