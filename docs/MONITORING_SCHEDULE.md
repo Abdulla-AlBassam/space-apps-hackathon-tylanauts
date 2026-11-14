@@ -60,9 +60,9 @@ raises a "device not synced in 24 hours" alert if data stops arriving.
 | --- | --- | --- | --- | --- |
 | Mood (1–5) and symptoms | Mind & mood | App check-in | Daily | Ours |
 | "How rested do you feel?" (1–5) | Sleep | App check-in | Daily, on waking | Ours |
-| Blood pressure | Heart | Automatic cuff, typed in (or sent by a smart cuff) | Daily | Ours |
-| Food and water intake | Bone & muscle | App log (NASA uses an app called EveryWear) | Daily | Ours, supporting V1 4020 (no frequency stated) |
-| Body mass | Bone & muscle | Mass-measuring device (SLAMMD), typed in | Weekly | Ours; V1 4020 bases nutrition on body mass |
+| Blood pressure | Heart | Sent by the smart shirt (see DEVICE_HUB.md), or an automatic cuff typed in | Daily | Ours |
+| Food and water intake | Bone & muscle | App log (NASA uses an app called EveryWear) | Daily | Ours (NASA does this; no frequency found) |
+| Body mass | Bone & muscle | Mass-measuring device (SLAMMD), typed in | Weekly | Ours |
 | Vision test (near/far acuity, Amsler grid) and questionnaire | Eyes | Eye chart and grid, results typed in | FD30, FD90, R-30 | NASA ([SANS schedule](https://ntrs.nasa.gov/api/citations/20180004916/downloads/20180004916.pdf)) |
 | Cognitive test (WinSCAT / Cognition) | Mind & mood | 10–16 minute test on a laptop or tablet | Monthly, compared with the astronaut's own pre-flight baseline | NASA: WinSCAT is a medical requirement for long-duration crew, [taken monthly](https://ntrs.nasa.gov/citations/20100036584) |
 | Hearing test | Hearing | Self-run test on a laptop with headphones (NASA's On-Orbit Hearing Assessment) | Monthly, for missions longer than 30 days | Partly NASA: [routine for crew on orbit over 30 days](https://ntrs.nasa.gov/citations/20240009887); monthly is ours |

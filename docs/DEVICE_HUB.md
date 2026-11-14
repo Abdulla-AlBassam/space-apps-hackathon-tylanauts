@@ -51,6 +51,35 @@ A small script pretends to be each device and sends messages to the webhook
 addresses on a timer, following a 30-day mission storyline (for example a few
 nights of bad sleep around day 12, so the alerts have something to catch).
 
+### The smart shirt (based on a real space agency device)
+
+The **Smart shirt** on the Devices page is modelled on **Bio-Monitor**, a smart shirt,
+headband and tablet app that the Canadian Space Agency (CSA) sent to the International
+Space Station in December 2018. CSA astronaut David Saint-Jacques was the first to try it
+in space. It was developed for the CSA by Carré Technologies of Montreal, whose commercial
+version is called Hexoskin. News coverage at the time also called the shirt "Astroskin".
+
+What the CSA says Bio-Monitor records: pulse and the heart's electrical activity (ECG),
+blood pressure, breathing rate and volume, skin temperature, blood oxygen, and physical
+activity. It can be worn while sleeping and exercising. After use, the astronaut docks the
+battery pack on a base, which sends the data down to Earth.
+
+In our app the shirt is a made-up copy (always tagged "Sample data") and feeds two health
+categories:
+
+- **Heart:** blood pressure (it replaces the daily typed-in reading) and heart rhythm (ECG).
+- **Sleep:** breathing depth while asleep.
+
+It does not feed Mind & mood or Radiation, because it doesn't measure those.
+
+Sources:
+- Canadian Space Agency, "Bio-Monitor: Keeping an eye on astronauts' vital signs":
+  https://www.asc-csa.gc.ca/eng/sciences/bio-monitor.asp
+- Space.com, "Astronaut Suits Up in 'Smart' Astroskin Jersey on Space Station":
+  https://www.space.com/43228-astroskin-smart-space-jersey-for-astronauts.html
+
+We use no CSA logo or branding, only a text credit.
+
 ### When two devices measure the same thing
 
 A priority list picks the more trustworthy device (for example: heart rate from

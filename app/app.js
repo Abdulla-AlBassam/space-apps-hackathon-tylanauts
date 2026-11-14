@@ -7,10 +7,12 @@
  *   #log     – health log: what's due, what's coming up, latest results, "Log a result"
  * The AI doctor is a round button in the corner of every page that opens a chat box.
  *   #devices – my devices, how data flows, "Connect a device" walkthrough (a mock)
- * Every icon comes from icons.js (Lucide). All data is simulated.
+ * Every icon comes from icons.js (Lucide). No real astronaut data: readings come from our
+ * device simulator through the backend, and anything still made up wears a "Sample data" tag.
+ * data.js loads the readings first; drawing starts once window.HEALTH_READY is done.
  */
-(function () {
-  window.APP_HANDLES_HELP = true; // tells body-map.js that this file shows the "?" pop-ups
+window.APP_HANDLES_HELP = true; // tells body-map.js that this file shows the "?" pop-ups
+window.HEALTH_READY.then(function () {
 
   const H = window.HEALTH_DATA;
   const { astronaut, devices, days, baseline, alerts, band, categories, tests, history, doctor } = H;
@@ -31,7 +33,10 @@
     const d = device(id);
     return d ? `<span class="chip">${ic(d.icon)}${d.label}</span>` : "";
   };
-  const head = (id, iconName, text) => { const el = $(id); if (el) el.innerHTML = ic(iconName) + text; };
+  // "Sample data" tag: shown beside anything that still uses made-up numbers.
+  const SAMPLE_TIP = "Made-up numbers for the demo. Real readings will replace them once the backend stores this.";
+  const sampleTag = () => `<span class="sample-tag" title="${SAMPLE_TIP}">Sample data</span>`;
+  const head = (id, iconName, text, sample) => { const el = $(id); if (el) el.innerHTML = ic(iconName) + text + (sample ? sampleTag() : ""); };
   const fmtDate = (iso) =>
     new Date(iso + "T00:00:00Z").toLocaleDateString("en-GB", { day: "numeric", month: "short", timeZone: "UTC" });
   const helpBtn = (key) => `<button type="button" class="help" data-help="${key}" aria-label="What is this?">?</button>`;
@@ -253,26 +258,65 @@
     rc.className = "rail-count is-" + level;
     rc.hidden = !needs;
 
-    // The Alerts page
-    $("alert-counts").innerHTML = countsHtml(c);
-    $("alert-list").innerHTML = alerts
-      .map(
-        (a, i) => `<article class="alert ${a.level}${a.done ? " done" : ""}">
-        <div class="alert-what">
-          <div class="alert-top">${pill(a.level)}${a.combined ? `<span class="badge">${ic("sparkles")}Combined devices</span>` : ""}${a.device ? `<span class="badge">${ic("wifi-off")}Device</span>` : ""}</div>
-          <h3>${a.title}</h3>
-          <p>${a.detail}</p>
-          <div class="chips">${(a.sources || []).map(deviceChip).join("")}</div>
-        </div>
-        <div class="alert-do">
-          <h4>${ic("clipboard-list")}What to do</h4>
-          <ul>${a.actions.map((x) => `<li>${x}</li>`).join("")}</ul>
-          ${a.level === "info" ? "" : `<button type="button" class="btn-ghost" data-alert="${i}">${ic(a.done ? "refresh-cw" : "check")}${a.done ? "Undo" : "Mark as done"}</button>`}
-        </div>
-      </article>`
-      )
-      .join("");
+    // The Alerts page: three separate sections, one per level, each with its own look.
+    // Alert = large cards (act today), Watch = smaller cards side by side, For info = a quiet list.
+    $("alert-counts").innerHTML = SECTIONS.map((sec) => {
+      const n = sec.level === "info" ? c.info : c[sec.level];
+      return `<a class="alert-tab is-${sec.level}${n ? "" : " is-empty"}" href="#alerts" data-jump="${sec.level}"><b>${n}</b><span>${ic(STATUS_ICON[sec.level])}${WORDS[sec.level]}</span></a>`;
+    }).join("");
+    $("alert-list").innerHTML = SECTIONS.map((sec) => {
+      const list = alerts.map((a, i) => ({ a, i })).filter((x) => x.a.level === sec.level);
+      if (!list.length && sec.level !== "act") return ""; // the Alert section always shows, so "nothing urgent" is said out loud
+      const open = list.filter((x) => !x.a.done).length;
+      return `<section class="alert-sec sec-${sec.level}" id="alerts-${sec.level}" aria-label="${sec.name}">
+        <header class="alert-sec-head">
+          <span class="alert-sec-ico">${ic(STATUS_ICON[sec.level])}</span>
+          <div><h3>${sec.name}</h3><p>${sec.sub}</p></div>
+          <span class="alert-sec-count label">${sec.level === "info" ? list.length : `${open} open`}</span>
+        </header>
+        ${list.length
+          ? `<div class="alert-sec-body">${list.map((x) => alertCard(x.a, x.i)).join("")}</div>`
+          : `<p class="empty alert-none">${ic("circle-check")}Nothing needs action today.</p>`}
+      </section>`;
+    }).join("");
   }
+  const SECTIONS = [
+    { level: "act", name: "Alert", sub: "Act on these today." },
+    { level: "watch", name: "Watch", sub: "Not urgent. Keep an eye on these and follow the steps when you can." },
+    { level: "info", name: "For info", sub: "Nothing to do. These are here so you know." },
+  ];
+  const alertBadges = (a) =>
+    (a.combined ? `<span class="badge">${ic("sparkles")}Combined devices</span>` : "") + (a.device ? `<span class="badge">${ic("wifi-off")}Device</span>` : "");
+  function alertCard(a, i) {
+    // For info: one quiet row, no steps and no button
+    if (a.level === "info")
+      return `<article class="alert info">
+        <div class="alert-what"><h4>${a.title}</h4><p>${a.detail}</p></div>
+        <div class="chips">${(a.sources || []).map(deviceChip).join("")}</div>
+        <p class="alert-note">${a.actions.join(" ")}</p>
+      </article>`;
+    return `<article class="alert ${a.level}${a.done ? " done" : ""}">
+      <div class="alert-what">
+        ${alertBadges(a) ? `<div class="alert-top">${alertBadges(a)}</div>` : ""}
+        <h4>${a.title}</h4>
+        <p>${a.detail}</p>
+        <div class="chips">${(a.sources || []).map(deviceChip).join("")}</div>
+      </div>
+      <div class="alert-do">
+        <h5>${ic("clipboard-list")}What to do</h5>
+        <ul>${a.actions.map((x) => `<li>${x}</li>`).join("")}</ul>
+        <button type="button" class="${a.level === "act" && !a.done ? "btn-primary" : "btn-ghost"}" data-alert="${i}">${ic(a.done ? "refresh-cw" : "check")}${a.done ? "Undo" : "Mark as done"}</button>
+      </div>
+    </article>`;
+  }
+  // The three counts at the top of the page jump to their section
+  $("alert-counts").addEventListener("click", (e) => {
+    const t = e.target.closest("[data-jump]");
+    if (!t) return;
+    e.preventDefault();
+    const sec = $("alerts-" + t.dataset.jump);
+    if (sec) sec.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
+  });
   $("alerts-card").addEventListener("click", (e) => {
     if (!e.target.closest(".help, a")) location.hash = "#alerts"; // the whole card opens the Alerts page
   });
@@ -340,7 +384,7 @@
     chat.innerHTML = `
       <header class="doc-head">
         <span class="doc-avatar">${ic("bot")}</span>
-        <div><h2>AI doctor ${helpBtn("doctor")}</h2><p>${pill(doctor.tier.level, `Tier ${doctor.tier.n} · ${doctor.tier.word}`)}</p></div>
+        <div><h2>AI doctor ${helpBtn("doctor")}${sampleTag()}</h2><p>${pill(doctor.tier.level, `Tier ${doctor.tier.n} · ${doctor.tier.word}`)}</p></div>
         <button type="button" class="icon-btn" id="doc-close" aria-label="Close the AI doctor">${ic("x")}</button>
       </header>
       <div class="doc-msgs" id="doc-msgs">${chatLog.map((m) => `<div class="bubble${m.me ? " me" : ""}">${m.me ? esc(m.text) : m.text}</div>`).join("")}</div>
@@ -400,7 +444,7 @@
         </div>`));
     const empty = `<p class="empty">${ic("circle-check")}Nothing due. You're all caught up.</p>`;
     $("due-full").innerHTML = rows.join("") || empty;
-    head("log-due-heading", "calendar-clock", `To do <span class="count">${items.length + unsynced.length}</span>`);
+    head("log-due-heading", "calendar-clock", `To do <span class="count">${items.length + unsynced.length}</span>`, true);
 
     // Coming up: the next few checks that aren't due yet
     const next = typedTests().filter((t) => t.dueInDays > 0).sort((a, b) => a.dueInDays - b.dueInDays).slice(0, 5);
@@ -513,7 +557,7 @@
 
   /* "This week" on Today: two days back, today, four days ahead */
   function renderWeek() {
-    head("due-heading", "calendar-days", "This week");
+    head("due-heading", "calendar-days", "This week", true);
     $("due-all").innerHTML = "Calendar" + ic("chevron-right");
     let html = "";
     for (let n = -2; n <= 4; n++) {
@@ -557,7 +601,7 @@
   });
 
   /* The Calendar page */
-  head("cal-title", "calendar", "Calendar");
+  head("cal-title", "calendar", "Calendar", true);
   const FILTERS = [
     { id: "all", label: "All" },
     { id: "alert", label: "Alerts", icon: "bell" },
@@ -635,8 +679,8 @@
   head("log-title", "clipboard-list", "Health log");
   $("log-new").innerHTML = ic("plus") + "Log a result";
   $("log-new").addEventListener("click", () => openLogModal());
-  head("next-heading", "calendar", "Coming up");
-  head("hist-heading", "history", "Latest results");
+  head("next-heading", "calendar", "Coming up", true);
+  head("hist-heading", "history", "Latest results", true);
 
   function renderHistory() {
     $("history").innerHTML = `<thead><tr><th>Test</th><th>Result</th><th>When</th><th>From</th></tr></thead><tbody>${history
@@ -699,12 +743,12 @@
   }
 
   /* ---------- Devices page ---------- */
-  head("dev-title", "watch", "My devices");
+  head("dev-title", "watch", "My devices", true);
   $("dev-connect").innerHTML = ic("plus") + "Connect a device";
   $("dev-connect").addEventListener("click", () => openWizard());
 
   $("flow").innerHTML = `
-    <div class="flow-step">${ic("watch")}${ic("heart-pulse")}${ic("headphones")}<span>Wearables</span></div>
+    <div class="flow-step">${ic("watch")}${ic("heart-pulse")}${ic("headphones")}${ic("shirt")}<span>Wearables</span></div>
     <span class="flow-arrow">${ic("chevron-right")}</span>
     <div class="flow-step">${ic("webhook")}<span>Webhook per device</span></div>
     <span class="flow-arrow">${ic("chevron-right")}</span>
@@ -728,6 +772,7 @@
             <span class="${d.battery < 25 ? "is-watch" : ""}">${ic(batteryIcon(d.battery))}${d.battery}%</span>
           </div>
           <p class="dev-measures">${d.measures.join(" · ")}</p>
+          ${d.note ? `<p class="dev-note dim small">${ic("moon")}${d.note}</p>` : ""}
           <div class="hook"><span>${ic("webhook")}</span><code>hub.tylanauts.app/hooks/${d.id}</code>
             <button type="button" class="icon-btn" data-copy="https://hub.tylanauts.app/hooks/${d.id}" aria-label="Copy webhook address">${ic("copy")}</button></div>
         </div>`;
@@ -748,6 +793,7 @@
     { type: "chest_strap", label: "Chest strap", icon: "heart-pulse", measures: ["HRV", "Breathing rate"] },
     { type: "headband", label: "Headband", icon: "headphones", measures: ["Sleep time", "Deep sleep"] },
     { type: "dosimeter", label: "Radiation badge", icon: "radiation", measures: ["Radiation dose"] },
+    { type: "smart_shirt", label: "Smart shirt", icon: "shirt", measures: ["ECG", "Blood pressure", "Breathing rate & depth"] },
     { type: "thermometer", label: "Thermometer", icon: "thermometer", measures: ["Body temperature"] },
     { type: "other", label: "Something else", icon: "plug", measures: ["Custom readings"] },
   ];
@@ -847,7 +893,7 @@
       return `<div class="vital ${out ? "out" : ""}">
         <div class="vital-name"><span class="vital-ico">${ic(v.icon)}</span>${v.name} ${helpBtn(v.help)}</div>
         <div class="vital-value">${shown}<small>${v.unit}</small></div>
-        <div class="vital-flag">${out ? pill("watch", "Outside normal") : pill("good")}</div>
+        <div class="vital-flag">${out ? pill("watch", "Outside normal") : pill("good")}${H.isSample(v.metric) ? sampleTag() : ""}</div>
         <div class="${out ? "is-watch" : "is-good"}" title="Last 14 days, from your ${src.label.toLowerCase()}">${sparkline(days.slice(-14).map((d) => d[v.metric]), b ? b.low : null, b ? b.high : null)}</div>
       </div>`;
     }).join("");
@@ -957,6 +1003,7 @@
     const rows = [
       ["Resting heart rate", "resting_hr", "bpm"], ["Heart rate variability", "hrv_rmssd", "ms"], ["Blood oxygen", "spo2", "%"],
       ["Breathing rate", "resp_rate", "/min"], ["Skin temperature change", "skin_temp_delta", "°C"], ["Sleep", "sleep_hours", "h"],
+      ["Blood pressure (top number)", "bp_systolic", "mmHg"], ["Blood pressure (bottom number)", "bp_diastolic", "mmHg"], ["Breathing depth while asleep", "breath_volume", "mL"],
       ["Deep sleep", "deep_sleep_pct", "%"], ["Exercise", "exercise_minutes", "min"], ["Radiation", "radiation_dose", "mSv"],
     ];
     const last5 = days.slice(-5);
@@ -965,7 +1012,7 @@
       <tbody>${rows.map(([name, key, unit]) => {
         const b = baseline[key];
         const cells = last5.map((d) => `<td class="num ${b && (d[key] < b.low || d[key] > b.high) ? "is-watch" : ""}">${d[key]}</td>`).join("");
-        return `<tr><td>${name} <span class="dim">${unit}</span></td><td>${deviceChip(today.sources[key])}</td>${cells}<td class="num">${b ? `${b.low.toFixed(1)}–${b.high.toFixed(1)}` : "–"}</td></tr>`;
+        return `<tr><td>${name} <span class="dim">${unit}</span>${H.isSample(key) ? sampleTag() : ""}</td><td>${deviceChip(today.sources[key])}</td>${cells}<td class="num">${b ? `${b.low.toFixed(1)}–${b.high.toFixed(1)}` : "–"}</td></tr>`;
       }).join("")}</tbody>`;
   }
 
@@ -1017,6 +1064,12 @@
   }, true);
   window.addEventListener("scroll", () => !pinned && hideHelp(), { passive: true });
 
+  /* ---------- No live data at all: say so once, at the top ---------- */
+  if (H.live.source === "sample") {
+    document.querySelector(".main").insertAdjacentHTML("afterbegin",
+      `<p class="sample-banner" role="status">${ic("info")}Showing sample data only: ${H.live.reason}.</p>`);
+  }
+
   /* ---------- First draw ---------- */
   renderScores();
   renderContributors();
@@ -1028,4 +1081,4 @@
   renderRaw();
   showPage();
   drawTrend(true);
-})();
+});
