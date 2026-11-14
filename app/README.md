@@ -16,16 +16,40 @@ python3 -m http.server 8000
 | File | What it does |
 | --- | --- |
 | `index.html` | The page layout: left rail, header, and four pages switched by the rail: Today (scores, body map, alerts card, AI doctor, vitals, trend), Alerts, Health log and Devices. |
-| `styles.css` | All the styling. Colours and fonts come only from the Space Apps brand guide (see `docs/design/DESIGN_BRIEF.md`). |
+| `sirius.css` | **The Sirius visual identity**, shared by every page: the four colours, the two fonts, the logo and the health dial. Change a brand colour here and it changes everywhere. |
+| `sirius.js` | Draws the brand pieces: the logo (`SIRIUS.mark`), the health dial used as the score meter (`SIRIUS.dial`), the moving logo for loading (`SIRIUS.loading`) and the intro video. |
+| `brand/` | Logo files (`sirius-mark.svg`, `favicon.svg`) and the designer's motion logo video (`sirius-motion.mp4`). |
+| `styles.css` | The main dashboard's layout and components. Colours and fonts come from `sirius.css`. |
 | `data.js` | Makes 30 days of simulated readings from 3 wearables and a radiation badge, in the common format from `docs/PLAN.md`, then works out the scores and alerts. |
-| `app.js` | Draws everything from `data.js`, plus the moving star background and the `?` help pop-ups. |
+| `app.js` | Draws everything from `data.js`, plus the `?` help pop-ups. |
 | `body-map.html` | **Body map** page: a 3D body you can turn, with glowing points where a health area needs attention. The same body map is the centrepiece of the Today page; this is its full-screen version ("Full screen" link on the map). |
 | `body-map.js` | Draws the 3D anatomy model with three.js and the list of body areas. Reads the same simulated data from `data.js`, so both pages tell the same story. |
-| `body-map.css` | Styling for the body map page (same brand colours and fonts). |
+| `body-map.css` | Styling for the body map page (same Sirius colours and fonts). |
 | `crew.html` | **Crew overview** mock: one crew score, a grid of every astronaut against every health category, and "crew patterns" that link people who share the same drop. Linked from the left rail ("Crew"). |
 | `crew.js` | Makes 14 days of simulated scores for a crew of six, finds the patterns, and draws the page. Self-contained: it doesn't use `data.js`. |
-| `crew.css` | Styling for the crew page. Self-contained: it doesn't load `styles.css`, so restyling the main dashboard can't break it. |
+| `crew.css` | Styling for the crew page. It loads `sirius.css` for the brand but not `styles.css`, so restyling the main dashboard can't break it. |
 | `models/body.glb` | The 3D anatomy model (from BodyParts3D, CC BY 4.0). See `models/README.md`. |
+
+## The Sirius visual identity
+
+The look follows the designer's guide: `docs/design/sirius-identity/Sirius_visual_identity.pdf`.
+
+- **Name:** Sirius, with the tagline "health on board". The wordmark is SIRIUS in capitals, spaced out.
+- **Four colours:** Ink `#0D0D10` (backgrounds), Bone `#F2EEE6` (text and marks), Slate `#5B6472`
+  (quiet things) and Ember `#FF5A36`. Ember is the only colour that asks for attention, so it is
+  kept for alerts and things that are off. Don't add other colours.
+- **Two fonts:** IBM Plex Sans for words (headings medium, body regular) and IBM Plex Mono for
+  numbers and for the small CAPS labels above each section.
+- **Logo:** a four-point star inside a dial of ticks, with one ember tick. Drawn by `SIRIUS.mark(size)`.
+- **Health dial:** the same 24 ticks used as the score meter on Recovery, Radiation, Mind and the
+  crew score. Bone ticks are the score so far, slate ticks are what is left. At **Watch** the last
+  filled tick is ember; at **Alert** all filled ticks are ember. Drawn by `SIRIUS.dial(...)`.
+- **Status words:** Steady, Watch, Alert (always with an icon, never colour alone).
+- **Motion:** the designer's motion logo video plays once as an intro when the dashboard opens
+  (click to skip; add `?intro=0` to the address to turn it off). The same motion, drawn live,
+  shows while the 3D body loads and while a new device is being tested. Motion is calm:
+  colours fade, nothing bounces, spins or glows.
+- **Still true:** we can't use the NASA logo.
 
 ## How the pages are laid out
 
@@ -56,8 +80,7 @@ python3 -m http.server 8000
   our backend. As long as readings keep the same fields, the rest keeps working.
 - **Tech stack isn't decided yet** (see `docs/PLAN.md`). Plain HTML was used so anyone can
   open it; it can be moved into a framework later.
-- **No logo yet.** We can't use the NASA logo. The official Space Apps logo files need adding
-  from https://spaceappschallenge.org/brand (they couldn't be downloaded from the build machine).
+- **Logo:** the Sirius logo is in `brand/`. We can't use the NASA logo.
 
 ## Body map
 

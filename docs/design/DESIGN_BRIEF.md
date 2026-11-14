@@ -1,5 +1,10 @@
 # Design brief: astronaut health dashboard (desktop)
 
+> **Update, 14 Nov 2026:** the look of the app now follows the **Sirius visual identity**
+> (`docs/design/sirius-identity/Sirius_visual_identity.pdf`): its own logo, four colours
+> (Ink, Bone, Slate, Ember) and IBM Plex fonts. That replaces the Space Apps colours and fonts
+> described below. The rest of this brief (no NASA logo, layout ideas, research) still applies.
+
 Researched 14 Nov 2026. This is a starting point for the frontend team, not a final spec.
 Where something could not be checked, it says so. Sources are at the bottom.
 

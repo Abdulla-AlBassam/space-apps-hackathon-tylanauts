@@ -84,11 +84,11 @@
 
   /* ---------- Status helpers (same cut-offs as the main dashboard) ---------- */
   const band = (score) => (score >= 67 ? "good" : score >= 34 ? "watch" : "act");
-  const WORDS = { good: "Normal", watch: "Watch", act: "Act now", info: "For info" };
+  const WORDS = { good: "Steady", watch: "Watch", act: "Alert", info: "For info" };
   const ICONS = {
     good: '<svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="8" cy="8" r="6.5"/><path d="M5 8.2l2 2 4-4.2"/></svg>',
     watch: '<svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8 1.8l6.6 12H1.4z" stroke-linejoin="round"/><path d="M8 6.5v3.2M8 11.6v.3"/></svg>',
-    act: '<svg class="ico" viewBox="0 0 16 16" fill="currentColor"><circle cx="8" cy="8" r="7.2"/><path d="M8 4v4.8M8 11v.4" stroke="#07173F" stroke-width="1.9" stroke-linecap="round"/></svg>',
+    act: '<svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5.3 1.5h5.4l3.8 3.8v5.4l-3.8 3.8H5.3l-3.8-3.8V5.3z" stroke-linejoin="round"/><path d="M8 4.8v3.6M8 10.9v.3" stroke-linecap="round"/></svg>',
     info: '<svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="8" cy="8" r="6.5"/><path d="M8 7.2v4M8 4.8v.3"/></svg>',
   };
   const helpBtn = (key) => `<button type="button" class="help" data-help="${key}" aria-label="What is this?">?</button>`;
@@ -210,6 +210,7 @@
   const catName = (key) => CATS.find((c) => c.key === key).name;
 
   /* ---------- 4a. Header ---------- */
+  $("cw-logo").innerHTML = SIRIUS.mark(24, { label: "" });
   $("cw-mission").textContent = `${MISSION.name} · day ${MISSION.today} of ${MISSION.length} · crew of ${CREW.length}`;
   for (const lvl of ["good", "watch", "act"]) $("lg-" + lvl).innerHTML = ICONS[lvl] + WORDS[lvl];
 
@@ -219,9 +220,9 @@
     const change = crewScore - crewScoreWeekAgo;
     const n = live.length;
     $("cw-score").innerHTML = `
-      <b class="cw-score-num is-${level}">${crewScore}</b>
+      ${SIRIUS.dial(crewScore, level, crewScore, 132)}
       <div>
-        <p class="cw-score-title">Crew score ${helpBtn("crew-score")} <span class="level-word is-${level}">${ICONS[level]}${WORDS[level]}</span></p>
+        <p class="cw-score-title">Crew score ${helpBtn("crew-score")} <span class="level-word lvl-${level}">${ICONS[level]}${WORDS[level]}</span></p>
         <p class="cw-score-note">${change < 0 ? "Down " + -change : change > 0 ? "Up " + change : "No change"} from a week ago. ${n ? `${n} shared pattern${n === 1 ? "" : "s"} right now.` : "No shared patterns right now."}</p>
       </div>`;
   }
@@ -238,7 +239,7 @@
           <span class="in-count"><b>${pt.people.length}</b> of ${crew.length} crew</span>
         </div>
         <div class="in-issue">
-          <h3 class="is-${pt.level}">${icon(pt.cat)}<span>${ISSUE_WORDS[pt.cat]}</span></h3>
+          <h3>${icon(pt.cat)}<span>${ISSUE_WORDS[pt.cat]}</span></h3>
           <p>Since day ${pt.startDay}${cause ? `, after ${cause.short}` : ""}.</p>
         </div>
         <div class="in-fix">
@@ -272,7 +273,7 @@
         const v = p.scores[c.key][T];
         const lvl = band(v);
         const hit = sel && sel.cat === c.key && hitIds.has(p.id);
-        // Normal scores stay quiet; only Watch and Act now get an icon and colour.
+        // Steady scores stay quiet; only Watch and Alert get an icon and the ember colour.
         html += `<td><span class="cell lvl-${lvl}${hit ? " hit" : ""}" title="${label(p)}, ${c.name}: ${v}, ${WORDS[lvl]}">${lvl === "good" ? "" : ICONS[lvl]}${v}</span></td>`;
       }
       html += `</tr>`;
@@ -304,7 +305,7 @@
     view: ["Who is viewing", "Flight surgeon view shows everyone's name. Astronaut view keeps your own name and shows crewmates as \"Crewmate B\" and so on, so people can see the crew picture without seeing each other's private health details. (An idea for the team to decide.)"],
     "crew-score": ["Crew score", "Everyone's health rolled into one number, from 0 to 100: the average of each person's five health areas. One number can hide one person struggling, so the table below always shows everyone. Placeholder formula for the demo."],
     patterns: ["Where the crew lines up", `When ${CREW_MIN} or more people drop in the same health area over the same days (at least ${DROP} points under their own normal), it usually points to a shared cause, like the schedule or a stressful event, rather than one person's health. Click a row to highlight those people in the table below.`],
-    grid: ["Everyone today", "Each row is one astronaut and each column is one health area. The number is today's score from 0 to 100. Yellow means Watch and red means Act now. A score on its own, like one person's heart, is personal rather than crew-wide."],
+    grid: ["Everyone today", "Each row is one astronaut and each column is one health area. The number is today's score from 0 to 100. Orange text means Watch and a solid orange tag means Alert. A score on its own, like one person's heart, is personal rather than crew-wide."],
   };
   const pop = $("help-pop");
   let pinned = null;
@@ -348,48 +349,6 @@
     }
   });
   window.addEventListener("scroll", () => !pinned && hideHelp(), { passive: true });
-
-  /* ---------- Star background (a lighter copy of the main dashboard's) ---------- */
-  const canvas = $("space");
-  const ctx = canvas.getContext("2d");
-  let W = 0, Hc = 0, stars = [];
-  function resizeSky() {
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
-    W = window.innerWidth; Hc = window.innerHeight;
-    canvas.width = W * dpr; canvas.height = Hc * dpr;
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    stars = Array.from({ length: Math.round((W * Hc) / 5200) }, () => {
-      const depth = Math.random();
-      return {
-        a: Math.random() * Math.PI * 2,
-        r: Math.sqrt(Math.random()) * Math.hypot(W, Hc) * 1.1,
-        size: 0.4 + depth * 1.4,
-        speed: 0.00002 + depth * 0.00005,
-        alpha: 0.25 + depth * 0.6,
-        twinkle: Math.random() * Math.PI * 2,
-        blue: Math.random() < 0.3,
-      };
-    });
-  }
-  function sky(t) {
-    ctx.fillStyle = "#07173F";
-    ctx.fillRect(0, 0, W, Hc);
-    const cx = W * 0.15, cy = Hc * 1.35;
-    for (const s of stars) {
-      s.a += s.speed * 16;
-      const sx = cx + Math.cos(s.a) * s.r, sy = cy + Math.sin(s.a) * s.r;
-      if (sx < -4 || sx > W + 4 || sy < -4 || sy > Hc + 4) continue;
-      const tw = 0.75 + 0.25 * Math.sin(t * 0.0012 + s.twinkle);
-      ctx.fillStyle = s.blue ? `rgba(46,150,245,${s.alpha * tw})` : `rgba(255,255,255,${s.alpha * tw})`;
-      ctx.beginPath();
-      ctx.arc(sx, sy, s.size, 0, Math.PI * 2);
-      ctx.fill();
-    }
-    if (!reduceMotion) requestAnimationFrame(sky);
-  }
-  window.addEventListener("resize", resizeSky);
-  resizeSky();
-  requestAnimationFrame(sky);
 
   /* ---------- First draw ---------- */
   function renderAll() {

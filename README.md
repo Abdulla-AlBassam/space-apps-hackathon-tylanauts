@@ -1,4 +1,4 @@
-# Siryius – Astronaut Health Hub
+# Sirius – Astronaut Health Hub
 
 By Team Tylanauts.
 
