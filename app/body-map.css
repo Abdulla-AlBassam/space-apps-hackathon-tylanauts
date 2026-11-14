@@ -1,6 +1,7 @@
 /*
  * Body map page. Uses the brand colours and fonts defined in styles.css.
- * Layout: header, then three columns: list of body areas | 3D figure | details.
+ * Layout: the 3D figure in the middle with a column of labels on each side. Nothing is
+ * boxed in: the body and its labels sit straight on the background.
  */
 .bm-page {
   min-height: 100%;
@@ -16,8 +17,7 @@
   display: flex;
   align-items: center;
   gap: 24px;
-  padding: 18px 28px;
-  border-bottom: 1px solid var(--line);
+  padding: 24px 32px 8px;
 }
 .bm-back {
   display: inline-flex;
@@ -41,7 +41,7 @@
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: 20px;
-  padding: 20px 28px 12px;
+  padding: 12px 32px;
   min-height: 620px;
 }
 .bm-list-panel, .bm-detail-panel { align-self: start; }
@@ -127,19 +127,21 @@
   100% { transform: scale(1.7); opacity: 0; }
 }
 
-.bm-controls { position: absolute; top: 14px; right: 14px; display: flex; gap: 8px; }
-.bm-controls button {
-  padding: 6px 12px;
+/* Small text buttons in the top right corner: Reset view, Auto-turn, Full screen */
+.bm-controls { position: absolute; top: 0; right: 0; z-index: 3; display: flex; gap: 4px; }
+.bm-controls button, .bm-controls a {
+  padding: 5px 10px;
+  border: 0;
   border-radius: 999px;
-  border: 1px solid var(--line-strong);
-  background: var(--panel);
-  color: var(--text-dim);
+  background: transparent;
+  color: var(--text-faint);
   font: 600 12.5px var(--font-body);
+  text-decoration: none;
   cursor: pointer;
 }
-.bm-controls button:hover { color: var(--text); }
-.bm-controls button[aria-pressed="true"] { color: var(--text); border-color: var(--blue-yonder); }
-.bm-controls button:focus-visible { outline: 2px solid var(--blue-yonder); outline-offset: 1px; }
+.bm-controls button:hover, .bm-controls a:hover { color: var(--text); }
+.bm-controls button[aria-pressed="true"] { color: var(--blue-yonder); }
+.bm-controls button:focus-visible, .bm-controls a:focus-visible { outline: 2px solid var(--blue-yonder); outline-offset: 1px; }
 .bm-hint {
   position: absolute;
   bottom: 12px;
@@ -202,38 +204,31 @@
 
 /* ---------- Labels around the body ---------- */
 .bm-leaders { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
-.bm-leader { fill: none; stroke: currentColor; stroke-width: 1.2; opacity: 0.75; }
-circle.bm-leader { fill: currentColor; }
+.bm-leader { fill: none; stroke: currentColor; stroke-width: 1; opacity: 0.55; }
 .bm-leader.is-good { color: var(--blue-yonder); }
 .bm-leader.is-watch { color: var(--neon-yellow); }
 .bm-leader.is-act { color: var(--rocket-red); }
-.bm-leader.behind { opacity: 0.25; stroke-dasharray: 3 4; }
-.bm-leader.selected { stroke-width: 2; opacity: 1; }
+.bm-leader.behind { opacity: 0.22; stroke-dasharray: 3 4; }
+.bm-leader.selected { stroke-width: 1.6; opacity: 1; }
 
 .bm-col {
   position: absolute;
-  top: 56px;
+  top: 48px;
   bottom: 44px;
   width: min(270px, 30%);
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: 14px;
+  gap: 44px;
   z-index: 2;
+  pointer-events: none; /* so you can still drag the body between the labels */
 }
-.bm-col-left { left: 16px; }
-.bm-col-right { right: 16px; }
+/* The columns stay close to the body, however wide the screen is */
+.bm-col-left { right: max(calc(50% + 200px), 70%); align-items: flex-end; }
+.bm-col-right { left: max(calc(50% + 200px), 70%); align-items: flex-start; }
 
-.bm-tag {
-  border-radius: 12px;
-  border: 1px solid var(--line);
-  background: rgba(7, 23, 63, 0.82);
-  backdrop-filter: blur(6px);
-  cursor: default;
-  transition: border-color 0.2s, box-shadow 0.2s;
-}
-.bm-tag:hover { border-color: var(--line-strong); }
-.bm-tag.open { border-color: currentColor; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45); }
+/* One label: an icon, the name and the status. No box. */
+.bm-tag { pointer-events: auto; border-radius: 16px; cursor: default; max-width: 100%; }
 .bm-tag.is-good { color: var(--blue-yonder); }
 .bm-tag.is-watch { color: var(--neon-yellow); }
 .bm-tag.is-act { color: var(--rocket-red); }
@@ -241,8 +236,7 @@ circle.bm-leader { fill: currentColor; }
   display: flex;
   align-items: center;
   gap: 12px;
-  width: 100%;
-  padding: 10px 12px;
+  padding: 4px 0;
   border: 0;
   background: none;
   color: var(--text);
@@ -250,48 +244,50 @@ circle.bm-leader { fill: currentColor; }
   text-align: left;
   cursor: pointer;
 }
-.bm-tag-head:focus-visible { outline: 2px solid var(--blue-yonder); outline-offset: -2px; border-radius: 12px; }
-.bm-tag-icon {
-  display: grid;
-  place-items: center;
-  width: 40px;
-  height: 40px;
-  flex: none;
-  border-radius: 10px;
-  border: 1px solid currentColor;
-  background: rgba(0, 66, 166, 0.35);
-}
-.bm-tag-icon .ico { width: 20px; height: 20px; }
-.bm-tag-text { display: grid; gap: 3px; min-width: 0; }
-.bm-tag-name { font: 700 14.5px var(--font-display); color: var(--text); }
+.bm-tag-head:focus-visible { outline: 2px solid var(--blue-yonder); outline-offset: 4px; border-radius: 8px; }
+/* Left-hand labels are mirrored, so the icon is always on the side nearest the body */
+.bm-col-left .bm-tag-head { flex-direction: row-reverse; text-align: right; margin-left: auto; }
+.bm-col-left .bm-tag-text { justify-items: end; }
+.bm-tag-icon { display: grid; place-items: center; flex: none; }
+.bm-tag-icon .ico { width: 26px; height: 26px; }
+.bm-tag-text { display: grid; gap: 2px; min-width: 0; }
+.bm-tag-name { font: 700 15.5px var(--font-display); color: var(--text); }
+.bm-tag-head:hover .bm-tag-name { text-decoration: underline; text-underline-offset: 3px; }
 .bm-pill {
   display: inline-flex;
   align-items: center;
   gap: 5px;
   width: fit-content;
-  font: 700 10.5px var(--font-display);
+  font: 700 11px var(--font-display);
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 .bm-pill .ico { width: 13px; height: 13px; }
 .bm-pill.is-act { color: var(--white); }
 .bm-pill.is-act .ico { color: var(--rocket-red); }
-.bm-tag-meta { font-size: 11.5px; color: var(--text-faint); }
-.bm-tag-chev { margin-left: auto; color: var(--text-faint); transition: transform 0.2s; }
-.bm-tag-chev .ico { width: 16px; height: 16px; }
-.bm-tag.open .bm-tag-chev { transform: rotate(90deg); }
+
+/* An opened label is the one place a box appears: its details need a calm background */
+.bm-tag.open {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 16px 14px;
+  background: rgba(7, 23, 63, 0.86);
+  backdrop-filter: blur(8px);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4);
+}
 .bm-tag-body {
-  padding: 0 12px 12px;
+  padding-top: 8px;
   color: var(--text);
   max-height: 340px;
   overflow-y: auto;
   animation: bm-open 0.25s ease-out;
 }
 @keyframes bm-open { from { opacity: 0; transform: translateY(-4px); } }
-.bm-tag-body .bm-summary { font-size: 13px; margin: 0 0 10px; color: var(--text-dim); }
-.bm-tag-body .bm-readings { gap: 6px; margin-bottom: 12px; }
-.bm-tag-body .bm-reading { padding: 7px 9px; }
+.bm-tag-body .bm-summary { font-size: 13px; margin: 0 0 12px; color: var(--text-dim); }
+.bm-tag-body .bm-readings { gap: 0; margin-bottom: 14px; }
+.bm-tag-body .bm-reading { padding: 8px 0; border: 0; border-top: 1px solid var(--hair); border-radius: 0; background: none; }
 .bm-tag-body .bm-reading .val { font-size: 14.5px; }
+.bm-tag-body .bm-reading.out .val { color: var(--neon-yellow); }
 .bm-tag-body h3 { display: flex; align-items: center; gap: 6px; margin: 0 0 6px; font: 700 11.5px var(--font-display); letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-dim); }
 .bm-tag-body h3 .ico { width: 14px; height: 14px; }
 .bm-tag-body .bm-actions { margin: 0; font-size: 13px; }
@@ -301,7 +297,9 @@ circle.bm-leader { fill: currentColor; }
   .bm-stage { display: flex; flex-direction: column; min-height: 0; }
   .bm-stage canvas { position: relative; height: 460px; flex: none; }
   .bm-markers { height: 460px; bottom: auto; }
-  .bm-col { position: static; width: auto; padding: 0 0 12px; }
+  .bm-col { position: static; width: auto; padding: 0 0 12px; gap: 18px; align-items: stretch; }
+  .bm-col-left .bm-tag-head { flex-direction: row; text-align: left; margin-left: 0; }
+  .bm-col-left .bm-tag-text { justify-items: start; }
   .bm-leaders { display: none; }
   .bm-hint { position: static; padding-bottom: 8px; }
   .bm-top { flex-wrap: wrap; padding: 14px 16px; gap: 12px; }

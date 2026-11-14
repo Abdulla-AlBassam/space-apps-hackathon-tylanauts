@@ -22,7 +22,6 @@
 
   <main class="main">
     <header class="topbar">
-      <a class="brand" href="#today" id="brand" aria-label="Siryius home">Siryius</a>
       <div class="who">
         <h1 id="astro-name">Astronaut</h1>
         <p id="astro-mission">Mission</p>
@@ -32,7 +31,6 @@
         <div class="mission-bar"><span id="mission-fill"></span></div>
       </div>
       <div class="topbar-right">
-        <span class="status-pill" id="status-pill"></span>
         <div class="switch" role="group" aria-label="Who is viewing" id="viewer-switch"></div>
       </div>
     </header>
@@ -42,31 +40,29 @@
       <div class="scores" id="scores" aria-label="Today's scores"></div>
 
       <div class="layout">
-        <section class="panel bm-panel" aria-label="Body map">
-          <div class="panel-head">
-            <h2 id="bm-heading"></h2>
-            <button type="button" class="help" data-help="bodymap" aria-label="What is this?">?</button>
-            <span class="spacer"></span>
-            <a class="link-btn" href="body-map.html" id="bm-full"></a>
-          </div>
-          <div class="bm-stage" id="bm-stage" aria-label="3D body. Drag to turn it, scroll to zoom. Click a label for details.">
+        <!-- The 3D body sits straight on the background, with its labels around it (body-map.js) -->
+        <section class="bm-wrap" aria-label="Body map">
+          <div class="bm-stage" id="bm-stage" aria-label="3D body. Drag to turn it. Click a label for details.">
+            <div class="panel-head bm-head">
+              <h2 id="bm-heading"></h2>
+              <button type="button" class="help" data-help="bodymap" aria-label="What is this?">?</button>
+            </div>
             <div class="bm-markers" id="bm-markers"></div>
             <div class="bm-controls">
               <button type="button" id="bm-reset">Reset view</button>
               <button type="button" id="bm-spin" aria-pressed="true">Auto-turn</button>
+              <a href="body-map.html" id="bm-full">Full screen</a>
             </div>
-            <p class="bm-hint">Drag to turn&nbsp; • &nbsp;scroll to zoom&nbsp; • &nbsp;click a label</p>
+            <p class="bm-hint">Drag to turn&nbsp; • &nbsp;click a label</p>
             <p class="bm-loading" id="bm-loading">Loading the 3D body&hellip;</p>
             <p class="bm-fallback" id="bm-fallback" hidden>The 3D view couldn&rsquo;t start because this browser has WebGL turned off. The labels still work.</p>
           </div>
         </section>
 
         <aside class="col">
-          <section class="panel" id="alerts-panel">
-            <div class="panel-head"><h2 id="alerts-heading"></h2><button type="button" class="help" data-help="alerts" aria-label="What is this?">?</button></div>
-            <div class="alerts" id="alert-list"></div>
-          </section>
-          <section class="panel doctor" id="doctor"></section>
+          <!-- One small card: how many alerts and how serious. Clicking it opens the Alerts page. -->
+          <section class="card alerts-card" id="alerts-card" aria-label="Alerts"></section>
+          <section class="card doctor" id="doctor"></section>
         </aside>
       </div>
 
@@ -106,6 +102,15 @@
       </section>
     </section>
 
+    <!-- ================= ALERTS ================= -->
+    <section class="view" id="view-alerts" aria-label="Alerts and actions" hidden>
+      <div class="view-head">
+        <div><h2 class="view-title" id="alerts-title"></h2><p class="view-sub">What changed, why it matters and what to do about it.</p></div>
+        <div class="alert-counts" id="alert-counts"></div>
+      </div>
+      <div class="alert-list" id="alert-list"></div>
+    </section>
+
     <!-- ================= HEALTH LOG ================= -->
     <section class="view" id="view-log" aria-label="Health log" hidden>
       <div class="view-head">
@@ -132,7 +137,7 @@
     <!-- ================= DEVICES ================= -->
     <section class="view" id="view-devices" aria-label="My devices" hidden>
       <div class="view-head">
-        <div><h2 class="view-title" id="dev-title"></h2><p class="view-sub">Every wearable sends its readings to its own webhook address. The hub combines them.</p></div>
+        <div><h2 class="view-title" id="dev-title"></h2><p class="view-sub">Each wearable sends its readings to the hub, which combines them.</p></div>
         <button type="button" class="btn-primary" id="dev-connect"></button>
       </div>
       <div class="flow" id="flow"></div>

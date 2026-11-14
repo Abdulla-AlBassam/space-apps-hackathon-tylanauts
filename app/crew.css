@@ -95,10 +95,9 @@ body {
 .cw-layout { display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: 20px; align-items: start; }
 .cw-col { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
 .panel {
-  background: var(--panel);
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  padding: 18px 20px;
+  background: rgba(46, 150, 245, 0.07);
+  border-radius: 18px;
+  padding: 20px 22px;
   backdrop-filter: blur(8px);
   min-width: 0;
 }
@@ -264,7 +263,7 @@ body {
 .level-word.is-act { color: var(--white); }
 .level-word.is-act .ico { color: var(--rocket-red); }
 
-.single { display: flex; align-items: center; gap: 10px; font-size: 13.5px; padding: 8px 10px; border-radius: 10px; background: rgba(255, 255, 255, 0.03); border: 1px solid var(--line); cursor: pointer; color: inherit; font-family: inherit; text-align: left; width: 100%; }
+.single { display: flex; align-items: center; gap: 10px; font-size: 13.5px; padding: 8px 10px; border-radius: 10px; background: rgba(255, 255, 255, 0.03); cursor: pointer; color: inherit; font-family: inherit; text-align: left; width: 100%; }
 .single:hover { border-color: var(--line-strong); }
 .single:focus-visible { outline: 2px solid var(--blue-yonder); outline-offset: 2px; }
 .single .avatar { width: 28px; height: 28px; font-size: 11px; }

@@ -173,9 +173,9 @@ const astroEl = $("bm-astro");
 if (astroEl) astroEl.textContent = `${H.astronaut.name}   •   Day ${H.astronaut.missionDay} of ${H.astronaut.missionLength}`;
 
 /*
- * Labels around the body (like an anatomy chart): one tag per area in a column on the
- * left or right, joined to its glowing point by a thin line that follows the body as it
- * turns. Clicking a tag (or the point) expands the tag into a card with the details.
+ * Labels around the body (like an anatomy chart): one label per area (icon, name, status)
+ * in a column on the left or right, joined to its glowing point by a thin line that follows
+ * the body as it turns. Clicking a label (or the point) opens its details underneath it.
  */
 const stageEl = $("bm-stage");
 const cols = { left: document.createElement("div"), right: document.createElement("div") };
@@ -202,14 +202,12 @@ function tagHtml(a, open) {
     )
     .join("");
   return `
-    <button type="button" class="bm-tag-head" aria-expanded="${open}">
+    <button type="button" class="bm-tag-head" aria-expanded="${open}" title="${tagSummary(a)}">
       <span class="bm-tag-icon is-${a.status}">${ic(a.icon)}</span>
       <span class="bm-tag-text">
         <span class="bm-tag-name">${a.name}</span>
         <span class="bm-pill is-${a.status}">${ICONS[a.status]}${STATUS_WORD[a.status]}</span>
-        <span class="bm-tag-meta">${tagSummary(a)}</span>
       </span>
-      <span class="bm-tag-chev">${ic("chevron-right")}</span>
     </button>
     ${open ? `<div class="bm-tag-body">
       <p class="bm-summary">${a.summary} <button type="button" class="help" data-help="${a.id}" aria-label="Why this matters">?</button></p>
@@ -219,8 +217,10 @@ function tagHtml(a, open) {
     </div>` : ""}`;
 }
 
+// Labels go top to bottom in the same order as their points on the body (head first),
+// so the lines to the body don't cross each other.
 const tags = {};
-AREAS.forEach((a) => {
+[...AREAS].sort((a, b) => b.point[1] - a.point[1]).forEach((a) => {
   const el = document.createElement("div");
   el.className = `bm-tag is-${a.status}`;
   el.dataset.id = a.id;
@@ -386,32 +386,19 @@ loader.load(
 );
 markerLayer.hidden = true;
 
-// --- Around the body: a glowing floor ring and a field of stars ---
-const floor = new THREE.Group();
-for (const [r, o] of [[0.32, 0.5], [0.45, 0.28], [0.62, 0.14]]) {
-  const ring = new THREE.Mesh(new THREE.RingGeometry(r, r + 0.006, 96), new THREE.MeshBasicMaterial({ color: 0x2e96f5, transparent: true, opacity: o, side: THREE.DoubleSide, blending: THREE.AdditiveBlending, depthWrite: false }));
-  ring.rotation.x = -Math.PI / 2;
-  floor.add(ring);
+// --- Around the body: a field of stars. The main dashboard already has its own moving
+// star background (the #space canvas), so stars are only added on the full-screen page. ---
+const stars = new THREE.Group();
+if (!document.getElementById("space")) {
+  const starGeo = new THREE.BufferGeometry();
+  const starPos = [];
+  for (let i = 0; i < 700; i++) {
+    const v = new THREE.Vector3().randomDirection().multiplyScalar(6 + Math.random() * 10);
+    starPos.push(v.x, v.y + 1, v.z);
+  }
+  starGeo.setAttribute("position", new THREE.Float32BufferAttribute(starPos, 3));
+  stars.add(new THREE.Points(starGeo, new THREE.PointsMaterial({ color: 0xffffff, size: 0.035, transparent: true, opacity: 0.7, depthWrite: false })));
 }
-// A dashed outer ring that slowly turns
-const dashes = new THREE.Group();
-for (let i = 0; i < 36; i++) {
-  const seg = new THREE.Mesh(new THREE.RingGeometry(0.52, 0.535, 4, 1, (i / 36) * Math.PI * 2, (Math.PI * 2) / 72), floor.children[0].material.clone());
-  seg.material.opacity = 0.4;
-  seg.rotation.x = -Math.PI / 2;
-  dashes.add(seg);
-}
-floor.add(dashes);
-scene.add(floor);
-
-const starGeo = new THREE.BufferGeometry();
-const starPos = [];
-for (let i = 0; i < 700; i++) {
-  const v = new THREE.Vector3().randomDirection().multiplyScalar(6 + Math.random() * 10);
-  starPos.push(v.x, v.y + 1, v.z);
-}
-starGeo.setAttribute("position", new THREE.Float32BufferAttribute(starPos, 3));
-const stars = new THREE.Points(starGeo, new THREE.PointsMaterial({ color: 0xffffff, size: 0.035, transparent: true, opacity: 0.7, depthWrite: false }));
 scene.add(stars);
 
 /* ---------- 4. Glowing points (HTML buttons that follow the 3D body) ---------- */
@@ -430,7 +417,7 @@ const markers = AREAS.map((a) => {
 
 /* ---------- 5. Turning, zooming and selecting ---------- */
 
-const view = { yaw: 0.35, pitch: 0, dist: 4.7, lookY: 0.88 }; // where we are now
+const view = { yaw: 0.35, pitch: 0, dist: 4.0, lookY: 0.9 }; // where we are now
 const goal = { ...view }; // where we're easing towards
 const HOME = { ...view };
 let spinning = !reduceMotion;
@@ -471,7 +458,11 @@ stage.addEventListener("pointermove", (e) => {
 });
 stage.addEventListener("pointerup", () => (drag = null));
 stage.addEventListener("pointercancel", () => (drag = null));
+// Scrolling zooms on the full-screen page only. On the main dashboard the body sits in
+// the middle of a long page, so scrolling there must keep scrolling the page.
+const embedded = Boolean(window.APP_HANDLES_HELP);
 stage.addEventListener("wheel", (e) => {
+  if (embedded) return;
   e.preventDefault();
   goal.dist = THREE.MathUtils.clamp(goal.dist * (1 + Math.sign(e.deltaY) * 0.1), 2.4, 7.5);
   lastTouch = performance.now();
@@ -503,12 +494,11 @@ function drawLeaders() {
     const head = tag.querySelector(".bm-tag-head") || tag;
     const r = head.getBoundingClientRect();
     const left = m.area.side === "left";
-    const ax = (left ? r.right : r.left) - sr.left;
-    const ay = r.top + Math.min(r.height, 64) / 2 - sr.top;
-    const elbow = ax + (left ? 26 : -26);
+    const ax = (left ? r.right + 10 : r.left - 10) - sr.left;
+    const ay = r.top + r.height / 2 - sr.top;
+    const elbow = ax + (left ? 28 : -28);
     const cls = `bm-leader is-${m.area.status}${m.behind && m.area.id !== selectedId ? " behind" : ""}${m.area.id === selectedId ? " selected" : ""}`;
     html += `<polyline class="${cls}" points="${ax.toFixed(1)},${ay.toFixed(1)} ${elbow.toFixed(1)},${ay.toFixed(1)} ${m.sx.toFixed(1)},${m.sy.toFixed(1)}"/>`;
-    html += `<circle class="${cls}" cx="${ax.toFixed(1)}" cy="${ay.toFixed(1)}" r="2.5"/>`;
   }
   leaderSvg.innerHTML = html;
 }
@@ -542,7 +532,6 @@ function frame(now) {
   body.rotation.y = view.yaw;
   camera.position.set(0, view.lookY + Math.sin(view.pitch) * view.dist, Math.cos(view.pitch) * view.dist);
   camera.lookAt(0, view.lookY, 0);
-  dashes.rotation.y = now * 0.00015;
   stars.rotation.y = now * 0.00002;
   const scanY = reduceMotion ? -1 : ((now * 0.00035) % 2.3) - 0.2;
   for (const mat of Object.values(MATERIALS)) mat.uniforms.uScan.value = scanY;
