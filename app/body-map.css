@@ -169,7 +169,8 @@
   color: var(--text-faint);
   pointer-events: none;
 }
-.bm-fallback { position: absolute; inset: 40% 15% auto; text-align: center; color: var(--text-dim); }
+.bm-fallback, .bm-loading { position: absolute; inset: 45% 15% auto; margin: 0; text-align: center; color: var(--text-dim); }
+.footer-note a { color: inherit; }
 
 /* ---------- Details panel ---------- */
 .bm-detail-panel h2 { display: flex; align-items: center; gap: 8px; }

@@ -20,8 +20,9 @@ python3 -m http.server 8000
 | `data.js` | Makes 30 days of simulated readings from 3 wearables and a radiation badge, in the common format from `docs/PLAN.md`, then works out the scores and alerts. |
 | `app.js` | Draws everything from `data.js`, plus the moving star background and the `?` help pop-ups. |
 | `body-map.html` | **Body map** page: a 3D body you can turn, with glowing points where a health area needs attention. Linked from the left rail ("Body"). |
-| `body-map.js` | Builds the 3D figure with three.js and the list of body areas. Reads the same simulated data from `data.js`, so both pages tell the same story. |
+| `body-map.js` | Draws the 3D anatomy model with three.js and the list of body areas. Reads the same simulated data from `data.js`, so both pages tell the same story. |
 | `body-map.css` | Styling for the body map page (same brand colours and fonts). |
+| `models/body.glb` | The 3D anatomy model (from BodyParts3D, CC BY 4.0). See `models/README.md`. |
 
 ## Things to know
 
@@ -36,12 +37,18 @@ python3 -m http.server 8000
 
 ## Body map
 
-- **The 3D figure is made in code** from simple shapes (spheres and rounded tubes), so there is no
-  3D model file and no model licence to check. It is a stylised figure, not an anatomical model.
+- **The 3D body is a real anatomy model** (skeleton, heart, brain, eyes, thigh muscles and a faint
+  skin outline) drawn in an X-ray style. It comes from **BodyParts3D**, © The Database Center for
+  Life Science, licensed under CC BY 4.0. We must keep the credit shown at the bottom of the page.
+  Details and how to rebuild it: `models/README.md`.
 - **three.js** (MIT licence) is loaded from the jsDelivr CDN, pinned to version 0.160.0, so the
-  body map needs an internet connection the first time it loads.
+  body map needs an internet connection. The model itself (`models/body.glb`, about 3.8 MB) ships
+  with the app, so open the page through a local server (see the top of this file), not by
+  double-clicking the HTML file.
 - **Six body areas:** heart, mind/mood/sleep, eyes (SANS), radiation dose, bones (spine and hips)
-  and leg muscles. Each has a status colour, readings with normal ranges, a `?` explaining why it
-  matters in space, and what to do. The list lives in `AREAS` at the top of `body-map.js`.
+  and leg muscles. The matching part of the model glows in that area's status colour. Each area has
+  readings with normal ranges, a `?` explaining why it matters in space, and what to do. The list
+  lives in `AREAS` at the top of `body-map.js`.
 - **Moving it into the main dashboard later:** copy the three parts of `body-map.html`
-  (`#bm-list`, `#bm-stage`, `#bm-detail`) into `index.html` and load `body-map.js` as a module.
+  (`#bm-list`, `#bm-stage`, `#bm-detail`) and its import map into `index.html`, and load
+  `body-map.js` as a module.

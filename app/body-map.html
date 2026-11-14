@@ -50,17 +50,25 @@
       <button type="button" id="bm-spin" aria-pressed="true">Auto-turn</button>
     </div>
     <p class="bm-hint">Drag to turn&nbsp; • &nbsp;scroll to zoom&nbsp; • &nbsp;click a glowing point</p>
+    <p class="bm-loading" id="bm-loading">Loading the 3D body&hellip;</p>
     <p class="bm-fallback" id="bm-fallback" hidden>The 3D view couldn&rsquo;t start because this browser has WebGL turned off. The list on the left still works.</p>
   </section>
 
   <aside class="panel bm-detail-panel" id="bm-detail" aria-live="polite"></aside>
 </div>
 
-<p class="footer-note">Simulated data for a demo. Built by Team Tylanauts for NASA Space Apps 2026.</p>
+<p class="footer-note">Simulated data for a demo. Built by Team Tylanauts for NASA Space Apps 2026.<br>
+3D anatomy: <a href="https://dbarchive.biosciencedbc.jp/en/bodyparts3d/lic.html">BodyParts3D</a>, &copy; The Database Center for Life Science, licensed under <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>. Simplified and recoloured for this page.</p>
 
 <div class="help-pop" id="help-pop" role="tooltip"></div>
 
 <script src="data.js"></script>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
 <script type="module" src="body-map.js"></script>
 </body>
 </html>

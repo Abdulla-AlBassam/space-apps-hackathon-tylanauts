@@ -7,9 +7,10 @@
  *    Numbers that the dashboard already simulates (heart rate, sleep, radiation, exercise)
  *    are read from window.HEALTH_DATA (data.js) so both pages tell the same story.
  *    The rest (mood score, eye exam, exercise plan) are made-up "hand-entered" results.
- * 2. Draws a see-through, glowing human figure with three.js. The figure is built here
- *    from simple shapes (spheres and capsules), so there is no 3D model file and no
- *    model licence to worry about. three.js itself is MIT-licensed and loaded from a CDN.
+ * 2. Draws an X-ray style anatomy model with three.js: skeleton, heart, brain, eyes, thigh
+ *    muscles and a faint skin outline. The model (models/body.glb) is made from BodyParts3D,
+ *    © The Database Center for Life Science, licensed under CC BY 4.0 (see models/README.md).
+ *    three.js itself is MIT-licensed and loaded from a CDN.
  * 3. Puts a clickable glowing point on the body for each area. Its colour is the status
  *    (blue = Normal, yellow = Watch, red = Act now). Clicking it turns the body to face
  *    you and opens the details panel on the right.
@@ -17,7 +18,8 @@
  * To move this into the main dashboard later: copy the three parts of body-map.html
  * (#bm-list, #bm-stage, #bm-detail) into index.html and load this file the same way.
  */
-import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js";
+import * as THREE from "three";
+import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 
 const H = window.HEALTH_DATA;
 const today = H.days[H.days.length - 1];
@@ -59,7 +61,7 @@ const AREAS = [
     name: "Heart",
     category: "Heart",
     status: heartStatus,
-    point: [0.035, 1.24, 0.13],
+    point: [0.025, 1.29, 0.128],
     facing: [0, 0, 1],
     summary: "Resting heart rate is up and heart rate variability is down. Recovery has fallen 3 days in a row.",
     readings: [
@@ -76,7 +78,7 @@ const AREAS = [
     name: "Mind, mood & sleep",
     category: "Mind & mood, Sleep",
     status: outside("sleep_hours") ? "watch" : "good",
-    point: [0, 1.75, 0.03],
+    point: [0, 1.735, -0.01],
     facing: [0, 0.7, 0.7],
     summary: "Short sleep for several nights and a lower mood score today. Worth keeping an eye on.",
     readings: [
@@ -93,7 +95,7 @@ const AREAS = [
     name: "Eyes (SANS)",
     category: "Eyes",
     status: "good",
-    point: [0.038, 1.64, 0.105],
+    point: [0.032, 1.596, 0.09],
     facing: [0, 0, 1],
     summary: "Last eye check found no swelling at the back of the eye. Next check is due in about 8 days.",
     readings: [
@@ -110,7 +112,7 @@ const AREAS = [
     name: "Radiation dose",
     category: "Radiation",
     status: "good",
-    point: [0.11, 1.36, 0.125],
+    point: [0.105, 1.355, 0.108],
     facing: [0, 0, 1],
     summary: `Mission total is ${today.doseTotal} mSv, ${Math.round((today.doseTotal / CAREER_LIMIT_MSV) * 100)}% of the career limit.${doseSpike ? " One spike was recorded earlier." : ""}`,
     readings: [
@@ -127,7 +129,7 @@ const AREAS = [
     name: "Bones (spine & hips)",
     category: "Bone & muscle",
     status: "watch",
-    point: [0, 1.04, -0.125],
+    point: [0, 1.0, -0.108],
     facing: [0, 0, -1],
     summary: "Two resistance-exercise sessions were missed this week. These sessions are the main way to protect bone in space.",
     readings: [
@@ -143,7 +145,7 @@ const AREAS = [
     name: "Leg muscles",
     category: "Bone & muscle",
     status: "good",
-    point: [-0.095, 0.66, 0.075],
+    point: [-0.09, 0.68, 0.082],
     facing: [0, 0, 1],
     summary: "Leg strength is holding close to your pre-flight level.",
     readings: [
@@ -236,11 +238,13 @@ document.addEventListener("click", (e) => {
 
 const stage = $("bm-stage");
 const markerLayer = $("bm-markers");
+const loadingEl = $("bm-loading");
 let renderer;
 try {
   renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
 } catch (err) {
   $("bm-fallback").hidden = false;
+  loadingEl.hidden = true;
   markerLayer.hidden = true;
 }
 
@@ -249,149 +253,104 @@ const camera = new THREE.PerspectiveCamera(30, 1, 0.1, 100);
 const body = new THREE.Group(); // everything that turns with the figure
 scene.add(body);
 
-// The see-through "hologram" skin. It glows most at the edges (where the surface
-// turns away from you), plus a bright band that sweeps up and down like a scanner.
-const skinMaterial = new THREE.ShaderMaterial({
-  uniforms: {
-    uBase: { value: new THREE.Color(0x0042a6) },
-    uRim: { value: new THREE.Color(0x2e96f5) },
-    uScan: { value: 0 },
+/*
+ * The "X-ray" look. Each surface glows most at its edges (where it turns away from you)
+ * and is almost clear where it faces you, so you can see through skin to bone and
+ * through bone to the organs. A bright band sweeps up and down the body like a scanner.
+ * Everything adds light on top of what's behind it, so draw order doesn't matter.
+ */
+function xray(colour, core, edge, { onTop = false } = {}) {
+  return new THREE.ShaderMaterial({
+    uniforms: {
+      uColour: { value: new THREE.Color(colour) },
+      uCore: { value: core },
+      uEdge: { value: edge },
+      uStrength: { value: 1 },
+      uScan: { value: -1 },
+    },
+    vertexShader: `
+      varying vec3 vNormal; varying vec3 vView; varying float vY;
+      void main() {
+        vec4 world = modelMatrix * vec4(position, 1.0);
+        vec4 mv = viewMatrix * world;
+        vNormal = normalize(normalMatrix * normal);
+        vView = normalize(-mv.xyz);
+        vY = world.y;
+        gl_Position = projectionMatrix * mv;
+      }`,
+    fragmentShader: `
+      uniform vec3 uColour; uniform float uCore; uniform float uEdge; uniform float uStrength; uniform float uScan;
+      varying vec3 vNormal; varying vec3 vView; varying float vY;
+      void main() {
+        float rim = pow(1.0 - abs(dot(normalize(vNormal), normalize(vView))), 2.0);
+        float scan = smoothstep(0.03, 0.0, abs(vY - uScan));
+        float a = (uCore + rim * uEdge) * uStrength + scan * 0.12;
+        gl_FragColor = vec4(uColour * a, 1.0);
+      }`,
+    transparent: true,
+    depthWrite: false,
+    depthTest: !onTop,
+    side: THREE.DoubleSide,
+    blending: THREE.AdditiveBlending,
+  });
+}
+
+// Materials for each part of the model. Bones are pale X-ray white, skin is a faint
+// blue outline, and the parts linked to a body area take that area's status colour.
+const statusOf = (id) => AREAS.find((a) => a.id === id).status;
+const MATERIALS = {
+  skin: xray(0x2e96f5, 0.0, 0.22),
+  skeleton: xray(0xdce8ff, 0.035, 0.5),
+  spine: xray(STATUS_COLOUR[statusOf("bone")], 0.05, 0.6),
+  heart: xray(STATUS_COLOUR[statusOf("heart")], 0.12, 0.9, { onTop: true }),
+  brain: xray(STATUS_COLOUR[statusOf("mind")], 0.05, 0.6, { onTop: true }),
+  eyes: xray(STATUS_COLOUR[statusOf("eyes")], 0.15, 0.9, { onTop: true }),
+  muscle: xray(STATUS_COLOUR[statusOf("muscle")], 0.02, 0.35),
+};
+// Which body area lights up which part of the model (used for pulsing and selecting)
+const organs = {
+  heart: [MATERIALS.heart],
+  mind: [MATERIALS.brain],
+  eyes: [MATERIALS.eyes],
+  bone: [MATERIALS.spine],
+  muscle: [MATERIALS.muscle],
+};
+
+// Radiation badge: a small card clipped on the chest (not part of the anatomy model)
+const badgeMat = xray(STATUS_COLOUR[statusOf("radiation")], 0.5, 0.6, { onTop: true });
+const badge = new THREE.Mesh(new THREE.BoxGeometry(0.045, 0.06, 0.006), badgeMat);
+badge.position.set(0.105, 1.355, 0.1);
+body.add(badge);
+organs.radiation = [badgeMat];
+
+/*
+ * The anatomy model (models/body.glb). It comes from BodyParts3D, a free 3D atlas of an
+ * adult male body: © The Database Center for Life Science, licensed under CC BY 4.0.
+ * tools/build_body_model.py picks the bones, heart, brain, eyes, thigh muscles and skin
+ * out of it, makes them lighter for the web, and saves them as named parts.
+ */
+const loader = new GLTFLoader();
+loader.load(
+  new URL("models/body.glb", import.meta.url).href,
+  (gltf) => {
+    gltf.scene.traverse((o) => {
+      if (!o.isMesh) return;
+      const mat = MATERIALS[o.name];
+      if (!mat) return;
+      if (!o.geometry.attributes.normal) o.geometry.computeVertexNormals();
+      o.material = mat;
+      o.renderOrder = mat.depthTest ? 1 : 2;
+    });
+    body.add(gltf.scene);
+    loadingEl.hidden = true;
+    markerLayer.hidden = false;
   },
-  vertexShader: `
-    varying vec3 vNormal; varying vec3 vView; varying float vY;
-    void main() {
-      vec4 world = modelMatrix * vec4(position, 1.0);
-      vec4 mv = viewMatrix * world;
-      vNormal = normalize(normalMatrix * normal);
-      vView = normalize(-mv.xyz);
-      vY = world.y;
-      gl_Position = projectionMatrix * mv;
-    }`,
-  fragmentShader: `
-    uniform vec3 uBase; uniform vec3 uRim; uniform float uScan;
-    varying vec3 vNormal; varying vec3 vView; varying float vY;
-    void main() {
-      float edge = pow(1.0 - abs(dot(vNormal, vView)), 2.2);
-      float scan = smoothstep(0.035, 0.0, abs(vY - uScan));
-      vec3 col = mix(uBase, uRim, edge) + uRim * scan * 0.8;
-      float alpha = 0.10 + edge * 0.75 + scan * 0.25;
-      gl_FragColor = vec4(col, alpha);
-    }`,
-  transparent: true,
-  depthWrite: false,
-  blending: THREE.AdditiveBlending,
-});
-// Invisible copy that only fills the depth buffer, so only the outermost skin glows
-// (otherwise overlapping shapes like shoulder + arm would add up into bright seams).
-const depthOnly = new THREE.MeshBasicMaterial({ colorWrite: false });
-
-function addSkin(geometry, position, rotation, scale) {
-  for (const [mat, order] of [[depthOnly, 0], [skinMaterial, 1]]) {
-    const m = new THREE.Mesh(geometry, mat);
-    m.renderOrder = order;
-    if (position) m.position.set(...position);
-    if (rotation) m.quaternion.copy(rotation);
-    if (scale) m.scale.set(...scale);
-    body.add(m);
+  undefined,
+  () => {
+    loadingEl.textContent = "The 3D body model couldn't load. The list on the left still works.";
   }
-}
-// A rounded tube from point a to point b (used for arms, legs, neck).
-function limb(a, b, radius) {
-  const from = new THREE.Vector3(...a), to = new THREE.Vector3(...b);
-  const dir = to.clone().sub(from);
-  const geo = new THREE.CapsuleGeometry(radius, Math.max(dir.length() - radius, 0.01), 8, 20);
-  const rot = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir.clone().normalize());
-  addSkin(geo, from.add(to).multiplyScalar(0.5).toArray(), rot);
-}
-
-// --- Build the figure (about 1.8 m tall, standing at y = 0, facing +z) ---
-const sphere = new THREE.SphereGeometry(1, 40, 28);
-addSkin(sphere, [0, 1.63, 0.005], null, [0.095, 0.118, 0.108]); // head
-limb([0, 1.44, -0.01], [0, 1.55, 0], 0.048); // neck
-// Torso: a shape spun around the vertical axis, then flattened front-to-back
-const torsoProfile = [
-  [0.0, 0.86], [0.13, 0.87], [0.165, 0.93], [0.16, 1.0], [0.142, 1.08], [0.145, 1.15],
-  [0.165, 1.24], [0.182, 1.32], [0.18, 1.39], [0.14, 1.445], [0.07, 1.47], [0.0, 1.475],
-].map(([r, y]) => new THREE.Vector2(r, y));
-addSkin(new THREE.LatheGeometry(torsoProfile, 48), [0, 0, 0], null, [1, 1, 0.62]);
-for (const s of [1, -1]) {
-  addSkin(sphere, [0.185 * s, 1.385, -0.005], null, [0.062, 0.058, 0.06]); // shoulder
-  limb([0.2 * s, 1.37, -0.01], [0.245 * s, 1.1, -0.02], 0.043); // upper arm
-  limb([0.245 * s, 1.1, -0.02], [0.27 * s, 0.86, 0.03], 0.036); // forearm
-  addSkin(sphere, [0.275 * s, 0.8, 0.035], null, [0.028, 0.06, 0.042]); // hand
-  limb([0.088 * s, 0.9, 0], [0.098 * s, 0.5, 0.005], 0.07); // thigh
-  limb([0.098 * s, 0.5, 0.005], [0.1 * s, 0.1, -0.015], 0.05); // lower leg
-  limb([0.1 * s, 0.045, -0.03], [0.105 * s, 0.035, 0.1], 0.035); // foot
-}
-
-// --- Inside the body: faint organs and bones that light up with their area's status ---
-const organs = {}; // area id -> list of materials to tint
-function glowMaterial(opacity = 0.35) {
-  return new THREE.MeshBasicMaterial({ color: 0x2e96f5, transparent: true, opacity, depthTest: false, depthWrite: false, blending: THREE.AdditiveBlending });
-}
-function organ(id, object) {
-  object.renderOrder = 2;
-  object.traverse((o) => { if (o.material) { o.renderOrder = 2; (organs[id] ||= []).push(o.material); } });
-  body.add(object);
-  return object;
-}
-// Brain: a wireframe ball inside the head
-const brain = organ("mind", new THREE.Mesh(new THREE.IcosahedronGeometry(1, 2), Object.assign(glowMaterial(0.3), { wireframe: true })));
-brain.scale.set(0.072, 0.06, 0.082);
-brain.position.set(0, 1.665, -0.005);
-// Eyes
-for (const s of [1, -1]) organ("eyes", new THREE.Mesh(new THREE.SphereGeometry(0.014, 16, 12), glowMaterial(0.6))).position.set(0.036 * s, 1.638, 0.088);
-// Heart: two overlapping blobs, tilted to the astronaut's left
-const heart = new THREE.Group();
-for (const [x, y, sx] of [[-0.016, 0.012, 0.034], [0.018, 0.012, 0.034], [0.002, -0.015, 0.042]]) {
-  const m = new THREE.Mesh(sphere, glowMaterial(0.45));
-  m.position.set(x, y, 0);
-  m.scale.set(sx, sx * 1.15, sx * 0.9);
-  heart.add(m);
-}
-heart.position.set(0.03, 1.24, 0.04);
-heart.rotation.z = -0.5;
-organ("heart", heart);
-// Radiation badge: a small card clipped on the chest (outside the body)
-const badge = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.065, 0.006), glowMaterial(0.55));
-badge.position.set(0.11, 1.36, 0.118);
-organ("radiation", badge);
-// Spine: a stack of small vertebrae following a gentle S-curve, plus a simple pelvis
-const spine = new THREE.Group();
-const vertebra = new THREE.BoxGeometry(0.034, 0.016, 0.03);
-for (let i = 0; i < 24; i++) {
-  const t = i / 23;
-  const v = new THREE.Mesh(vertebra, glowMaterial(0.45));
-  v.position.set(0, 0.96 + t * 0.5, -0.07 + Math.sin(t * Math.PI * 1.6) * 0.018);
-  v.scale.setScalar(1.25 - t * 0.5);
-  spine.add(v);
-}
-const pelvis = new THREE.Mesh(new THREE.TorusGeometry(0.09, 0.012, 8, 32), glowMaterial(0.35));
-pelvis.position.set(0, 0.93, -0.01);
-pelvis.rotation.x = Math.PI / 2.4;
-spine.add(pelvis);
-organ("bone", spine);
-// Ribs: thin rings around the chest
-const ribs = new THREE.Group();
-for (let i = 0; i < 7; i++) {
-  const curve = new THREE.EllipseCurve(0, 0, 0.14 - Math.abs(i - 3) * 0.008, 0.088, 0, Math.PI * 2);
-  const line = new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(curve.getPoints(48)), new THREE.LineBasicMaterial({ color: 0x2e96f5, transparent: true, opacity: 0.25, depthTest: false, blending: THREE.AdditiveBlending }));
-  line.rotation.x = Math.PI / 2 + 0.25;
-  line.position.set(0, 1.16 + i * 0.033, 0.0);
-  ribs.add(line);
-}
-ribs.renderOrder = 2;
-ribs.children.forEach((l) => (l.renderOrder = 2));
-body.add(ribs); // decorative only, so the chest stays readable
-// Leg bones (femurs) and the thigh muscle that the "Leg muscles" point refers to
-for (const s of [1, -1]) {
-  const femur = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.38, 8), glowMaterial(0.35));
-  femur.position.set(0.093 * s, 0.7, 0.002);
-  organ("bone", femur);
-  const quad = new THREE.Mesh(new THREE.CapsuleGeometry(0.045, 0.24, 6, 16), glowMaterial(0.18));
-  quad.position.set(0.093 * s, 0.68, 0.025);
-  organ("muscle", quad);
-}
+);
+markerLayer.hidden = true;
 
 // --- Around the body: a glowing floor ring and a field of stars ---
 const floor = new THREE.Group();
@@ -432,14 +391,12 @@ const markers = AREAS.map((a) => {
   el.addEventListener("click", (e) => { e.stopPropagation(); select(a.id === selectedId ? null : a.id); });
   el.addEventListener("pointerdown", (e) => e.stopPropagation());
   markerLayer.appendChild(el);
-  // Colour the organ inside to match the status
-  (organs[a.id] || []).forEach((m) => m.color.setHex(STATUS_COLOUR[a.status]));
   return { area: a, el, local: new THREE.Vector3(...a.point), facing: new THREE.Vector3(...a.facing).normalize() };
 });
 
 /* ---------- 5. Turning, zooming and selecting ---------- */
 
-const view = { yaw: 0.35, pitch: 0, dist: 4.9, lookY: 0.93 }; // where we are now
+const view = { yaw: 0.35, pitch: 0, dist: 4.7, lookY: 0.88 }; // where we are now
 const goal = { ...view }; // where we're easing towards
 const HOME = { ...view };
 let spinning = !reduceMotion;
@@ -529,13 +486,14 @@ function frame(now) {
   camera.lookAt(0, view.lookY, 0);
   dashes.rotation.y = now * 0.00015;
   stars.rotation.y = now * 0.00002;
-  skinMaterial.uniforms.uScan.value = reduceMotion ? -1 : ((now * 0.00035) % 2.4) - 0.2;
+  const scanY = reduceMotion ? -1 : ((now * 0.00035) % 2.3) - 0.2;
+  for (const mat of Object.values(MATERIALS)) mat.uniforms.uScan.value = scanY;
 
   // Pulse the organs of areas that need attention; brighten the selected one
   for (const m of markers) {
     const pulse = reduceMotion ? 0.5 : 0.5 + 0.5 * Math.sin(now * (m.area.status === "act" ? 0.006 : 0.003));
     const strength = m.area.id === selectedId ? 1 : m.area.status === "good" ? 0.35 : 0.45 + pulse * 0.4;
-    (organs[m.area.id] || []).forEach((mat) => (mat.opacity = mat.wireframe ? strength * 0.7 : strength * 0.75));
+    (organs[m.area.id] || []).forEach((mat) => (mat.uniforms.uStrength.value = 0.5 + strength));
   }
 
   renderer.render(scene, camera);
