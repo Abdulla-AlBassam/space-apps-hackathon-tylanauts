@@ -611,12 +611,22 @@ td .chip { font-size: 12px; }
 .voice[data-state="listening"] .voice-mic { background: var(--ember); color: var(--ink); }
 .voice-caption {
   align-self: flex-end; width: min(340px, calc(100vw - 160px)); margin-bottom: 6px;
-  padding: 14px 16px; border-radius: 14px;
+  padding: 14px 40px 14px 16px; border-radius: 14px;
   background: var(--ink); border: 1px solid var(--rule);
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6);
   animation: voice-in 0.3s ease-in-out;
 }
 .voice-caption[hidden] { display: none; }
+.voice-caption { position: relative; }
+.voice-close {
+  position: absolute; top: 8px; right: 8px;
+  display: grid; place-items: center; width: 30px; height: 30px;
+  border: 0; border-radius: 50%; background: transparent; color: var(--text-faint);
+  cursor: pointer; transition: color 0.2s ease-in-out, background 0.2s ease-in-out;
+}
+.voice-close .ico { width: 16px; height: 16px; }
+.voice-close:hover { color: var(--bone); background: rgba(242, 238, 230, 0.08); }
+.voice-close:focus-visible { outline: 2px solid var(--bone); outline-offset: 2px; }
 @keyframes voice-in { from { opacity: 0; } }
 .voice-caption .label { margin: 0 0 6px; color: var(--text-faint); }
 .voice[data-state="speaking"] .voice-caption .label, .voice[data-state="listening"] .voice-caption .label { color: var(--ember); }

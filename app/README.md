@@ -98,7 +98,7 @@ what is coming up, the alerts, and each day's readings. It is not new data, just
   Clicking one opens its details underneath. There are no view buttons: the body turns by itself.
 - **Sirius voice** (`voice.js`, replaces the old AI doctor chat box) is the round Sirius logo in
   the bottom right corner. Clicking it reads out today's summary; clicking it again while it
-  talks stops it. It never starts talking by itself. The mic button beside it listens to a
+  talks stops it. It never starts talking by itself. The X on the caption stops it and closes the caption. The mic button beside it listens to a
   question such as "what's my sleep?" and reads the number back. It uses the browser's free
   built-in speech (Web Speech API): talking works in Chrome, Edge and Safari, listening works in
   Chrome and Edge (Chrome sends the audio to Google to turn it into text). The answers are

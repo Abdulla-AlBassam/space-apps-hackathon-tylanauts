@@ -31,6 +31,7 @@ window.HEALTH_READY.then(function () {
   const root = $("voice");
   root.innerHTML = `
     <div class="voice-caption" id="voice-caption" aria-live="polite" hidden>
+      <button type="button" class="voice-close" id="voice-close" aria-label="Close Sirius">${ic("x")}</button>
       <p class="label" id="voice-state">Sirius</p>
       <p class="voice-text" id="voice-text"></p>
       <form class="voice-type" id="voice-type" hidden>
@@ -225,6 +226,15 @@ window.HEALTH_READY.then(function () {
     if (state === "speaking") return hush();
     stopListening();
     say(summary());
+  });
+  // The X on the caption: stop talking or listening and close the caption.
+  $("voice-close").addEventListener("click", () => {
+    stopListening();
+    if (synth) synth.cancel();
+    setState("idle");
+    clearTimeout(hideTimer);
+    caption.hidden = true;
+    $("voice-type").hidden = true;
   });
   micBtn.addEventListener("click", () => {
     if (state === "listening") { stopListening(); return setState("idle"); }
