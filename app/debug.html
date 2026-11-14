@@ -17,7 +17,7 @@
 <!--
   Debug page: a look under the bonnet, for the team.
     1. Is the backend up?
-    2. Which numbers on the dashboard are real (from the backend) and which are still made up?
+    2. Which devices are sending, and the latest reading of each metric the backend stores.
     3. A live list of every call the app has made to the backend.
     4. Buttons to send test requests, one crew member at a time.
   Read-only: it only ever asks the backend for data (GET). It never sends data and never
@@ -31,7 +31,7 @@
     </a>
     <div class="db-who">
       <h1>Debug</h1>
-      <p>Backend calls, live or sample, and test requests</p>
+      <p>Backend status, connected devices, readings and every API call</p>
     </div>
     <a class="db-link" id="db-docs" target="_blank" rel="noopener">API docs</a>
   </header>
@@ -48,12 +48,18 @@
     <div class="tools" id="tools"></div>
   </section>
 
-  <!-- 2. Live or sample, for the numbers the dashboard shows -->
-  <section aria-label="Live or sample data">
-    <div class="sec-head"><h2>What the dashboard is showing</h2></div>
-    <p class="db-note" id="source-note"></p>
+  <!-- 2. Devices the backend has heard from -->
+  <section aria-label="Connected devices">
+    <div class="sec-head"><h2>Connected devices</h2><span class="count" id="dev-count"></span><span class="spacer"></span><button type="button" class="btn-ghost" id="dev-refresh"></button></div>
+    <p class="db-note" id="sim-note"></p>
+    <div class="table-wrap"><table class="db-table" id="devices"></table></div>
+  </section>
+
+  <!-- Latest stored reading of each metric, for one crew member -->
+  <section aria-label="Latest readings">
+    <div class="sec-head"><h2>Latest readings</h2><span class="spacer"></span><label class="pick">Crew member<select id="r-subject"></select></label></div>
     <div class="table-wrap"><table class="db-table" id="metrics"></table></div>
-    <p class="db-note small" id="pages-note"></p>
+    <p class="db-note small">Straight from the backend. The dashboard also shows breath depth, deep sleep, exercise and skin temperature, but the backend doesn't store those yet, so they aren't listed here.</p>
   </section>
 
   <!-- 3. Send a test request -->
@@ -79,14 +85,12 @@
     <div class="log" id="log"></div>
   </section>
 
-  <p class="footer-note">Read-only: this page only reads from the backend and never sends data. Sirius is built by Team Tylanauts for NASA Space Apps 2026.</p>
+  <p class="footer-note">Read-only: this page only reads from the backend and never sends data. Everything on it comes from the backend; nothing is made up. Sirius is built by Team Tylanauts for NASA Space Apps 2026.</p>
 </main>
 
 <script src="api-log.js"></script>
 <script src="sirius.js"></script>
 <script src="icons.js"></script>
-<script src="escalation.js"></script>
-<script src="data.js"></script>
 <script src="debug.js"></script>
 </body>
 </html>

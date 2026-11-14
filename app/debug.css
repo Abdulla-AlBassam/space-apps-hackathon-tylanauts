@@ -90,8 +90,8 @@ body {
 
 /* ---------- 3. Test request form ---------- */
 .tester { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 14px 18px; margin-bottom: 10px; }
-.tester label { display: flex; flex-direction: column; gap: 6px; font: 400 11px var(--font-mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
-.tester select {
+.tester label, .pick { display: flex; flex-direction: column; gap: 6px; font: 400 11px var(--font-mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+.tester select, .pick select {
   min-width: 220px; padding: 8px 12px; border-radius: 10px;
   border: 1px solid var(--rule); background: var(--ink); color: var(--text);
   font: 400 14px var(--font-sans); letter-spacing: 0; text-transform: none;
@@ -134,8 +134,8 @@ body {
   .db-link { margin-left: 0; }
   .call summary { grid-template-columns: 64px 44px minmax(0, 1fr) 56px; }
   .call .method, .call summary .right:nth-of-type(6), .call .from { display: none; }
-  .tester select { min-width: 0; width: 100%; }
-  .tester label { flex: 1 1 100%; }
+  .tester select, .pick select { min-width: 0; width: 100%; }
+  .tester label, .pick { flex: 1 1 100%; }
 }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition: none !important; }
@@ -147,3 +147,8 @@ body {
 .tool b { font-weight: 500; font-size: 14px; }
 .tool span { color: var(--muted); font-size: 12.5px; line-height: 1.35; }
 .tool:hover { border-color: var(--muted); }
+
+/* Device status and the crew picker on the readings table */
+.pick { flex-direction: row !important; align-items: center; gap: 10px !important; }
+.bad-tag { color: var(--ember); font: 400 12px var(--font-mono); }
+.db-table td.is-bad { color: var(--ember); }

@@ -4,9 +4,10 @@
  *
  * In plain English, it draws four things:
  *   1. Backend: is the server up, how fast it answered, and how much it stores.
- *   2. What the dashboard is showing: for every number the dashboard uses, whether it came
- *      from the backend ("Live") or is still made up ("Sample"). This uses the same data.js
- *      the dashboard uses, so the answer is exactly what the dashboard sees.
+ *   2. Connected devices: every device the backend has heard from lately, whether it is
+ *      sending now, and the simulator's on/off and faulty switches. Then the latest reading
+ *      of every metric the backend stores for one crew member.
+ *   Everything on this page comes from the backend. Nothing is made up (no sample data).
  *   3. A form to send a test request for one crew member.
  *   4. The call log: every backend call any Sirius page made in this browser (api-log.js
  *      writes them down), newest first. Click a call to see what the server answered.
@@ -66,7 +67,9 @@
 
   /* ---------- 1. Backend status ---------- */
   let stats = null;
-  async function loadStatus() {
+  let statusReady = null;
+  function loadStatus() { statusReady = checkStatus(); return statusReady; }
+  async function checkStatus() {
     $("status-refresh").disabled = true;
     $("status").innerHTML = `<p class="db-note">${ic("loader")} Asking the server…</p>`;
     const [health, st] = await Promise.all([get(ROOT + "/health"), get(API_BASE + "/stats")]);
@@ -89,66 +92,134 @@
           `(or ask nayem-m to add this address). <a href="${esc(ROOT)}/health" target="_blank" rel="noopener">Open the health check directly</a> to see whether the server itself is up.</p>`
         : "");
     $("status-refresh").disabled = false;
-    drawBackendHas();
   }
   $("status-refresh").innerHTML = ic("refresh-cw") + "Check again";
   $("status-refresh").addEventListener("click", loadStatus);
 
-  /* ---------- 2. Live or sample ---------- */
-  const NAMES = {
-    resting_hr: "Resting heart rate", hrv_rmssd: "Heart rate variability (HRV)", spo2: "Blood oxygen",
-    skin_temp_delta: "Skin temperature change", resp_rate: "Breathing rate", sleep_hours: "Sleep time",
-    deep_sleep_pct: "Deep sleep", exercise_minutes: "Exercise time", avg_exercise_hr: "Exercise heart rate",
-    radiation_dose: "Radiation dose", bp_systolic: "Blood pressure (top number)", bp_diastolic: "Blood pressure (bottom number)",
-    breath_volume: "Breath depth", mood: "Mood",
+  /* ---------- 2. Connected devices ---------- */
+  // Built only from what the backend says: its recent uploads (/ingestions) and the
+  // simulator's switches (/sim). Nothing here is made up.
+  const TYPES = { "smart-watch": "Smart watch", "smart-shirt": "Smart shirt", dosimeter: "Radiation badge", "csv-table": "CSV upload", "manual-entry": "Typed in" };
+  const SENDING_S = 120; // uploaded within the last 2 minutes = sending now
+  const UPLOADS = 300;   // how many recent uploads to look through
+
+  async function loadDevices() {
+    $("dev-refresh").disabled = true;
+    $("sim-note").innerHTML = `${ic("loader")} Asking the server…`;
+    const [sim, ups] = await Promise.all([get(API_BASE + "/sim"), get(`${API_BASE}/ingestions?limit=${UPLOADS}`)]);
+    $("dev-refresh").disabled = false;
+    if (!ups.ok || !Array.isArray(ups.body)) {
+      $("devices").innerHTML = "";
+      $("dev-count").textContent = "";
+      $("sim-note").textContent = "Couldn't get the device uploads from the backend.";
+      return;
+    }
+    const settings = sim.ok && sim.body ? sim.body.settings : null;
+    const switches = (settings && settings.devices) || {};
+    const devs = {};
+    for (const u of ups.body) {
+      const id = u.device_id || "(no device)";
+      const d = devs[id] || (devs[id] = { id, adapter: u.adapter_id, subject: u.subject_id, last: u.received_at, uploads: 0, rejected: 0 });
+      d.uploads++;
+      d.rejected += (u.rejected || []).length;
+      if (u.received_at > d.last) d.last = u.received_at;
+    }
+    // Simulated devices that haven't uploaded lately are still listed, with no upload time.
+    for (const id of Object.keys(switches)) if (!devs[id]) devs[id] = { id, adapter: null, subject: null, last: null, uploads: 0, rejected: 0 };
+
+    const ageS = (iso) => (Date.now() - new Date(iso)) / 1000;
+    const list = Object.values(devs).sort((a, b) => String(a.subject).localeCompare(String(b.subject)) || a.id.localeCompare(b.id));
+    const sending = list.filter((d) => d.last && ageS(d.last) < SENDING_S).length;
+    $("dev-count").textContent = `${sending} of ${list.length} sending now`;
+
+    const oldest = ups.body.length ? ups.body[ups.body.length - 1].received_at : null;
+    $("sim-note").innerHTML =
+      (settings
+        ? `Simulator switch: <b>${settings.running ? "on" : "off"}</b>${settings.scenario ? `, scenario <b>${esc(settings.scenario)}</b>` : ""}. ` +
+          `The simulated devices only send while someone has <a href="${esc(ROOT)}/live" target="_blank" rel="noopener">Live devices</a> open with Start devices pressed. `
+        : "") +
+      (oldest ? `Uploads counted from the backend's last ${ups.body.length}, back to ${esc(ago(oldest))}.` : "The backend has no uploads.");
+
+    $("devices").innerHTML =
+      `<thead><tr><th>Device</th><th>Type</th><th>Crew member</th><th>Status</th><th>Last upload</th><th>Uploads</th><th>Rejected</th></tr></thead><tbody>` +
+      list.map((d) => {
+        const sw = switches[d.id];
+        let status;
+        if (sw && sw.faulty) status = `<span class="bad-tag">Faulty sensor</span>`;
+        else if (sw && !sw.on) status = `<span class="dim">Switched off</span>`;
+        else if (d.last && ageS(d.last) < SENDING_S) status = `<span class="live-tag">${ic("wifi")}Sending</span>`;
+        else status = `<span class="dim">Quiet</span>`;
+        return `<tr><td class="mono">${esc(d.id)}</td>` +
+          `<td>${esc(TYPES[d.adapter] || d.adapter || "–")}</td>` +
+          `<td class="mono">${esc(d.subject || "–")}</td>` +
+          `<td>${status}</td>` +
+          `<td class="mono dim">${d.last ? esc(ago(d.last)) : "–"}</td>` +
+          `<td class="mono">${d.uploads}</td>` +
+          `<td class="mono${d.rejected ? " is-bad" : " dim"}">${d.rejected}</td></tr>`;
+      }).join("") + `</tbody>`;
+  }
+  $("dev-refresh").innerHTML = ic("refresh-cw") + "Check again";
+  $("dev-refresh").addEventListener("click", loadDevices);
+
+  /* ---------- Latest readings, straight from the backend ---------- */
+  let labels = {}; // backend metric id -> its own label, from /metrics
+  const fmt = (n) => (typeof n === "number" ? String(+n.toPrecision(4)) : esc(n));
+  const valueOf = (r) => {
+    const v = r.values || {};
+    if ("systolic" in v) return `${fmt(v.systolic)}/${fmt(v.diastolic)}`;
+    if ("value" in v) return fmt(v.value);
+    return esc(JSON.stringify(v));
+  };
+  const unitOf = (r) => {
+    const body = (r.data_point && r.data_point.body) || {};
+    const u = Object.values(body).find((x) => x && typeof x === "object" && "unit" in x);
+    return u ? u.unit : "";
   };
 
-  function drawSource(data) {
-    const live = data.live;
-    const who = esc(data.astronaut.id);
-    $("source-note").innerHTML = live.source === "live"
-      ? `The dashboard is reading <b>live data</b> from the backend for <b>${who}</b>. Numbers marked Sample aren't stored by the backend yet, so the dashboard still makes them up.`
-      : `The dashboard is showing <b>sample data only</b> for <b>${who}</b>, because ${esc(live.reason || "the backend couldn't be used")}.`;
-
-    // The newest reading of each metric, as the dashboard has it.
+  async function loadReadings() {
+    const s = $("r-subject").value;
+    if (!s) return;
+    $("metrics").innerHTML = `<tbody><tr><td>${ic("loader")} Asking the server…</td></tr></tbody>`;
+    await statusReady; // the storage totals say which metrics this crew member has
+    const res = await get(`${API_BASE}/subjects/${encodeURIComponent(s)}/data-points?limit=300&order=desc`);
+    if (s !== $("r-subject").value) return; // picked someone else meanwhile
+    if (!res.ok || !Array.isArray(res.body)) {
+      $("metrics").innerHTML = `<tbody><tr><td>Couldn't get readings for ${esc(s)} from the backend.</td></tr></tbody>`;
+      return;
+    }
+    // The newest reading is the one that ended last. (The backend sorts by start time, and a
+    // radiation badge reports a 24-hour window, so its start is a day earlier than its end.)
+    const timeOfRec = (r) => r.effective_end || r.effective_start;
     const latest = {};
-    for (const r of data.readings) if (!latest[r.metric] || r.time >= latest[r.metric].time) latest[r.metric] = r;
-    const metrics = Object.keys(latest).sort((a, b) => (data.isSample(a) - data.isSample(b)) || a.localeCompare(b));
+    const keep = (r) => { if (!latest[r.metric] || timeOfRec(r) > timeOfRec(latest[r.metric])) latest[r.metric] = r; };
+    res.body.forEach(keep);
+    // Metrics sent rarely (sleep, mood) may be older than the newest 300: ask for those one by one.
+    const coverage = stats ? stats.coverage.filter((c) => c.subject_id === s) : [];
+    const missing = coverage.filter((c) => !latest[c.metric]).map((c) => c.metric);
+    const extra = await Promise.all(missing.map((m) =>
+      get(`${API_BASE}/subjects/${encodeURIComponent(s)}/data-points?metric=${encodeURIComponent(m)}&limit=5&order=desc`)));
+    extra.forEach((x) => { if (x.ok && Array.isArray(x.body)) x.body.forEach(keep); });
+    if (s !== $("r-subject").value) return;
+
+    const count = Object.fromEntries(coverage.map((c) => [c.metric, c.count]));
+    const metrics = Object.keys(latest).sort((a, b) => timeOfRec(latest[b]).localeCompare(timeOfRec(latest[a])));
+    if (!metrics.length) {
+      $("metrics").innerHTML = `<tbody><tr><td>The backend has no readings for ${esc(s)}.</td></tr></tbody>`;
+      return;
+    }
     $("metrics").innerHTML =
-      `<thead><tr><th>Reading</th><th>Shown as</th><th>Latest value</th><th>From device</th><th>Time</th></tr></thead><tbody>` +
+      `<thead><tr><th>Reading</th><th>Latest value</th><th>From device</th><th>Time</th><th>Stored</th></tr></thead><tbody>` +
       metrics.map((m) => {
         const r = latest[m];
-        const sample = data.isSample(m);
-        return `<tr><td>${esc(NAMES[m] || m)}<span class="mono dim"> ${esc(m)}</span></td>` +
-          `<td>${sample ? `<span class="sample-tag">Sample</span>` : `<span class="live-tag">${ic("wifi")}Live</span>`}</td>` +
-          `<td class="mono">${esc(r.value)} ${esc(r.unit || "")}</td>` +
-          `<td class="mono dim">${esc(r.device_id)}</td>` +
-          `<td class="mono dim">${esc(dateTimeOf(r.time))}</td></tr>`;
+        const t = timeOfRec(r);
+        return `<tr><td>${esc(labels[m] || m)}<span class="mono dim"> ${esc(m)}</span></td>` +
+          `<td class="mono">${valueOf(r)} ${esc(unitOf(r))}</td>` +
+          `<td class="mono dim">${esc(r.device_id || "typed")}</td>` +
+          `<td class="mono dim">${esc(dateTimeOf(t))} · ${esc(ago(t))}</td>` +
+          `<td class="mono dim">${count[m] != null ? count[m].toLocaleString("en-GB") : "–"}</td></tr>`;
       }).join("") + `</tbody>`;
-    $("pages-note").innerHTML =
-      "Live means the backend has a reading for it on the latest day. The Today, Alerts, Calendar and Log pages use this mix. " +
-      "Breath depth, deep sleep, exercise and skin temperature aren't sent by the simulated devices yet. " +
-      "The Crew overview page and the device list (battery, last sync) are still all sample data.";
-    drawBackendHas();
   }
-
-  // What the backend stores for this crew member, including things the dashboard doesn't read yet.
-  function drawBackendHas() {
-    const data = window.HEALTH_DATA;
-    let el = $("backend-has");
-    if (!data || !stats) { if (el) el.remove(); return; }
-    const rows = stats.coverage.filter((c) => c.subject_id === data.astronaut.id);
-    if (!el) {
-      el = document.createElement("p");
-      el.id = "backend-has";
-      el.className = "db-note small";
-      $("pages-note").before(el);
-    }
-    el.innerHTML = rows.length
-      ? `The backend stores these for ${esc(data.astronaut.id)}: ` +
-        rows.map((c) => `<span class="mono">${esc(c.metric)}</span> (${c.count}, newest ${esc(ago(c.last))})`).join(", ") + "."
-      : `The backend stores nothing for ${esc(data.astronaut.id)}.`;
-  }
+  $("r-subject").addEventListener("change", loadReadings);
 
   /* ---------- 3. Test requests ---------- */
   const ENDPOINTS = [
@@ -179,6 +250,8 @@
     const fromServer = res.ok && Array.isArray(res.body) ? res.body.filter((s) => /^crew-/.test(s)) : [];
     const list = [...new Set(crew.concat(fromServer))].sort();
     $("t-subject").innerHTML = list.map((s) => `<option>${esc(s)}</option>`).join("");
+    $("r-subject").innerHTML = $("t-subject").innerHTML;
+    loadReadings();
     showUrl();
   }
 
@@ -243,7 +316,9 @@
   /* ---------- Start ---------- */
   drawLog();
   loadStatus();
-  loadSubjects();
-  $("source-note").innerHTML = `${ic("loader")} Loading the dashboard's data…`;
-  window.HEALTH_READY.then(drawSource);
+  loadDevices();
+  get(API_BASE + "/metrics").then((res) => {
+    if (res.ok && Array.isArray(res.body)) labels = Object.fromEntries(res.body.map((m) => [m.id, m.label]));
+    loadSubjects();
+  });
 })();
