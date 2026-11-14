@@ -28,6 +28,10 @@ Nice-to-haves only **after** the MVP works: a daily mood/symptom check-in,
 trends over the whole mission, radiation-dose tracking, exercise tracking for
 bone and muscle loss, a view for the flight surgeon on Earth.
 
+**Feature idea (not decided yet):** a personal AI "doctor" assistant for each
+astronaut that explains their data, suggests actions, and escalates serious
+cases to the flight surgeon on Earth. See [AI_DOCTOR.md](AI_DOCTOR.md).
+
 **Last priority:** connecting a real watch or wearable (or a mock-up of one for the
 pitch). Only start this once everything above works.
 
