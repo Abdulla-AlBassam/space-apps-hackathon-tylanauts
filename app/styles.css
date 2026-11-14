@@ -839,3 +839,6 @@ td .chip { font-size: 12px; }
 .layout-even .vital { display: flex; flex-direction: column; }
 .layout-even .vital > :last-child { margin-top: auto; }
 .layout-even .due-list > :last-child { padding-bottom: 0; }
+/* When the list on the right is the shorter side, spread its rows so its last row still ends
+ * level with the charts. Only with three or more rows, so one or two items stay together at the top. */
+.layout-even .due-list:has(> :nth-child(3)) { flex: 1; justify-content: space-between; }
