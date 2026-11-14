@@ -814,12 +814,32 @@ td .chip { font-size: 12px; }
 .vital-flag .sample-tag { margin-left: 0; }
 .vital-flag .pill + .sample-tag { margin-left: 8px; }
 
-/* Escalation details on an alert: who is told, and each rule with where its number comes from */
-.alert-notify { display: flex; align-items: center; gap: 6px; margin: 8px 0 0; font-size: 13.5px; color: var(--text-dim); }
-.alert-notify svg { width: 14px; height: 14px; flex: none; }
-.alert-rules { margin: 8px 0 0; padding-left: 18px; font-size: 13px; color: var(--text-dim); }
-.alert-rules li { margin: 2px 0; }
-.rule-src { margin-left: 6px; font: 400 10px var(--font-mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+/* Escalation details on an alert. Every card shows them in the same place:
+ * a small "Told / From" table under the text, then the rules behind the alert, which stay
+ * closed until you click "Why this was flagged" so the cards keep a similar height. */
+.alert-top { min-height: 24px; }
+.alert-meta { margin: 14px 0 0; display: grid; gap: 8px; }
+.alert-meta > div { display: grid; grid-template-columns: 52px minmax(0, 1fr); gap: 12px; align-items: baseline; }
+.alert-meta dt { font: 400 11px var(--font-mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+.alert-meta dd { margin: 0; font-size: 13.5px; color: var(--text-dim); }
+.alert .alert-meta .chips { margin-top: 0; }
+.alert-why { margin-top: 14px; }
+.alert-why summary {
+  display: inline-flex; align-items: center; gap: 8px; cursor: pointer; list-style: none;
+  font-size: 13.5px; color: var(--text-dim); border-radius: 6px;
+}
+.alert-why summary::-webkit-details-marker { display: none; }
+.alert-why summary:hover { color: var(--bone); }
+.alert-why summary:focus-visible { outline: 2px solid var(--bone); outline-offset: 3px; }
+.alert-why summary .ico { width: 14px; height: 14px; transition: transform 0.15s; }
+.alert-why[open] summary .ico { transform: rotate(90deg); }
+.alert-why-n { font: 400 11px var(--font-mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+.alert .alert-rules { margin: 10px 0 0; padding: 0 0 0 22px; display: grid; gap: 6px; }
+.alert .alert-rules li { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; font-size: 13.5px; color: var(--text-dim); }
+.alert .alert-rules li::before { content: none; }
+.rule-src { flex: none; font: 400 10px var(--font-mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); border: 1px solid var(--line-strong); border-radius: 999px; padding: 1px 7px; }
+/* In a Watch card the text block grows, so the "What to do" footers line up across a row */
+.alert.watch .alert-what { flex: 1; }
 
 /* ---------- Today: Vitals and This week sit flush ----------
  * The two sections share a row. Their headings get the same height so the tops line up,
