@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Path, Query, Request
 from starlette.concurrency import run_in_threadpool
 
 from app.adapters.base import PayloadError, all_adapters
-from app.api.deps import get_ingestion_service, get_repository, get_settings
+from app.api.deps import get_ingestion_service, get_repository, get_settings, require_ingest_key
 from app.config import Settings
 from app.domain.models import IngestionReport
 from app.pipeline.ingest import IngestionService, UnknownAdapterError
@@ -34,6 +34,13 @@ _RAW_BODY_DOC = {
         "Sending the same readings twice is safe: repeats are counted as duplicates."
     ),
     openapi_extra=_RAW_BODY_DOC,
+    dependencies=[Depends(require_ingest_key)],
+    responses={
+        400: {"description": "Nothing in the payload could be read (e.g. not valid JSON)"},
+        401: {"description": "Missing or wrong X-Api-Key header"},
+        404: {"description": "Unknown adapter"},
+        413: {"description": "Payload too large"},
+    },
 )
 async def ingest(
     request: Request,

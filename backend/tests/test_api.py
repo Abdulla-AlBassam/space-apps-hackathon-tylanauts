@@ -1,4 +1,27 @@
+import dataclasses
 import json
+
+from fastapi.testclient import TestClient
+
+from app.main import create_app
+
+HR = {"entries": [{"metric": "heart-rate", "value": 62, "time": "2026-11-14T08:00:00Z"}]}
+
+
+def test_health_reports_storage(client, settings):
+    body = client.get("/health").json()
+    assert body["status"] == "ok"
+    assert body["storage"] == ("postgres" if settings.database_url else "sqlite")
+
+
+def test_ingest_key_required_when_configured(settings):
+    keyed = TestClient(create_app(dataclasses.replace(settings, ingest_api_key="s3cret")))
+    url, params = "/api/v1/ingest/manual-entry", {"subject_id": "astro-01"}
+    assert keyed.post(url, params=params, json=HR).status_code == 401
+    assert keyed.post(url, params=params, json=HR, headers={"X-Api-Key": "wrong"}).status_code == 401
+    assert keyed.post(url, params=params, json=HR, headers={"X-Api-Key": "s3cret"}).status_code == 200
+    # Reading never needs the key.
+    assert keyed.get("/api/v1/subjects/astro-01/data-points").status_code == 200
 
 
 def test_catalog(client):

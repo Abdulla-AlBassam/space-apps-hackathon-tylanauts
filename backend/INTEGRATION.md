@@ -19,8 +19,9 @@ does and doesn't cover yet. How to run it: [README.md](README.md). How it works:
 | `GET /api/readings?astronaut_id=...&from=...&to=...` | `GET /api/v1/subjects/{subject_id}/data-points?metric=&start=&end=&limit=` | |
 | Bad message gets a clear error | Each bad reading is rejected with where and why; the rest of the message is still stored. Sending the same data twice is safe | |
 | Typed-in results marked `manual` | `manual-entry` adapter; readings marked `self-reported` | |
-| Storage undecided | SQLite file. Swappable for a hosted database (one class in `app/storage/`) | |
-| Tech stack undecided | Python 3.12 + FastAPI | Needs a server with a disk (see section 5) |
+| Storage undecided | Postgres (Neon) when hosted, a SQLite file when run locally | Vercel can't keep files |
+| Tech stack undecided | Python 3.12 + FastAPI on Vercel, like the dashboard ([DEPLOY.md](DEPLOY.md)). Live at https://tylanauts-api.vercel.app | |
+| No API description | [`openapi.json`](openapi.json): the full API schema, also browsable at `/docs` | Frontend can build against it, or generate a client |
 
 ## 2. Metric names: dashboard to backend
 
@@ -61,6 +62,11 @@ Two things to change around it:
 
 - `fetch` is asynchronous, so the page has to wait for the data before drawing (today
   `generateReadings()` returns instantly).
+- `API_BASE` already points at the live backend, https://tylanauts-api.vercel.app. It allows
+  requests from the live dashboard and from `localhost:8000`; tell the backend owner about any other
+  address (e.g. dashboard preview links). To use a local backend instead, the dashboard's own server
+  (`python3 -m http.server 8000`) and the backend both default to port 8000: run the backend with
+  `--port 8001` and point `API_BASE` there.
 - Units come back in the standard's spelling (`beats/min`, `C`), not `bpm` / `°C`.
 
 ## 4. Sending data (simulator, typed-in logs, new devices)
@@ -71,6 +77,8 @@ curl -X POST "http://localhost:8000/api/v1/ingest/manual-entry?subject_id=crew-0
   -d '{"entries":[{"metric":"mood","value":4,"time":"2026-11-14T08:00:00Z","extras":{"note":"Slept well"}}]}'
 ```
 
+- On the hosted backend, sending needs the shared key: add `-H "X-Api-Key: <key>"` (ask the
+  backend owner). Reading never needs it, so the dashboard doesn't either.
 - Every input format and a working example of its payload: `GET /api/v1/adapters`.
 - The reply always says how many readings were accepted, how many were duplicates, and why
   any were rejected.
@@ -90,9 +98,7 @@ curl -X POST "http://localhost:8000/api/v1/ingest/manual-entry?subject_id=crew-0
 
 ## 6. Not built yet
 
-- **Hosting.** Vercel's serverless functions don't keep files, so the SQLite file would lose
-  data there. It needs a small always-on server, or a hosted database instead of SQLite.
-- **No login.** Anyone who can reach the API can write to it.
+- **No per-person login.** Sending is protected by one shared key; reading is open.
 - **Device list** (#38): add, pause, remove, battery, last sync.
 - **Due and overdue tests** (#23), and the test catalogue it needs (#21).
 - **`quality`** per reading and the device priority list (#39).

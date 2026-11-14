@@ -39,6 +39,8 @@ def _db_time(dt: datetime) -> str:
 
 
 class SQLiteRepository:
+    kind = "sqlite"
+
     def __init__(self, path: str | Path):
         self.path = str(path)
         Path(self.path).parent.mkdir(parents=True, exist_ok=True)

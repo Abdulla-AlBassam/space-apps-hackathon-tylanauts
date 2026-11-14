@@ -2,7 +2,7 @@
 // Fetches stored data points from the backend and flattens them into the
 // { astronaut_id, device_id, device_type, metric, value, unit, time } rows the dashboard uses.
 
-const API_BASE = "http://localhost:8000/api/v1";
+const API_BASE = "https://tylanauts-api.vercel.app/api/v1";
 
 // Backend metric id -> name the dashboard already uses.
 const DASHBOARD_NAMES = {

@@ -5,7 +5,9 @@ from app.domain.models import DataPointRecord, IngestionReport
 
 
 class Repository(Protocol):
-    """Everything the rest of the app needs from storage. Swap SQLite for Postgres by implementing this."""
+    """Everything the rest of the app needs from storage. Implemented by SQLite and Postgres."""
+
+    kind: str
 
     def existing_uuids(self, uuids: list[str]) -> set[str]: ...
 

@@ -1,0 +1,719 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Siryius Health Data API",
+    "description": "Collects health readings from many devices and inputs and stores them as IEEE 1752.1 / Open mHealth data points. Sending data needs the X-Api-Key header when the server has a key set; reading does not.",
+    "version": "0.2.0"
+  },
+  "paths": {
+    "/health": {
+      "get": {
+        "tags": [
+          "system"
+        ],
+        "summary": "Is the server up, and which storage it uses",
+        "operationId": "health",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/metrics": {
+      "get": {
+        "tags": [
+          "catalog"
+        ],
+        "summary": "Metrics the backend understands",
+        "operationId": "list_metrics",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/MetricInfo"
+                  },
+                  "type": "array",
+                  "title": "Response List Metrics"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/adapters": {
+      "get": {
+        "tags": [
+          "catalog"
+        ],
+        "summary": "Input formats that can be ingested",
+        "operationId": "list_adapters",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/AdapterInfo"
+                  },
+                  "type": "array",
+                  "title": "Response List Adapters"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ingest/{adapter_id}": {
+      "post": {
+        "tags": [
+          "ingestion"
+        ],
+        "summary": "Ingest a payload through an adapter",
+        "description": "Parses the payload, converts every reading to the standard format and stores it. Bad records are rejected individually with a reason; the rest are still stored. Sending the same readings twice is safe: repeats are counted as duplicates.",
+        "operationId": "ingest",
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "adapter_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "Adapter id, e.g. 'manual-entry'.",
+              "title": "Adapter Id"
+            },
+            "description": "Adapter id, e.g. 'manual-entry'."
+          },
+          {
+            "name": "subject_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9._-]{1,100}$",
+              "description": "Who the data belongs to, e.g. 'astro-01'.",
+              "title": "Subject Id"
+            },
+            "description": "Who the data belongs to, e.g. 'astro-01'."
+          },
+          {
+            "name": "device_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^[A-Za-z0-9._-]{1,100}$"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Which physical device, if known.",
+              "title": "Device Id"
+            },
+            "description": "Which physical device, if known."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IngestionReport"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Nothing in the payload could be read (e.g. not valid JSON)"
+          },
+          "401": {
+            "description": "Missing or wrong X-Api-Key header"
+          },
+          "404": {
+            "description": "Unknown adapter"
+          },
+          "413": {
+            "description": "Payload too large"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "description": "The raw payload in the adapter's format (see GET /api/v1/adapters for examples).",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            },
+            "text/csv": {
+              "schema": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ingestions/{ingestion_id}": {
+      "get": {
+        "tags": [
+          "ingestion"
+        ],
+        "summary": "Report for a past ingestion",
+        "operationId": "get_ingestion",
+        "parameters": [
+          {
+            "name": "ingestion_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Ingestion Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IngestionReport"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/subjects": {
+      "get": {
+        "tags": [
+          "data points"
+        ],
+        "summary": "Subjects that have data",
+        "operationId": "list_subjects",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array",
+                  "title": "Response List Subjects"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/subjects/{subject_id}/data-points": {
+      "get": {
+        "tags": [
+          "data points"
+        ],
+        "summary": "Stored data points for one subject, oldest first",
+        "operationId": "query_data_points",
+        "parameters": [
+          {
+            "name": "subject_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Subject Id"
+            }
+          },
+          {
+            "name": "metric",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Only this metric, e.g. 'heart-rate'.",
+              "title": "Metric"
+            },
+            "description": "Only this metric, e.g. 'heart-rate'."
+          },
+          {
+            "name": "start",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "From this time (inclusive). No timezone = UTC.",
+              "title": "Start"
+            },
+            "description": "From this time (inclusive). No timezone = UTC."
+          },
+          {
+            "name": "end",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Up to this time (exclusive). No timezone = UTC.",
+              "title": "End"
+            },
+            "description": "Up to this time (exclusive). No timezone = UTC."
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 5000,
+              "minimum": 1,
+              "default": 500,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DataPointRecord"
+                  },
+                  "title": "Response Query Data Points"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AdapterInfo": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          },
+          "content_type": {
+            "type": "string",
+            "title": "Content Type"
+          },
+          "example": {
+            "type": "string",
+            "title": "Example"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "description",
+          "content_type",
+          "example"
+        ],
+        "title": "AdapterInfo"
+      },
+      "ComponentInfo": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "body_field": {
+            "type": "string",
+            "title": "Body Field"
+          },
+          "min": {
+            "type": "number",
+            "title": "Min"
+          },
+          "max": {
+            "type": "number",
+            "title": "Max"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "body_field",
+          "min",
+          "max"
+        ],
+        "title": "ComponentInfo"
+      },
+      "DataPointRecord": {
+        "properties": {
+          "uuid": {
+            "type": "string",
+            "title": "Uuid"
+          },
+          "subject_id": {
+            "type": "string",
+            "title": "Subject Id"
+          },
+          "metric": {
+            "type": "string",
+            "title": "Metric"
+          },
+          "device_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Device Id"
+          },
+          "adapter_id": {
+            "type": "string",
+            "title": "Adapter Id"
+          },
+          "ingestion_id": {
+            "type": "string",
+            "title": "Ingestion Id"
+          },
+          "effective_start": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Effective Start"
+          },
+          "effective_end": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Effective End"
+          },
+          "values": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object",
+            "title": "Values",
+            "description": "Flat values in canonical units, ready for analysis."
+          },
+          "data_point": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Data Point",
+            "description": "The IEEE 1752.1 / Open mHealth data point, exactly per spec."
+          }
+        },
+        "type": "object",
+        "required": [
+          "uuid",
+          "subject_id",
+          "metric",
+          "device_id",
+          "adapter_id",
+          "ingestion_id",
+          "effective_start",
+          "effective_end",
+          "values",
+          "data_point"
+        ],
+        "title": "DataPointRecord",
+        "description": "A stored data point: the untouched standard data point plus our own bookkeeping around it.\n\nIEEE 1752.1 headers carry no user or device fields, so who/what/how lives here instead."
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "IngestionReport": {
+        "properties": {
+          "ingestion_id": {
+            "type": "string",
+            "title": "Ingestion Id"
+          },
+          "adapter_id": {
+            "type": "string",
+            "title": "Adapter Id"
+          },
+          "subject_id": {
+            "type": "string",
+            "title": "Subject Id"
+          },
+          "device_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Device Id"
+          },
+          "received_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Received At"
+          },
+          "received": {
+            "type": "integer",
+            "title": "Received",
+            "description": "Records found in the payload."
+          },
+          "accepted": {
+            "type": "integer",
+            "title": "Accepted"
+          },
+          "duplicates": {
+            "type": "integer",
+            "title": "Duplicates"
+          },
+          "rejected": {
+            "items": {
+              "$ref": "#/components/schemas/RecordError"
+            },
+            "type": "array",
+            "title": "Rejected"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Warnings"
+          },
+          "data_point_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Data Point Ids"
+          }
+        },
+        "type": "object",
+        "required": [
+          "ingestion_id",
+          "adapter_id",
+          "subject_id",
+          "device_id",
+          "received_at",
+          "received",
+          "accepted",
+          "duplicates",
+          "rejected",
+          "warnings",
+          "data_point_ids"
+        ],
+        "title": "IngestionReport"
+      },
+      "MetricInfo": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "schema_id": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object",
+            "title": "Schema Id"
+          },
+          "canonical_unit": {
+            "type": "string",
+            "title": "Canonical Unit"
+          },
+          "components": {
+            "items": {
+              "$ref": "#/components/schemas/ComponentInfo"
+            },
+            "type": "array",
+            "title": "Components"
+          },
+          "requires_period": {
+            "type": "boolean",
+            "title": "Requires Period"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "label",
+          "schema_id",
+          "canonical_unit",
+          "components",
+          "requires_period"
+        ],
+        "title": "MetricInfo"
+      },
+      "RecordError": {
+        "properties": {
+          "ref": {
+            "type": "string",
+            "title": "Ref"
+          },
+          "reason": {
+            "type": "string",
+            "title": "Reason"
+          }
+        },
+        "type": "object",
+        "required": [
+          "ref",
+          "reason"
+        ],
+        "title": "RecordError"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      }
+    },
+    "securitySchemes": {
+      "APIKeyHeader": {
+        "type": "apiKey",
+        "description": "Shared key for sending data (ask the backend owner).",
+        "in": "header",
+        "name": "X-Api-Key"
+      }
+    }
+  }
+}
