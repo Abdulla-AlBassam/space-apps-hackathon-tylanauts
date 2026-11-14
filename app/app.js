@@ -297,14 +297,23 @@ window.HEALTH_READY.then(function () {
         <div class="chips">${(a.sources || []).map(deviceChip).join("")}</div>
         <p class="alert-note">${a.actions.join(" ")}</p>
       </article>`;
+    // Every card has the same parts in the same order: tags, title, what happened, a small
+    // "Told / From" table, then the rules behind it (closed until you click), then what to do.
+    const tags = (a.level === "act" && a.tier == null ? pill("act") : "") + alertBadges(a);
+    const chips = (a.sources || []).map(deviceChip).join("");
     return `<article class="alert ${a.level}${a.done ? " done" : ""}">
       <div class="alert-what">
-        ${a.level === "act" || alertBadges(a) ? `<div class="alert-top">${a.level === "act" ? pill("act") : ""}${alertBadges(a)}</div>` : ""}
+        ${tags ? `<div class="alert-top">${tags}</div>` : ""}
         <h4>${a.title}</h4>
         <p>${a.detail}</p>
-        ${a.notify ? `<p class="alert-notify">${ic("send")}Who is told: ${a.notify}</p>` : ""}
-        ${a.rules ? `<ul class="alert-rules">${a.rules.map((r) => `<li>${r.text} <span class="rule-src">${r.status}</span></li>`).join("")}</ul>` : ""}
-        <div class="chips">${(a.sources || []).map(deviceChip).join("")}</div>
+        <dl class="alert-meta">
+          ${a.notify ? `<div><dt>Told</dt><dd>${a.notify}</dd></div>` : ""}
+          ${chips ? `<div><dt>From</dt><dd class="chips">${chips}</dd></div>` : ""}
+        </dl>
+        ${a.rules && a.rules.length ? `<details class="alert-why">
+          <summary>${ic("chevron-right")}Why this was flagged<span class="alert-why-n">${a.rules.length} rule${a.rules.length === 1 ? "" : "s"}</span></summary>
+          <ul class="alert-rules">${a.rules.map((r) => `<li><span>${r.text}</span><span class="rule-src">${r.status}</span></li>`).join("")}</ul>
+        </details>` : ""}
       </div>
       <div class="alert-do">
         <div class="alert-steps">
