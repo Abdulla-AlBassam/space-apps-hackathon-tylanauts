@@ -25,15 +25,18 @@ data so the doctor can act quickly.
 
 ## Escalation tiers
 
-A first draft. The exact rules for which reading goes in which tier would come
-from the health logic work (see `docs/HEALTH_LOG.md` once merged, and Issue #27).
+Mariam's rules (draft v0.2, issue #30) replaced the first draft here. There are five tiers,
+from 0 (Nominal) to 4 (Emergency). The full table, with each threshold and where it comes
+from, is in [`ESCALATION_RULES.md`](ESCALATION_RULES.md). The dashboard uses those rules in
+`app/escalation.js`, so the alerts and the AI doctor always show the same tier.
 
-| Tier | When | What the assistant does |
-| --- | --- | --- |
-| 1. Info | Everything looks normal, or a small change | Explains the data and gives general tips |
-| 2. Watch | A reading has drifted for a few days | Suggests an action, asks the astronaut to log a check, keeps an eye on it |
-| 3. Ask a doctor | A worrying pattern, or the astronaut is unsure | Writes a summary and sends it to the flight surgeon on Earth. The astronaut sees that it was sent |
-| 4. Urgent | A reading that could be an emergency | Tells the astronaut to follow the crew's emergency procedure straight away, and alerts the flight surgeon at the same time. It does not wait for a reply before telling the crew to act |
+| Tier | Name | What the assistant does | Who is told |
+| --- | --- | --- | --- |
+| 0 | Nominal | Logs it only | Nobody |
+| 1 | Watch | Notes the trend and suggests self-care | The astronaut, in the app |
+| 2 | Caution | Asks follow-up questions and rechecks in 30-60 min | The astronaut and the flight surgeon (daily summary, not urgent) |
+| 3 | Urgent | Checks the sensor, walks through the protocol, asks for a live call (within 1 hour) | The astronaut and the flight surgeon (paged now) |
+| 4 | Emergency | Opens the emergency checklist and alerts crew and ground at once | Crew, flight surgeon and mission control |
 
 ## Why it is useful: the delay to Earth
 
@@ -88,7 +91,7 @@ reply arriving later, with a note about the delay.
 - Scripted, live AI, or mixed for the demo?
 - Where does the flight surgeon's side live: a separate screen, or the
   existing "view for the flight surgeon on Earth" nice-to-have in the plan?
-- Which exact readings and thresholds go in each tier?
+- ~~Which exact readings and thresholds go in each tier?~~ Answered by Mariam's draft, see `ESCALATION_RULES.md`.
 
 ## Tasks
 
