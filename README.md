@@ -29,7 +29,7 @@ to do about it. The details are still being decided. See the plan.
 
 | Person | Role |
 | --- | --- |
-| Abdulla | Lead / integrator |
+| Abdulla | Lead / integrator, Frontend |
 | nayem-m | Developer |
 | _TBD_ | Developer |
 | _TBD_ | Developer |

@@ -10,13 +10,13 @@ Abdulla is the lead and merges everything.
 - `docs/PLAN.md`: the goal, the MVP, roles, decisions, timeline. The source of truth for *what* we build.
 - GitHub **Issues**: the task list. Each task is one issue, labelled by role (`frontend`, `backend`, `health-logic`, `pitch`, `lead`) and `mvp` if it's a must-have.
 - `CONTRIBUTING.md`: how we use Git (branches, pull requests, avoiding conflicts).
-- `dashboard/`: the team's live Mission Board website. It reads the Issues and `docs/PLAN.md` by itself. Don't change it unless asked.
+- `dashboard/`: the team's live Mission Board website (https://tylanauts-board.vercel.app). It reads the Issues and `docs/PLAN.md` by itself, and teammates can take tasks and roles from it. Don't change it unless asked.
 
 ## Before starting work
 
 1. Pull the latest `main`.
 2. Read `docs/PLAN.md` and the issue you're working on. If the person hasn't named an issue, help them pick an open, unassigned one that matches their role.
-3. Make sure the person is **assigned** to that issue on GitHub (`gh issue edit <N> --add-assignee @me`, or the "Assignees" box on the issue page). This is what moves it to "In progress" on the board and stops two people doing the same task.
+3. Make sure the person is **assigned** to that issue on GitHub (the "Take this" button on the Mission Board, `gh issue edit <N> --add-assignee @me`, or the "Assignees" box on the issue page). This is what moves it to "In progress" on the board and stops two people doing the same task.
 4. Work on a branch named after the issue, e.g. `7-dashboard-screen`. Never commit to `main`.
 
 ## While working

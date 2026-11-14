@@ -46,7 +46,7 @@ body {
   padding-block: max(32px, env(safe-area-inset-top, 0px)) max(64px, env(safe-area-inset-bottom, 0px));
 }
 [hidden] { display: none !important; }
-.wrap { max-width: 1120px; margin: 0 auto; display: grid; gap: 40px; }
+.wrap { max-width: 1120px; margin: 0 auto; display: grid; gap: 28px; }
 h1, h2, h3 { font-family: var(--font-display); text-wrap: balance; margin: 0; letter-spacing: -0.01em; }
 h1 { font-size: clamp(28px, 4vw, 38px); font-weight: 700; }
 h2 { font-size: 20px; font-weight: 600; }
@@ -67,7 +67,8 @@ header .sub { color: var(--muted); max-width: 64ch; font-size: 16px; }
 .live.stale .pulse { background: var(--warn); }
 .banner { border-radius: 10px; padding: 10px 14px; font-size: 13.5px; background: var(--warn-soft); color: var(--fg); border: 1px solid var(--line); }
 
-.summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; }
+.summary { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+@media (max-width: 700px) { .summary { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .stat { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; display: grid; gap: 4px; align-content: start; }
 .stat .num { font-family: var(--font-display); font-size: 28px; font-weight: 600; font-variant-numeric: tabular-nums; line-height: 1.2; }
 .stat .num small { font-size: 18px; color: var(--muted); font-weight: 500; }
@@ -138,6 +139,40 @@ tr:last-child td { border-bottom: none; }
 .prs a { display: flex; gap: 8px; align-items: baseline; color: var(--fg); }
 .prs .n { font-family: var(--font-mono); font-size: 12px; color: var(--muted); }
 
+
+.head-row { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px 24px; }
+.head-title { display: grid; gap: 6px; }
+.small { font-size: 13px; }
+.tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--line); position: sticky; top: env(safe-area-inset-top, 0px); background: var(--bg); z-index: 5; margin-bottom: -16px; overflow-x: auto; }
+.tabs button { font: 600 15px var(--font-display); color: var(--muted); background: none; border: 0; border-bottom: 2px solid transparent; padding: 10px 14px 12px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; }
+.tabs button:hover { color: var(--fg); }
+.tabs button[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--accent); }
+.tabs .count { font: 500 11.5px var(--font-mono); background: var(--line); color: var(--muted); border-radius: 99px; padding: 1px 7px; }
+.tabs .count:empty { display: none; }
+.view { display: grid; gap: 20px; }
+.mini-h { font-size: 13px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; font-family: var(--font-body); font-weight: 500; margin-bottom: 8px; }
+.prs { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+
+.me { display: inline-flex; align-items: center; gap: 8px; }
+.me select { font: 500 13px var(--font-body); color: var(--fg); background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 5px 8px; }
+.btn { font: 600 12.5px var(--font-body); color: var(--bg); background: var(--accent); border: 1px solid var(--accent); border-radius: 7px; padding: 4px 11px; cursor: pointer; margin-left: auto; white-space: nowrap; }
+.btn:hover { filter: brightness(1.08); }
+.btn.ghost { color: var(--fg); background: transparent; border-color: var(--line); }
+.btn.ghost:hover { border-color: var(--muted); }
+body.busy .btn { opacity: .5; pointer-events: none; }
+.card .top { color: var(--fg); }
+.card .top:hover { text-decoration: none; }
+.card .top:hover .title { color: var(--accent); }
+.card.mine { border-color: var(--accent); box-shadow: inset 3px 0 0 var(--accent); }
+.card .foot .who { margin-left: 0; }
+.role-list { display: grid; }
+.role { display: grid; gap: 6px; padding: 14px 0; border-bottom: 1px solid var(--line); }
+.role:last-child { border-bottom: none; padding-bottom: 0; }
+.role:first-child { padding-top: 0; }
+.role-main { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(20px + env(safe-area-inset-bottom, 0px)); z-index: 20; background: var(--fg); color: var(--bg); padding: 10px 16px; border-radius: 10px; font-size: 14px; max-width: min(520px, calc(100vw - 32px)); box-shadow: 0 6px 24px rgba(0,0,0,.25); }
+.toast.bad { background: var(--bad); color: #fff; }
 footer { font-size: 13px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 16px; display: grid; gap: 4px; }
 .skeleton { color: var(--muted); font-size: 14px; }
 @media (prefers-reduced-motion: no-preference) {
@@ -150,46 +185,58 @@ footer { font-size: 13px; color: var(--muted); border-top: 1px solid var(--line)
 <body>
 <div class="wrap">
   <header>
-    <span class="eyebrow">NASA Space Apps 2026 · Team Tylanauts</span>
-    <h1>Mission Board</h1>
-    <p class="sub">A wearable-style health monitor for astronauts on long missions: what their body is doing, what it means, and what to do about it.</p>
-    <div class="meta">
-      <span class="live stale" id="live"><span class="pulse"></span><span id="live-text">Loading…</span></span>
-      <a id="repo-link" href="https://github.com/Abdulla-AlBassam/space-apps-hackathon-tylanauts/issues" target="_blank" rel="noopener">Open the tasks on GitHub ↗</a>
+    <div class="head-row">
+      <div class="head-title">
+        <span class="eyebrow">NASA Space Apps 2026 · Team Tylanauts</span>
+        <h1>Mission Board</h1>
+      </div>
+      <div class="meta">
+        <span class="live stale" id="live"><span class="pulse"></span><span id="live-text">Loading…</span></span>
+        <label class="me" id="me-wrap" hidden>You are <select id="me" aria-label="Your GitHub name"></select></label>
+        <a id="repo-link" href="https://github.com/Abdulla-AlBassam/space-apps-hackathon-tylanauts/issues" target="_blank" rel="noopener">GitHub ↗</a>
+      </div>
     </div>
     <div class="banner" id="banner" hidden></div>
   </header>
 
-  <section class="summary" id="summary" aria-label="Progress summary"><p class="skeleton">Loading the board…</p></section>
+  <nav class="tabs" role="tablist" aria-label="Sections">
+    <button type="button" role="tab" id="tab-board" data-tab="board" aria-controls="view-board">Tasks <span class="count" id="count-board"></span></button>
+    <button type="button" role="tab" id="tab-team" data-tab="team" aria-controls="view-team">Team <span class="count" id="count-team"></span></button>
+    <button type="button" role="tab" id="tab-plan" data-tab="plan" aria-controls="view-plan">Plan</button>
+  </nav>
 
-  <section aria-labelledby="board-h">
-    <div class="sec-head">
-      <h2 id="board-h">Tasks</h2>
-      <div class="filters" id="filters" role="group" aria-label="Filter by role"></div>
-    </div>
+  <section class="view" id="view-board" role="tabpanel" aria-labelledby="tab-board">
+    <div class="summary" id="summary" aria-label="Progress summary"><p class="skeleton">Loading the board…</p></div>
+    <div class="filters" id="filters" role="group" aria-label="Show tasks for"></div>
     <div class="board" id="board"></div>
+    <div id="prs-sec" hidden>
+      <h3 class="mini-h">Waiting to be merged</h3>
+      <div class="prs" id="prs"></div>
+    </div>
   </section>
 
-  <section aria-labelledby="people-h">
-    <div class="sec-head"><h2 id="people-h">Who's on what</h2><span class="muted" style="font-size:13px">Based on who is assigned to each task on GitHub</span></div>
-    <div class="people" id="people"></div>
+  <section class="view" id="view-team" role="tabpanel" aria-labelledby="tab-team" hidden>
+    <div class="panel">
+      <div class="sec-head"><h2>Roles</h2><span class="muted small" id="roles-filled"></span></div>
+      <div id="roles"></div>
+    </div>
+    <div>
+      <div class="sec-head"><h2>Who's on what</h2><span class="muted small">From who is assigned on GitHub</span></div>
+      <div class="people" id="people"></div>
+    </div>
   </section>
 
-  <section aria-labelledby="prs-h" id="prs-sec" hidden>
-    <div class="sec-head"><h2 id="prs-h">Waiting to be merged</h2><span class="muted" style="font-size:13px">Open pull requests</span></div>
-    <div class="panel"><div class="prs" id="prs"></div></div>
-  </section>
-
-  <section aria-labelledby="plan-h">
-    <div class="sec-head"><h2 id="plan-h">The plan</h2><a id="plan-link" href="#" target="_blank" rel="noopener" style="font-size:13px">Edit docs/PLAN.md on GitHub ↗</a></div>
+  <section class="view" id="view-plan" role="tabpanel" aria-labelledby="tab-plan" hidden>
     <div class="grid2" id="plan"></div>
+    <a id="plan-link" class="small" href="#" target="_blank" rel="noopener">Edit the plan (docs/PLAN.md) on GitHub ↗</a>
   </section>
 
   <footer>
-    <span>To take a task: open it on GitHub and assign yourself (right-hand side, "Assignees"). When your pull request says <code>Closes #N</code> and gets merged, the task moves to Done here by itself.</span>
-    <span>This page reads GitHub directly and refreshes every minute.</span>
+    <span><strong>How it works:</strong> pick your name at the top, then press "Take this" on a task or a role. When your pull request says <code>Closes #N</code> and is merged, the task moves to Done by itself.</span>
   </footer>
 </div>
+
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
 <script>
 (() => {
@@ -228,7 +275,6 @@ footer { font-size: 13px; color: var(--muted); border-top: 1px solid var(--line)
     s = s.replace(/(^|[\s(])_([^_]+)_(?=[\s).,:;!?]|$)/g, "$1<em>$2</em>");
     return s;
   }
-  const isTbd = (cell) => /^\s*_?TBD_?/i.test(cell) || cell.trim() === "";
 
   /* ---------- Split PLAN.md into sections of blocks ---------- */
   function parsePlan(md) {
@@ -292,27 +338,89 @@ footer { font-size: 13px; color: var(--muted); border-top: 1px solid var(--line)
     return null;
   }
 
-  function renderTable(b, isRoles) {
-    const head = b.head.map((h) => `<th>${inline(h)}</th>`).join("") + (isRoles ? "<th>Tasks</th>" : "");
-    const rows = b.rows.map((r) => {
-      const cells = r.map((c, ci) => {
-        if (isTbd(c)) return `<td><span class="tbd">${ci === 1 && isRoles ? "Open" : "TBD"}</span></td>`;
-        if (isRoles && ci === 0) { const l = labelForRole(c); return `<td><span class="chip" style="color:${l ? roleOf(l).color : "var(--r-other)"}">${inline(c)}</span></td>`; }
-        return `<td>${inline(c)}</td>`;
-      }).join("");
-      let tasks = "";
-      if (isRoles) {
-        const l = labelForRole(r[0] || "");
-        const list = l ? data.issues.filter((i) => i.labels.includes(l)) : [];
-        tasks = `<td><div class="tasklist">${list.map((i) => `<a href="${esc(i.url)}" target="_blank" rel="noopener" class="${i.state === "closed" ? "closed" : ""}" title="${esc(i.title)}">#${i.number}</a>`).join("")}</div></td>`;
-      }
-      return `<tr>${cells}${tasks}</tr>`;
-    }).join("");
-    return `<div class="tbl-wrap"><table><thead><tr>${head}</tr></thead><tbody>${rows}</tbody></table></div>`;
+  const isTbd = (cell) => /^\s*_?TBD_?\s*$/i.test(cell) || cell.trim() === "";
+  let me = "";
+  try { me = localStorage.getItem("tyl-me") || ""; } catch (e) {}
+  let busy = false;
+
+  /* ---------- Writes: take / drop a task, take / leave a role ---------- */
+  function toast(msg, bad) {
+    const t = $("#toast");
+    t.textContent = msg; t.classList.toggle("bad", !!bad); t.hidden = false;
+    clearTimeout(toast.timer); toast.timer = setTimeout(() => { t.hidden = true; }, bad ? 7000 : 3500);
+  }
+  async function post(url, body, okMsg) {
+    if (busy) return;
+    if (!me) { toast("Pick your name at the top first.", true); $("#me").focus(); return; }
+    busy = true; document.body.classList.add("busy");
+    try {
+      const r = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...body, login: me }) });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(j.message || `Something went wrong (${r.status}).`);
+      toast(okMsg);
+      await load(true);
+    } catch (e) {
+      toast(e.message, true);
+    } finally {
+      busy = false; document.body.classList.remove("busy");
+    }
+  }
+  document.addEventListener("click", (e) => {
+    const b = e.target.closest("button[data-act]"); if (!b) return;
+    e.preventDefault();
+    const { act, issue, role } = b.dataset;
+    if (act === "take") post("/api/assign", { issue: Number(issue), action: "take" }, `You took task #${issue}. Good luck!`);
+    if (act === "drop") post("/api/assign", { issue: Number(issue), action: "drop" }, `You let go of task #${issue}.`);
+    if (act === "role-take") post("/api/role", { role, action: "take" }, `You're now ${role}. The plan has been updated.`);
+    if (act === "role-leave") post("/api/role", { role, action: "leave" }, `You left the ${role} role.`);
+  });
+
+  function renderMe() {
+    const people = (data.people || []).slice().sort((a, b) => a.localeCompare(b));
+    if (me && !people.includes(me) && !data.__snapshot) me = "";
+    $("#me").innerHTML = `<option value="">Choose…</option>` + people.map((p) => `<option value="${esc(p)}"${p === me ? " selected" : ""}>${esc(p)}</option>`).join("");
+    $("#me-wrap").hidden = !people.length;
+  }
+  $("#me").addEventListener("change", (e) => {
+    me = e.target.value;
+    try { localStorage.setItem("tyl-me", me); } catch (err) {}
+    renderAllButMe();
+  });
+
+  /* ---------- Roles (Team tab) ---------- */
+  function rolesTable(sections) {
+    const sec = sections.find((s) => /role/i.test(s.title));
+    const tbl = sec && sec.blocks.find((b) => b.type === "table" && b.head.some((h) => /person/i.test(h)));
+    return tbl ? { tbl, pi: tbl.head.findIndex((h) => /person/i.test(h)), oi: tbl.head.findIndex((h) => /own/i.test(h)) } : null;
+  }
+  function renderRoles(sections) {
+    const r = rolesTable(sections);
+    if (!r) { $("#roles").innerHTML = `<p class="muted">The roles table shows up here once the plan is on the main branch.</p>`; $("#roles-filled").textContent = ""; $("#count-team").textContent = ""; return; }
+    const filled = r.tbl.rows.filter((row) => !isTbd(row[r.pi] || "")).length;
+    $("#roles-filled").textContent = `${filled} of ${r.tbl.rows.length} filled`;
+    $("#count-team").textContent = `${filled}/${r.tbl.rows.length}`;
+    $("#roles").innerHTML = `<div class="role-list">${r.tbl.rows.map((row) => {
+      const role = row[0] || "";
+      const l = labelForRole(role);
+      const names = isTbd(row[r.pi] || "") ? [] : row[r.pi].split(",").map((s) => s.trim());
+      const mine = me && names.includes(me);
+      const tasks = l ? data.issues.filter((i) => i.labels.includes(l)) : [];
+      let btn = "";
+      if (me && mine) btn = `<button type="button" class="btn ghost" data-act="role-leave" data-role="${esc(role)}">Leave</button>`;
+      else if (me && !names.length) btn = `<button type="button" class="btn" data-act="role-take" data-role="${esc(role)}">Take this role</button>`;
+      return `<div class="role">
+        <div class="role-main">
+          <span class="chip" style="color:${l ? roleOf(l).color : "var(--r-other)"}">${esc(role)}</span>
+          <span class="role-who">${names.length ? names.map((n) => `<strong>${esc(n)}</strong>`).join(", ") : '<span class="tbd">Open</span>'}</span>
+          ${btn}
+        </div>
+        ${r.oi >= 0 ? `<p class="muted small">${inline(row[r.oi] || "")}</p>` : ""}
+        ${tasks.length ? `<div class="tasklist">${tasks.map((i) => `<a href="${esc(i.url)}" target="_blank" rel="noopener" class="${i.state === "closed" ? "closed" : ""}" title="${esc(i.title)}">#${i.number}</a>`).join("")}</div>` : ""}
+      </div>`;
+    }).join("")}</div>`;
   }
 
   function renderBlocks(sec) {
-    const isRoles = /role/i.test(sec.title);
     return sec.blocks.map((b) => {
       switch (b.type) {
         case "h3": return `<h3>${inline(b.text)}</h3>`;
@@ -320,60 +428,49 @@ footer { font-size: 13px; color: var(--muted); border-top: 1px solid var(--line)
         case "ol": return `<ol>${b.items.map((t) => `<li>${inline(t)}</li>`).join("")}</ol>`;
         case "ul": return `<ul class="plain">${b.items.map((t) => `<li>${inline(t)}</li>`).join("")}</ul>`;
         case "check": return `<ul class="check">${b.items.map((it) => `<li><span class="box${it.done ? " done" : ""}" role="img" aria-label="${it.done ? "Done" : "Not done"}"></span><span>${inline(it.text)}</span></li>`).join("")}</ul>`;
-        case "table": return renderTable(b, isRoles && b.head.some((h) => /person/i.test(h)));
+        case "table": return `<div class="tbl-wrap"><table><thead><tr>${b.head.map((h) => `<th>${inline(h)}</th>`).join("")}</tr></thead><tbody>${b.rows.map((r) => `<tr>${r.map((c) => `<td>${isTbd(c) ? '<span class="tbd">TBD</span>' : inline(c)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`;
         default: return "";
       }
     }).join("");
   }
 
-  /* Wide panels for sections that hold wide tables; the rest pair up. */
+  /* Plan tab: every section of PLAN.md except Roles (that lives on the Team tab). */
   function renderPlan(sections) {
     $("#plan-link").href = `${data.repo.url}/blob/HEAD/docs/PLAN.md`;
-    if (!data.plan) { $("#plan").innerHTML = `<div class="panel wide"><p class="muted">docs/PLAN.md isn't on the main branch yet. It shows up here as soon as it's merged.</p></div>`; return; }
-    $("#plan").innerHTML = sections.map((s) => {
-      const wide = /role/i.test(s.title) || s.blocks.some((b) => b.type === "table" && b.head.length >= 3);
-      return `<div class="panel${wide ? " wide" : ""}">${s.title ? `<h2>${inline(s.title)}</h2>` : ""}${renderBlocks(s)}</div>`;
+    const shown = sections.filter((s) => !/role/i.test(s.title));
+    if (!shown.length) { $("#plan").innerHTML = `<div class="panel wide"><p class="muted">The plan shows up here once docs/PLAN.md is on the main branch.</p></div>`; return; }
+    $("#plan").innerHTML = shown.map((s) => {
+      const wide = s.blocks.some((b) => b.type === "table" && b.head.length >= 3);
+      return `<div class="panel${wide ? " wide" : ""}"><h2>${inline(s.title)}</h2>${renderBlocks(s)}</div>`;
     }).join("");
   }
 
-  /* ---------- Board ---------- */
+  /* ---------- Tasks tab ---------- */
   const laneOf = (i) => (i.state === "closed" ? "done" : i.assignees.length || i.prs.length ? "doing" : "todo");
 
-  function renderSummary(sections) {
+  function renderSummary() {
     const all = data.issues;
     const n = (f) => all.filter(f).length;
     const done = n((i) => laneOf(i) === "done");
-    const doing = n((i) => laneOf(i) === "doing");
-    const free = n((i) => laneOf(i) === "todo");
     const mvp = all.filter((i) => i.labels.includes("mvp"));
     const mvpDone = mvp.filter((i) => i.state === "closed").length;
     const pct = (a, b) => (b ? Math.round((a / b) * 100) : 0);
-    let rolesStat = "";
-    const roles = sections.find((s) => /role/i.test(s.title));
-    const tbl = roles && roles.blocks.find((b) => b.type === "table");
-    if (tbl) {
-      const pi = tbl.head.findIndex((h) => /person/i.test(h));
-      if (pi >= 0) {
-        const filled = tbl.rows.filter((r) => !isTbd(r[pi] || "")).length;
-        rolesStat = `<div class="stat"><span class="num">${filled}<small> / ${tbl.rows.length}</small></span><span class="lbl">Roles with a name</span></div>`;
-      }
-    }
+    $("#count-board").textContent = `${n((i) => laneOf(i) === "todo")} free`;
     $("#summary").innerHTML = `
       <div class="stat"><span class="num">${done}<small> / ${all.length}</small></span><span class="lbl">Tasks done</span><div class="bar"><span style="width:${pct(done, all.length)}%"></span></div></div>
-      <div class="stat"><span class="num">${mvpDone}<small> / ${mvp.length}</small></span><span class="lbl">Must-have (MVP) tasks done</span><div class="bar"><span style="width:${pct(mvpDone, mvp.length)}%"></span></div></div>
-      <div class="stat"><span class="num">${doing}</span><span class="lbl">Tasks in progress</span></div>
-      <div class="stat"><span class="num">${free}</span><span class="lbl">Tasks free to take</span></div>
-      ${rolesStat}`;
+      <div class="stat"><span class="num">${mvpDone}<small> / ${mvp.length}</small></span><span class="lbl">Must-haves (MVP) done</span><div class="bar"><span style="width:${pct(mvpDone, mvp.length)}%"></span></div></div>
+      <div class="stat"><span class="num">${n((i) => laneOf(i) === "doing")}</span><span class="lbl">In progress</span></div>
+      <div class="stat"><span class="num">${n((i) => laneOf(i) === "todo")}</span><span class="lbl">Free to take</span></div>`;
   }
 
   function renderFilters() {
     const used = new Set(data.issues.flatMap((i) => i.labels).filter((l) => !SPECIAL_LABELS.has(l)));
-    const opts = [["all", "All"], ["mvp", "MVP only"], ...[...used].sort((a, b) => (ROLES[a] ? 0 : 1) - (ROLES[b] ? 0 : 1) || a.localeCompare(b)).map((l) => [l, roleOf(l).name])];
+    const opts = [["all", "All"], ...(me ? [["mine", "Mine"]] : []), ["mvp", "MVP"], ...[...used].sort((a, b) => (ROLES[a] ? 0 : 1) - (ROLES[b] ? 0 : 1) || a.localeCompare(b)).map((l) => [l, roleOf(l).name])];
     if (!opts.some(([k]) => k === filter)) filter = "all";
     $("#filters").innerHTML = opts.map(([k, v]) => `<button type="button" data-f="${esc(k)}" aria-pressed="${k === filter}">${esc(v)}</button>`).join("");
   }
   $("#filters").addEventListener("click", (e) => {
-    const b = e.target.closest("button"); if (!b) return;
+    const b = e.target.closest("button[data-f]"); if (!b) return;
     filter = b.dataset.f;
     try { localStorage.setItem("tyl-filter", filter); } catch (err) {}
     renderFilters(); renderBoard();
@@ -382,28 +479,35 @@ footer { font-size: 13px; color: var(--muted); border-top: 1px solid var(--line)
   function card(i) {
     const chips = i.labels.filter((l) => !SPECIAL_LABELS.has(l)).map((l) => `<span class="chip" style="color:${roleOf(l).color}">${esc(roleOf(l).name)}</span>`).join("");
     const pr = i.prs.length && i.state !== "closed" ? `<span class="chip pr">PR #${i.prs.join(", #")}</span>` : "";
+    const mine = me && i.assignees.includes(me);
+    let action = "";
+    if (i.state !== "closed" && me) {
+      action = mine
+        ? `<button type="button" class="btn ghost" data-act="drop" data-issue="${i.number}">Drop</button>`
+        : `<button type="button" class="btn${i.assignees.length ? " ghost" : ""}" data-act="take" data-issue="${i.number}">${i.assignees.length ? "Join" : "Take this"}</button>`;
+    }
     const who = i.assignees.length
-      ? `<span class="who">${i.assignees.map((a) => `<span class="avatar" aria-hidden="true">${initials(a)}</span>${esc(a)}`).join(" ")}</span>`
-      : i.state === "closed" ? "" : `<span class="who none">Unassigned</span>`;
-    return `<a class="card" href="${esc(i.url)}" target="_blank" rel="noopener">
-      <div class="top"><span class="num">#${i.number}</span><span class="title">${esc(i.title)}</span></div>
-      <div class="foot">${i.labels.includes("mvp") ? '<span class="chip mvp">MVP</span>' : ""}${chips}${pr}${who}</div>
-    </a>`;
+      ? `<span class="who">${i.assignees.map((a) => `<span class="avatar" aria-hidden="true">${initials(a)}</span>${esc(a === me ? "You" : a)}`).join(" ")}</span>`
+      : i.state === "closed" ? "" : `<span class="who none">Nobody yet</span>`;
+    return `<div class="card${mine ? " mine" : ""}">
+      <a class="top" href="${esc(i.url)}" target="_blank" rel="noopener"><span class="num">#${i.number}</span><span class="title">${esc(i.title)}</span></a>
+      <div class="foot">${i.labels.includes("mvp") ? '<span class="chip mvp">MVP</span>' : ""}${chips}${pr}</div>
+      <div class="foot">${who}${action}</div>
+    </div>`;
   }
 
   function renderBoard() {
-    const shown = data.issues.filter((i) => filter === "all" || i.labels.includes(filter));
+    const shown = data.issues.filter((i) => filter === "all" || (filter === "mine" ? i.assignees.includes(me) : i.labels.includes(filter)));
     const lanes = [
-      { k: "todo", name: "To do", hint: "Nobody has taken these yet", color: "var(--warn)" },
-      { k: "doing", name: "In progress", hint: "Someone is assigned, or a PR is open", color: "var(--accent)" },
-      { k: "done", name: "Done", hint: "Closed on GitHub", color: "var(--good)" },
+      { k: "todo", name: "To do", color: "var(--warn)" },
+      { k: "doing", name: "In progress", color: "var(--accent)" },
+      { k: "done", name: "Done", color: "var(--good)" },
     ];
     $("#board").innerHTML = lanes.map((L) => {
       const items = shown.filter((i) => laneOf(i) === L.k);
       return `<div class="lane">
         <div class="lane-head"><span class="dot" style="background:${L.color}"></span><h3>${L.name}</h3><span class="count">${items.length}</span></div>
-        <div class="lane-hint">${L.hint}</div>
-        ${items.length ? items.map(card).join("") : `<div class="empty">Nothing here yet</div>`}
+        ${items.length ? items.map(card).join("") : `<div class="empty">Nothing here</div>`}
       </div>`;
     }).join("");
   }
@@ -411,11 +515,11 @@ footer { font-size: 13px; color: var(--muted); border-top: 1px solid var(--line)
   function renderPeople() {
     const map = new Map();
     for (const i of data.issues) for (const a of i.assignees) { if (!map.has(a)) map.set(a, []); map.get(a).push(i); }
-    if (!map.size) { $("#people").innerHTML = `<div class="empty" style="grid-column:1/-1">Nobody has assigned themselves to a task yet. Open a task on GitHub and add yourself under "Assignees".</div>`; return; }
+    if (!map.size) { $("#people").innerHTML = `<div class="empty" style="grid-column:1/-1">Nobody has taken a task yet. Pick your name at the top, then press "Take this" on a task.</div>`; return; }
     $("#people").innerHTML = [...map.entries()].sort((a, b) => a[0].localeCompare(b[0])).map(([login, list]) => {
       const open = list.filter((i) => i.state !== "closed").length;
       return `<div class="person">
-        <div class="name"><span class="avatar" aria-hidden="true">${initials(login)}</span><a href="https://github.com/${encodeURIComponent(login)}" target="_blank" rel="noopener" style="color:inherit">${esc(login)}</a><span class="muted" style="font-weight:400;font-size:12.5px;margin-left:auto">${open} open</span></div>
+        <div class="name"><span class="avatar" aria-hidden="true">${initials(login)}</span><a href="https://github.com/${encodeURIComponent(login)}" target="_blank" rel="noopener" style="color:inherit">${esc(login)}</a><span class="muted small" style="font-weight:400;margin-left:auto">${open} open</span></div>
         <ul>${list.map((i) => `<li class="${i.state === "closed" ? "closed" : ""}"><span class="n">#${i.number}</span><a href="${esc(i.url)}" target="_blank" rel="noopener" style="color:inherit">${esc(i.title)}</a></li>`).join("")}</ul>
       </div>`;
     }).join("");
@@ -424,42 +528,69 @@ footer { font-size: 13px; color: var(--muted); border-top: 1px solid var(--line)
   function renderPrs() {
     const prs = data.prs || [];
     $("#prs-sec").hidden = !prs.length;
-    $("#prs").innerHTML = prs.map((p) => `<a href="${esc(p.url)}" target="_blank" rel="noopener"><span class="n">#${p.number}</span><span>${esc(p.title)}${p.draft ? ' <span class="chip" style="color:var(--muted)">Draft</span>' : ""}</span><span class="muted" style="margin-left:auto;font-size:13px;white-space:nowrap">${esc(p.author || "")}</span></a>`).join("");
+    $("#prs").innerHTML = prs.map((p) => `<a href="${esc(p.url)}" target="_blank" rel="noopener"><span class="n">#${p.number}</span><span>${esc(p.title)}${p.draft ? ' <span class="chip" style="color:var(--muted)">Draft</span>' : ""}</span><span class="muted small" style="margin-left:auto;white-space:nowrap">${esc(p.author || "")}</span></a>`).join("");
   }
 
+  let sections = [];
+  function renderAllButMe() {
+    renderSummary(); renderFilters(); renderBoard(); renderPeople(); renderPrs(); renderRoles(sections); renderPlan(sections);
+  }
   function renderAll() {
     data.issues.sort((a, b) => a.number - b.number);
-    const sections = data.plan ? parsePlan(data.plan) : [];
+    sections = data.plan ? parsePlan(data.plan) : [];
     $("#repo-link").href = `${data.repo.url}/issues`;
-    renderSummary(sections); renderFilters(); renderBoard(); renderPeople(); renderPrs(); renderPlan(sections);
+    renderMe(); renderAllButMe();
   }
 
-  /* ---------- Loading: live API first, saved copy if that fails ---------- */
+  /* ---------- Tabs (Tasks / Team / Plan), remembered in the address as #team etc. ---------- */
+  const TABS = ["board", "team", "plan"];
+  function showTab(name) {
+    if (!TABS.includes(name)) name = "board";
+    for (const t of TABS) {
+      $(`#view-${t}`).hidden = t !== name;
+      $(`#tab-${t}`).setAttribute("aria-selected", String(t === name));
+    }
+  }
+  document.querySelector(".tabs").addEventListener("click", (e) => {
+    const b = e.target.closest("button[data-tab]"); if (!b) return;
+    const name = b.dataset.tab;
+    if (location.hash !== `#${name}`) history.replaceState(null, "", name === "board" ? location.pathname : `#${name}`);
+    showTab(name);
+  });
+  window.addEventListener("hashchange", () => showTab(location.hash.slice(1)));
+  showTab(location.hash.slice(1));
+
+  /* ---------- Loading: live from GitHub, saved copy if that fails ---------- */
   function setStatus(live, text) {
     $("#live").classList.toggle("stale", !live);
     $("#live-text").textContent = text;
   }
-  const fmtTime = (iso) => { try { return new Date(iso).toLocaleString([], { weekday: "short", hour: "2-digit", minute: "2-digit" }); } catch (e) { return iso; } };
+  const fmtTime = (iso) => { try { return new Date(iso).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }); } catch (e) { return iso; } };
+  let snapshot = null;
+  async function getSnapshot() {
+    if (!snapshot) { const s = await fetch("snapshot.json", { cache: "no-store" }); snapshot = await s.json(); }
+    return snapshot;
+  }
 
-  async function load() {
+  async function load(fresh) {
     try {
-      const r = await fetch("/api/board", { cache: "no-store" });
+      const r = await fetch(fresh ? `/api/board?fresh=${Date.now()}` : "/api/board", { cache: "no-store" });
       const j = await r.json();
       if (!r.ok) throw Object.assign(new Error(j.message || r.status), { code: j.error });
+      // Until the plan is merged into main, borrow it from the saved copy.
+      if (!j.plan) { try { j.plan = (await getSnapshot()).plan; } catch (e) {} }
       data = j;
       $("#banner").hidden = true;
-      setStatus(true, `Live from GitHub · updated ${fmtTime(j.fetchedAt)}`);
+      setStatus(true, `Live · updated ${fmtTime(j.fetchedAt)}`);
     } catch (e) {
       if (!data || data.__snapshot) {
         try {
-          const s = await fetch("snapshot.json", { cache: "no-store" });
-          data = await s.json();
-          data.__snapshot = true;
+          data = Object.assign({}, await getSnapshot(), { __snapshot: true });
           setStatus(false, `Saved copy from ${fmtTime(data.fetchedAt)}`);
           $("#banner").hidden = false;
           $("#banner").textContent = e.code === "missing_token"
-            ? "Live updates are not switched on yet (the GitHub token hasn't been added in Vercel). Showing a saved copy for now."
-            : "Couldn't reach GitHub just now. Showing a saved copy; it will retry in a minute.";
+            ? "Live updates aren't switched on yet. Showing a saved copy."
+            : "Couldn't reach GitHub just now. Showing a saved copy; retrying every minute.";
         } catch (e2) {
           $("#summary").innerHTML = `<p class="skeleton">Couldn't load the board. Try refreshing the page.</p>`;
           return;
@@ -472,7 +603,7 @@ footer { font-size: 13px; color: var(--muted); border-top: 1px solid var(--line)
   }
 
   load();
-  setInterval(() => { if (!document.hidden) load(); }, REFRESH_MS);
+  setInterval(() => { if (!document.hidden && !busy) load(); }, REFRESH_MS);
   document.addEventListener("visibilitychange", () => { if (!document.hidden) load(); });
 })();
 </script>

@@ -29,7 +29,7 @@ bone and muscle loss, a view for the flight surgeon on Earth.
 | Role | Person | Owns |
 | --- | --- | --- |
 | Lead / integrator | Abdulla | The plan, reviewing and merging pull requests, making the pieces connect |
-| Frontend 1 | _TBD_ | Dashboard screen and charts |
+| Frontend 1 | Abdulla | Dashboard screen and charts |
 | Frontend 2 | _TBD_ | Alerts screen, check-in form, overall look |
 | Backend / data | _TBD_ | Simulated data and how the app reads it |
 | Health logic | _TBD_ | What we measure, how scores and alerts are worked out, NASA sources |
