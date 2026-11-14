@@ -60,11 +60,14 @@ b, strong { font-weight: 500; }
 
 /* ---------- Health dial: the logo's 24 ticks working as a score meter ----------
  * Bone ticks are the score so far, slate ticks are what is left, ember means attention.
- * When it first appears each tick fades to its colour in turn, clockwise from 12 o'clock. */
+ * Drawn as a speedometer reading left to right from 0 to 100. When it first appears each
+ * tick fades to its colour in turn, from the 0 end. */
 .dial { display: block; flex: none; }
 .dial line { stroke: var(--c); stroke-linecap: round; animation: tick-in 0.12s ease-in-out backwards; animation-delay: calc(var(--i) * 45ms + 150ms); }
 .dial text { fill: var(--bone); font-family: var(--font-sans); font-weight: 500; text-anchor: middle; }
-.dial text.dial-unit { fill: var(--muted); font-family: var(--font-mono); font-weight: 400; letter-spacing: 0.08em; text-transform: uppercase; }
+.dial .dial-unit { fill: var(--muted); font-family: var(--font-mono); font-weight: 400; letter-spacing: 0.08em; text-transform: uppercase; }
+/* The score's icon under the number */
+.dial .dial-ico { color: var(--muted); }
 @keyframes tick-in { from { stroke: var(--slate); } }
 
 /* ---------- Intro: the motion logo video, played once when the dashboard opens ---------- */
