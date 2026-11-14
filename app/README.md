@@ -97,13 +97,12 @@ what is coming up, the alerts, and each day's readings. It is not new data, just
 - **Body map labels** are an icon, a name and a status joined to the body by a thin line.
   Clicking one opens its details underneath. There are no view buttons: the body turns by itself.
 - **Sirius voice** (`voice.js`, replaces the old AI doctor chat box) is the round Sirius logo in
-  the bottom right corner. When the dashboard opens it reads out today's summary; clicking the
-  logo stops it (or replays it). The mic button beside it listens to a question such as "what's
-  my sleep?" and reads the number back. It uses the browser's free built-in speech (Web Speech
-  API): talking works in Chrome, Edge and Safari, listening works in Chrome and Edge (Chrome sends
-  the audio to Google to turn it into text). Browsers block sound until you've clicked the page,
-  so if it can't start by itself it waits for your first click. The answers are scripted:
-  `answer()` looks for key words. Add `?voice=0` to the address to turn it off.
+  the bottom right corner. Clicking it reads out today's summary; clicking it again while it
+  talks stops it. It never starts talking by itself. The mic button beside it listens to a
+  question such as "what's my sleep?" and reads the number back. It uses the browser's free
+  built-in speech (Web Speech API): talking works in Chrome, Edge and Safari, listening works in
+  Chrome and Edge (Chrome sends the audio to Google to turn it into text). The answers are
+  scripted: `answer()` looks for key words.
 - **Health log** is kept to three things: what to do, what's coming up, and the latest results.
 - **Crew overview** answers three questions per shared pattern: who lines up, what the issue
   is, and a suggested fix. Under that is one plain table of everyone today.
