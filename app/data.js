@@ -3,8 +3,8 @@
  * simulator (simulator/simulate.py), and the rest is made up here.
  *
  * What this file does, in plain English:
- * 1. Pretends three wearables (a watch, a chest strap, a headband) plus a radiation
- *    badge sent readings to our hub for the last 30 days of a mission.
+ * 1. Pretends four wearables (a watch, a chest strap, a headband and a smart shirt) plus a
+ *    radiation badge sent readings to our hub for the last 30 days of a mission.
  * 2. Writes each reading in one shared shape (the "common format" from docs/PLAN.md):
  *    { astronaut_id, device_id, device_type, metric, value, unit, time }
  * 3. Rolls those readings up into one summary per day, which the dashboard draws.
@@ -45,6 +45,12 @@
       measures: ["Radiation dose"], lastSyncHours: 0.1, battery: 92 },
     { id: "scale-01", type: "scale", label: "Body mass scale", model: "Mass measurement device", icon: "scale",
       measures: ["Body mass"], lastSyncHours: 27, battery: 15 },
+    // Modelled on the Canadian Space Agency's Bio-Monitor, a smart shirt and headband used on
+    // the ISS since 2018 (see docs/DEVICE_HUB.md for sources). Ours is a made-up copy for the demo.
+    // Like Bio-Monitor, its battery pack is docked to a base to send the data, so it syncs less often.
+    { id: "shirt-01", type: "smart_shirt", label: "Smart shirt", model: "Based on CSA's Bio-Monitor", icon: "shirt",
+      measures: ["ECG", "Blood pressure", "Breathing rate & depth", "Skin temp", "Blood oxygen", "Activity"],
+      note: "Worn day and night, including while asleep", lastSyncHours: 3, battery: 58 },
   ];
 
   const DAYS = 30;
@@ -103,7 +109,34 @@
       // A small spike on day 18 stands in for a solar particle event.
       add(dosi, "radiation_dose", 0.42 + noise(0.05) + (i === 18 ? 0.9 : 0), "mSv");
     }
+    addShirtReadings(today, readings);
     return readings;
+  }
+
+  // The smart shirt's readings. They use their own random numbers (seed 11), so adding the
+  // shirt doesn't change any of the other numbers, which the device simulator copies exactly.
+  // The backend doesn't store these yet, so they always show a "Sample data" tag.
+  function addShirtReadings(today, readings) {
+    let shirtSeed = 11;
+    const shirtNoise = (size) => {
+      shirtSeed = (shirtSeed * 16807) % 2147483647;
+      return ((shirtSeed - 1) / 2147483646 - 0.5) * 2 * size;
+    };
+    const shirt = DEVICES.find((d) => d.id === "shirt-01");
+    for (let i = 0; i < DAYS; i++) {
+      const s = stress(i);
+      const time = new Date(today.getTime() - (DAYS - 1 - i) * 86400000).toISOString();
+      const add = (metric, value, unit, places) =>
+        readings.push({
+          astronaut_id: ASTRONAUT.id, device_id: shirt.id, device_type: shirt.type,
+          metric, value: Math.round(value * 10 ** places) / 10 ** places, unit, time,
+        });
+      // Heart: morning blood pressure. A tired, stressed body can push it up a little.
+      add("bp_systolic", 117 + shirtNoise(3) + s * 5, "mmHg", 0);
+      add("bp_diastolic", 74 + shirtNoise(2) + s * 3, "mmHg", 0);
+      // Sleep: how deep each breath is while asleep (tidal volume; about 500 mL is typical at rest).
+      add("breath_volume", 500 + shirtNoise(30) - s * 30, "mL", 0);
+    }
   }
 
   /* ---------- Turning raw readings into daily summaries and scores ---------- */
@@ -134,7 +167,7 @@
     const BASE_DAYS = 14; // the "normal" is the first 14 of these 30 days
     const base = days.slice(0, BASE_DAYS);
     const baseline = {};
-    for (const metric of ["resting_hr", "hrv_rmssd", "sleep_hours", "resp_rate", "spo2", "skin_temp_delta"]) {
+    for (const metric of ["resting_hr", "hrv_rmssd", "sleep_hours", "resp_rate", "spo2", "skin_temp_delta", "bp_systolic", "bp_diastolic", "breath_volume"]) {
       const values = base.map((d) => d[metric]);
       const mean = average(values);
       const sd = Math.sqrt(average(values.map((v) => (v - mean) ** 2))) || 1;
@@ -270,9 +303,12 @@
   // How often each test happens. Most frequencies are our own proposal (see HEALTH_LOG.md).
   const TESTS = [
     { id: "rhr", cat: "heart", name: "Resting heart rate & HRV", how: "auto", every: "Continuous", device: "watch-01" },
-    { id: "bp", cat: "heart", name: "Blood pressure", how: "typed", every: "Daily", unit: "mmHg", normal: "below 130/80", lastDays: 1 },
+    // Blood pressure used to be typed in daily; the smart shirt now sends it by itself.
+    { id: "bp", cat: "heart", name: "Blood pressure", how: "auto", every: "Daily", device: "shirt-01" },
+    { id: "shirt-ecg", cat: "heart", name: "Heart rhythm (ECG)", how: "auto", every: "Continuous", device: "shirt-01" },
     { id: "ecg", cat: "heart", name: "ECG", how: "typed", every: "Monthly", unit: "", normal: "normal rhythm", lastDays: 12 },
     { id: "sleep", cat: "sleep", name: "Hours slept & quality", how: "auto", every: "Every night", device: "band-01" },
+    { id: "breath", cat: "sleep", name: "Breathing while asleep", how: "auto", every: "Every night", device: "shirt-01" },
     { id: "rested", cat: "sleep", name: "How rested do you feel? (1-5)", how: "typed", every: "Daily", unit: "/5", normal: "3 or more", lastDays: 0 },
     { id: "mood", cat: "mind", name: "Mood check & symptoms (1-5)", how: "typed", every: "Daily", unit: "/5", normal: "3 or more", lastDays: 1 },
     { id: "cog", cat: "mind", name: "Cognitive test", how: "typed", every: "Monthly", unit: "% of baseline", normal: "90% or more", lastDays: 31 },
@@ -311,7 +347,7 @@
       { when: "Today 07:00", test: "Resting heart rate", cat: "heart", value: `${todayRow.resting_hr} bpm`, source: "watch-01", out: todayRow.resting_hr > baseline.resting_hr.high },
       { when: "Today 07:00", test: "Personal dose", cat: "radiation", value: `${todayRow.radiation_dose} mSv`, source: "dosi-01", out: false },
       { when: "Yesterday 21:10", test: "Mood check", cat: "mind", value: `${yRow.mood} / 5`, source: "typed", note: "Tired, slight headache", out: yRow.mood < 3 },
-      { when: "Yesterday 08:05", test: "Blood pressure", cat: "heart", value: "118/76 mmHg", source: "typed", out: false },
+      { when: "Today 07:00", test: "Blood pressure", cat: "heart", value: `${todayRow.bp_systolic}/${todayRow.bp_diastolic} mmHg`, source: "shirt-01", out: todayRow.bp_systolic >= 130 || todayRow.bp_diastolic >= 80 },
     ];
 
     // The AI doctor (idea only, see docs/AI_DOCTOR.md). Scripted messages for the demo.

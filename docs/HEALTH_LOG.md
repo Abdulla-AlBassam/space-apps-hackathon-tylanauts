@@ -32,7 +32,7 @@ list these activities but do not say how often they happen.
 | Category | Test / reading | Source | How often |
 | --- | --- | --- | --- |
 | Heart | Resting heart rate, heart-rate variability | Device (watch / chest strap) | Continuous |
-| Heart | Blood pressure | Hand-entered | Daily (ours) |
+| Heart | Blood pressure | Automatic, from the smart shirt | Daily (ours) |
 | Heart | ECG | Hand-entered | Monthly (ours) |
 | Sleep | Hours slept, sleep quality | Device (headband / watch) | Every night |
 | Sleep | "How rested do you feel?" (1-5) | Hand-entered | Daily (ours) |

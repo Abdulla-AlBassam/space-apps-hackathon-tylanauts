@@ -68,7 +68,7 @@ const AREAS = [
     readings: [
       { name: "Resting heart rate", value: round(today.resting_hr), unit: "bpm", normal: range("resting_hr"), out: outside("resting_hr"), source: deviceLabel(today.sources.resting_hr), metric: "resting_hr" },
       { name: "Heart rate variability", value: today.hrv_rmssd, unit: "ms", normal: range("hrv_rmssd"), out: outside("hrv_rmssd"), source: deviceLabel(today.sources.hrv_rmssd), metric: "hrv_rmssd" },
-      { name: "Blood pressure", value: "118/76", unit: "mmHg", normal: "below 130/80", out: false, source: "Hand-entered" },
+      { name: "Blood pressure", value: `${today.bp_systolic}/${today.bp_diastolic}`, unit: "mmHg", normal: "below 130/80", out: today.bp_systolic >= 130 || today.bp_diastolic >= 80, source: deviceLabel(today.sources.bp_systolic), metric: "bp_systolic" },
     ],
     actions: recoveryAlert ? recoveryAlert.actions : ["No action needed."],
     link: ["index.html#trends", "See the 30-day heart trend"],

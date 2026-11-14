@@ -748,7 +748,7 @@ window.HEALTH_READY.then(function () {
   $("dev-connect").addEventListener("click", () => openWizard());
 
   $("flow").innerHTML = `
-    <div class="flow-step">${ic("watch")}${ic("heart-pulse")}${ic("headphones")}<span>Wearables</span></div>
+    <div class="flow-step">${ic("watch")}${ic("heart-pulse")}${ic("headphones")}${ic("shirt")}<span>Wearables</span></div>
     <span class="flow-arrow">${ic("chevron-right")}</span>
     <div class="flow-step">${ic("webhook")}<span>Webhook per device</span></div>
     <span class="flow-arrow">${ic("chevron-right")}</span>
@@ -772,6 +772,7 @@ window.HEALTH_READY.then(function () {
             <span class="${d.battery < 25 ? "is-watch" : ""}">${ic(batteryIcon(d.battery))}${d.battery}%</span>
           </div>
           <p class="dev-measures">${d.measures.join(" · ")}</p>
+          ${d.note ? `<p class="dev-note dim small">${ic("moon")}${d.note}</p>` : ""}
           <div class="hook"><span>${ic("webhook")}</span><code>hub.tylanauts.app/hooks/${d.id}</code>
             <button type="button" class="icon-btn" data-copy="https://hub.tylanauts.app/hooks/${d.id}" aria-label="Copy webhook address">${ic("copy")}</button></div>
         </div>`;
@@ -792,6 +793,7 @@ window.HEALTH_READY.then(function () {
     { type: "chest_strap", label: "Chest strap", icon: "heart-pulse", measures: ["HRV", "Breathing rate"] },
     { type: "headband", label: "Headband", icon: "headphones", measures: ["Sleep time", "Deep sleep"] },
     { type: "dosimeter", label: "Radiation badge", icon: "radiation", measures: ["Radiation dose"] },
+    { type: "smart_shirt", label: "Smart shirt", icon: "shirt", measures: ["ECG", "Blood pressure", "Breathing rate & depth"] },
     { type: "thermometer", label: "Thermometer", icon: "thermometer", measures: ["Body temperature"] },
     { type: "other", label: "Something else", icon: "plug", measures: ["Custom readings"] },
   ];
@@ -1001,6 +1003,7 @@ window.HEALTH_READY.then(function () {
     const rows = [
       ["Resting heart rate", "resting_hr", "bpm"], ["Heart rate variability", "hrv_rmssd", "ms"], ["Blood oxygen", "spo2", "%"],
       ["Breathing rate", "resp_rate", "/min"], ["Skin temperature change", "skin_temp_delta", "°C"], ["Sleep", "sleep_hours", "h"],
+      ["Blood pressure (top number)", "bp_systolic", "mmHg"], ["Blood pressure (bottom number)", "bp_diastolic", "mmHg"], ["Breathing depth while asleep", "breath_volume", "mL"],
       ["Deep sleep", "deep_sleep_pct", "%"], ["Exercise", "exercise_minutes", "min"], ["Radiation", "radiation_dose", "mSv"],
     ];
     const last5 = days.slice(-5);
