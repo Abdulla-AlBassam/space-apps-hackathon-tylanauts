@@ -24,12 +24,114 @@
  */
 
 (function () {
-  const ASTRONAUT = {
-    id: "crew-01",
-    name: "Cmdr. R. Haddad", // made-up person for the demo
-    mission: "Lunar Gateway Expedition 3", // made-up mission
-    missionDay: 142,
-    missionLength: 180,
+  /* ---------- The crew (all made up for the demo) ---------- */
+  // Six astronauts, the same people as the Crew page (crew.js). The name card at the top of
+  // Today lets you switch between them (crew-switch.js). Each one has their own "story" so
+  // the demo has something different to show for each person:
+  //   story(fromEnd, i) says how rough each day was. fromEnd = 0 is today, i = 0 is 30 days ago.
+  //   body  0-1: tiredness in the body (heart rate up, HRV down, less exercise)
+  //   sleep 0-1: shorter, lighter sleep
+  //   mood  points taken off the 1-5 mood check-in
+  //   dose  extra radiation that day (mSv)
+  //   bp    blood pressure creeping up (each point adds 5/3 mmHg)
+  //   ex, exHr  extra exercise minutes / heart rate (a spacewalk counts as hard exercise)
+  const MISSION = { mission: "Lunar Gateway Expedition 3", missionDay: 142, missionLength: 180 }; // made-up mission
+  const REST_DEBT = [1.0, 0.7, 0.45, 0.2]; // the commander's last four days (today first)
+  const SOLAR_EVENT_DAY = 18; // a solar particle event hits everyone on the same day
+  const CREW = [
+    {
+      id: "crew-01", name: "Cmdr. R. Haddad", initials: "RH", role: "Commander",
+      summary: "Running on too little rest",
+      seed: 7, shirtSeed: 11, doseBefore: 61.3,
+      base: { rhr: 56, hrv: 62, spo2: 97.5, resp: 14, sleep: 7.4, deep: 19, exMin: 120, exHr: 132, dose: 0.42, sys: 117, dia: 74 },
+      story: (fromEnd) => {
+        const s = REST_DEBT[fromEnd] || 0;
+        return { body: s, sleep: s, bp: s, mood: (fromEnd <= 2 ? 1 : 0) + (fromEnd === 0 ? 0.6 : 0) };
+      },
+      typedBp: { systolic: 118, diastolic: 76 }, // last typed-in blood pressure
+      moodNote: "Tired, slight headache",
+      sync: { "scale-01": [27, 15] }, // device id: [hours since last sync, battery %]
+    },
+    {
+      id: "crew-02", name: "M. Okafor", initials: "MO", role: "Flight engineer",
+      summary: "Homesick since family calls were lost",
+      seed: 23, shirtSeed: 29, doseBefore: 58.9,
+      base: { rhr: 54, hrv: 64, spo2: 97.6, resp: 13.5, sleep: 7.5, deep: 20, exMin: 110, exHr: 128, dose: 0.4, sys: 112, dia: 71 },
+      // Day 135 (a week ago) the comms window for private family calls was lost.
+      story: (fromEnd) => ({
+        mood: fromEnd <= 1 ? 2 : fromEnd <= 6 ? 1 : 0,
+        sleep: fromEnd <= 2 ? 0.45 - fromEnd * 0.1 : fromEnd <= 6 ? 0.15 : 0,
+        body: fromEnd <= 1 ? 0.15 : 0,
+      }),
+      moodNote: "Missing home. Hard to switch off at night",
+      sync: { "scale-01": [6, 70] },
+    },
+    {
+      id: "crew-03", name: "S. Lindqvist", initials: "SL", role: "Mission specialist",
+      summary: "All steady",
+      seed: 41, shirtSeed: 43, doseBefore: 54.2,
+      base: { rhr: 55, hrv: 63, spo2: 97.7, resp: 13.8, sleep: 7.6, deep: 21, exMin: 125, exHr: 130, dose: 0.39, sys: 114, dia: 72 },
+      story: () => ({}),
+      moodNote: "Feeling good",
+      sync: { "scale-01": [3, 88] },
+    },
+    {
+      id: "crew-04", name: "K. Tanaka", initials: "KT", role: "Pilot",
+      summary: "Recovering from a spacewalk",
+      seed: 59, shirtSeed: 61, doseBefore: 66.0,
+      base: { rhr: 57, hrv: 60, spo2: 97.4, resp: 14.2, sleep: 7.4, deep: 19, exMin: 130, exHr: 134, dose: 0.43, sys: 118, dia: 75 },
+      // Day 140 (two days ago): a 6.5-hour spacewalk. Extra dose, hard work, a short night after.
+      story: (fromEnd) =>
+        fromEnd === 2 ? { dose: 1.6, ex: 200, exHr: 12, body: 0.3 }
+        : fromEnd === 1 ? { body: 0.9, sleep: 0.6 }
+        : fromEnd === 0 ? { body: 0.55, sleep: 0.2 } : {},
+      moodNote: "Sore shoulders after the spacewalk",
+      sync: { "scale-01": [9, 64] },
+    },
+    {
+      id: "crew-05", name: "A. Moreau", initials: "AM", role: "Science officer",
+      summary: "Highest radiation total on board",
+      seed: 71, shirtSeed: 73, doseBefore: 248.0, // second long mission, so a bigger career total
+      base: { rhr: 58, hrv: 58, spo2: 97.5, resp: 14, sleep: 7.2, deep: 18, exMin: 115, exHr: 131, dose: 0.45, sys: 116, dia: 73 },
+      story: (fromEnd) =>
+        fromEnd === 2 ? { dose: 1.4, ex: 190, exHr: 10, body: 0.2 }
+        : fromEnd === 1 ? { body: 0.35, sleep: 0.25 } : {},
+      moodNote: "Fine, a bit tired",
+      sync: { "scale-01": [12, 52] },
+    },
+    {
+      id: "crew-06", name: "J. Reyes", initials: "JR", role: "Medical officer",
+      summary: "Blood pressure creeping up",
+      seed: 83, shirtSeed: 89, doseBefore: 57.5,
+      base: { rhr: 59, hrv: 58, spo2: 97.6, resp: 14, sleep: 7.3, deep: 19, exMin: 105, exHr: 129, dose: 0.41, sys: 118, dia: 75 },
+      // Fluids shifting towards the head in low gravity; blood pressure has crept up for 10 days.
+      story: (fromEnd) => (fromEnd <= 9 ? { bp: ((10 - fromEnd) / 10) * 4, body: fromEnd <= 2 ? 0.2 : 0 } : {}),
+      bpFromShirt: true, // use the smart shirt's blood pressure for the alerts
+      moodNote: "Mild headache in the mornings",
+      sync: { "scale-01": [5, 77] },
+    },
+  ];
+
+  // Who is shown: ?crew=crew-02 in the address bar, else the last one picked, else the commander.
+  function readChoice() {
+    const fromUrl = new URLSearchParams(location.search).get("crew");
+    let saved = null;
+    try { saved = localStorage.getItem("sirius.crew"); } catch (e) { /* storage blocked: ignore */ }
+    return CREW.find((c) => c.id === fromUrl) || CREW.find((c) => c.id === saved) || CREW[0];
+  }
+  const PERSON = readChoice();
+  const ASTRONAUT = { id: PERSON.id, name: PERSON.name, initials: PERSON.initials, role: PERSON.role, ...MISSION };
+
+  // Lets the name card switch astronaut: remembers the choice and reloads the page with it.
+  window.SIRIUS_CREW = {
+    list: CREW.map(({ id, name, initials, role, summary }) => ({ id, name, initials, role, summary })),
+    current: PERSON.id,
+    select(id) {
+      try { localStorage.setItem("sirius.crew", id); } catch (e) { /* ignore */ }
+      const url = new URL(location.href);
+      url.searchParams.set("crew", id);
+      location.assign(url.toString());
+    },
   };
 
   // The wearables this astronaut has connected to the hub. Each one sends its readings
@@ -52,6 +154,10 @@
       measures: ["ECG", "Blood pressure", "Breathing rate & depth", "Skin temp", "Blood oxygen", "Activity"],
       note: "Worn day and night, including while asleep", lastSyncHours: 3, battery: 58 },
   ];
+  // Each astronaut's devices last synced at different times.
+  for (const [id, [hours, battery]] of Object.entries(PERSON.sync || {})) {
+    Object.assign(DEVICES.find((d) => d.id === id), { lastSyncHours: hours, battery });
+  }
 
   const DAYS = 30;
 
@@ -66,23 +172,24 @@
     return (rand() - 0.5) * 2 * size;
   }
 
-  // How "rough" each of the last few days was (0 = normal). Drives the story.
-  function stress(dayIndex) {
-    const fromEnd = DAYS - 1 - dayIndex; // 0 = today
-    if (fromEnd === 0) return 1.0;
-    if (fromEnd === 1) return 0.7;
-    if (fromEnd === 2) return 0.45;
-    if (fromEnd === 3) return 0.2;
-    return 0;
+  // How rough each day was for this astronaut (see the crew list at the top).
+  function storyOf(i) {
+    const fromEnd = DAYS - 1 - i; // 0 = today
+    const st = PERSON.story(fromEnd, i) || {};
+    return {
+      body: st.body || 0, sleep: st.sleep || 0, mood: st.mood || 0, bp: st.bp || 0,
+      ex: st.ex || 0, exHr: st.exHr || 0, dose: (st.dose || 0) + (i === SOLAR_EVENT_DAY ? 0.9 : 0),
+    };
   }
 
   function generateReadings(today) {
-    seed = 7; // start the random numbers from the beginning every time
+    seed = PERSON.seed; // start the random numbers from the beginning every time
     const readings = [];
+    const b = PERSON.base;
 
     for (let i = 0; i < DAYS; i++) {
       const date = new Date(today.getTime() - (DAYS - 1 - i) * 86400000);
-      const s = stress(i);
+      const st = storyOf(i);
       const time = date.toISOString();
       const add = (device, metric, value, unit) =>
         readings.push({
@@ -97,34 +204,34 @@
 
       const [watch, strap, band, dosi] = DEVICES;
 
-      add(watch, "resting_hr", 56 + noise(2) + s * 9, "bpm");
-      add(strap, "hrv_rmssd", 62 + noise(5) - s * 24, "ms");
-      add(watch, "spo2", 97.5 + noise(0.6) - s * 0.8, "%");
-      add(watch, "skin_temp_delta", noise(0.15) + s * 0.4, "°C");
-      add(strap, "resp_rate", 14 + noise(0.6) + s * 1.6, "breaths/min");
-      add(band, "sleep_hours", 7.4 + noise(0.45) - s * 1.9, "h");
-      add(band, "deep_sleep_pct", 19 + noise(2.5) - s * 6, "%");
-      add(strap, "exercise_minutes", 120 + noise(20) - s * 30, "min");
-      add(strap, "avg_exercise_hr", 132 + noise(6) + s * 4, "bpm");
-      // A small spike on day 18 stands in for a solar particle event.
-      add(dosi, "radiation_dose", 0.42 + noise(0.05) + (i === 18 ? 0.9 : 0), "mSv");
+      add(watch, "resting_hr", b.rhr + noise(2) + st.body * 9, "bpm");
+      add(strap, "hrv_rmssd", b.hrv + noise(5) - st.body * 24, "ms");
+      add(watch, "spo2", b.spo2 + noise(0.6) - st.body * 0.8, "%");
+      add(watch, "skin_temp_delta", noise(0.15) + st.body * 0.4, "°C");
+      add(strap, "resp_rate", b.resp + noise(0.6) + st.body * 1.6, "breaths/min");
+      add(band, "sleep_hours", b.sleep + noise(0.45) - st.sleep * 1.9, "h");
+      add(band, "deep_sleep_pct", b.deep + noise(2.5) - st.sleep * 6, "%");
+      add(strap, "exercise_minutes", b.exMin + noise(20) - st.body * 30 + st.ex, "min");
+      add(strap, "avg_exercise_hr", b.exHr + noise(6) + st.body * 4 + st.exHr, "bpm");
+      add(dosi, "radiation_dose", b.dose + noise(0.05) + st.dose, "mSv");
     }
     addShirtReadings(today, readings);
     return readings;
   }
 
-  // The smart shirt's readings. They use their own random numbers (seed 11), so adding the
+  // The smart shirt's readings. They use their own random numbers, so adding the
   // shirt doesn't change any of the other numbers, which the device simulator copies exactly.
   // The backend doesn't store these yet, so they always show a "Sample data" tag.
   function addShirtReadings(today, readings) {
-    let shirtSeed = 11;
+    let shirtSeed = PERSON.shirtSeed;
     const shirtNoise = (size) => {
       shirtSeed = (shirtSeed * 16807) % 2147483647;
       return ((shirtSeed - 1) / 2147483646 - 0.5) * 2 * size;
     };
     const shirt = DEVICES.find((d) => d.id === "shirt-01");
+    const b = PERSON.base;
     for (let i = 0; i < DAYS; i++) {
-      const s = stress(i);
+      const st = storyOf(i);
       const time = new Date(today.getTime() - (DAYS - 1 - i) * 86400000).toISOString();
       const add = (metric, value, unit, places) =>
         readings.push({
@@ -132,21 +239,25 @@
           metric, value: Math.round(value * 10 ** places) / 10 ** places, unit, time,
         });
       // Heart: morning blood pressure. A tired, stressed body can push it up a little.
-      add("bp_systolic", 117 + shirtNoise(3) + s * 5, "mmHg", 0);
-      add("bp_diastolic", 74 + shirtNoise(2) + s * 3, "mmHg", 0);
+      add("bp_systolic", b.sys + shirtNoise(3) + st.bp * 5, "mmHg", 0);
+      add("bp_diastolic", b.dia + shirtNoise(2) + st.bp * 3, "mmHg", 0);
       // Sleep: how deep each breath is while asleep (tidal volume; about 500 mL is typical at rest).
-      add("breath_volume", 500 + shirtNoise(30) - s * 30, "mL", 0);
+      add("breath_volume", 500 + shirtNoise(30) - st.sleep * 30, "mL", 0);
     }
   }
 
   /* ---------- Turning raw readings into daily summaries and scores ---------- */
 
+  // One row per day. Each day keeps its first (morning) reading of each metric: resting heart
+  // rate and HRV are morning measurements, and the backend also streams readings during the
+  // day (exercise, short spikes) that shouldn't overwrite them. Readings arrive oldest first.
   function groupByDay(readings) {
     const days = new Map();
     for (const r of readings) {
       const key = r.time.slice(0, 10);
       if (!days.has(key)) days.set(key, { date: key, sources: {} });
       const day = days.get(key);
+      if (r.metric in day.sources) continue;
       day[r.metric] = r.value;
       day.sources[r.metric] = r.device_id;
     }
@@ -174,7 +285,7 @@
       baseline[metric] = { mean, sd, low: mean - 2 * sd, high: mean + 2 * sd };
     }
 
-    let doseSoFar = 61.3; // pretend dose before these 30 days (mSv)
+    let doseSoFar = PERSON.doseBefore; // pretend dose before these 30 days (mSv)
     for (const d of days) {
       // Each part is 0-100: about 85 on a normal day, lower the further you are from your normal.
       const hrv = clamp((d.hrv_rmssd / baseline.hrv_rmssd.mean) * 85, 0, 100);
@@ -194,7 +305,7 @@
       // Mood (1 to 5) is typed in by the astronaut in the daily check-in, not measured by a device.
       const fromEnd = days.length - 1 - days.indexOf(d);
       // If the backend sent a mood for this day, use it; otherwise make one up.
-      const madeUpMood = clamp(Math.round(4 + noise(0.6) - (fromEnd <= 2 ? 1 : 0) - (fromEnd === 0 ? 0.6 : 0)), 1, 5);
+      const madeUpMood = clamp(Math.round(4 + noise(0.6) - storyOf(DAYS - 1 - fromEnd).mood), 1, 5);
       if (d.mood == null) d.mood = madeUpMood;
       // Mind score (placeholder): mostly mood, plus sleep, as a 0-100 number.
       d.mindScore = Math.round(clamp((d.mood / 5) * 70 + Math.pow(d.sleep_hours / 8, 2) * 30, 0, 100));
@@ -274,7 +385,7 @@
       });
     }
 
-    const doseSpike = days.find((d) => d.radiation_dose > 1);
+    const doseSpike = [...days].reverse().find((d) => d.radiation_dose > 1); // the most recent one
     if (doseSpike) {
       alerts.push({
         level: "info",
@@ -328,7 +439,11 @@
     const days = groupByDay(readings);
     const baseline = addScores(days);
     // The latest typed-in blood pressure (made up for now: the health log isn't stored yet).
-    const latestBp = { systolic: 118, diastolic: 76, sample: true };
+    // Some astronauts' alerts use the smart shirt's latest reading instead.
+    const lastDay = days[days.length - 1];
+    const latestBp = PERSON.bpFromShirt
+      ? { systolic: lastDay.bp_systolic, diastolic: lastDay.bp_diastolic, sample: true }
+      : { ...(PERSON.typedBp || { systolic: 118, diastolic: 76 }), sample: true };
     const assessment = window.ESCALATION.assess(days, baseline, { bp: latestBp });
     // Each alert knows its day and health category, for the calendar.
     const alerts = buildAlerts(days, baseline, assessment);
@@ -340,21 +455,27 @@
       { when: "Today 07:00", test: "Hours slept", cat: "sleep", value: `${todayRow.sleep_hours} h`, source: "band-01", out: todayRow.sleep_hours < baseline.sleep_hours.low },
       { when: "Today 07:00", test: "Resting heart rate", cat: "heart", value: `${todayRow.resting_hr} bpm`, source: "watch-01", out: todayRow.resting_hr > baseline.resting_hr.high },
       { when: "Today 07:00", test: "Personal dose", cat: "radiation", value: `${todayRow.radiation_dose} mSv`, source: "dosi-01", out: false },
-      { when: "Yesterday 21:10", test: "Mood check", cat: "mind", value: `${yRow.mood} / 5`, source: "typed", note: "Tired, slight headache", out: yRow.mood < 3 },
+      { when: "Yesterday 21:10", test: "Mood check", cat: "mind", value: `${yRow.mood} / 5`, source: "typed", note: PERSON.moodNote, out: yRow.mood < 3 },
       { when: "Today 07:00", test: "Blood pressure", cat: "heart", value: `${todayRow.bp_systolic}/${todayRow.bp_diastolic} mmHg`, source: "shirt-01", out: todayRow.bp_systolic >= 130 || todayRow.bp_diastolic >= 80 },
     ];
 
     // The AI doctor (idea only, see docs/AI_DOCTOR.md). Scripted messages for the demo.
+    const t = tierInfo(assessment.tier);
+    const tierLine = `That puts you at Tier ${assessment.tier} (${t.name}), so ${t.notify.charAt(0).toLowerCase() + t.notify.slice(1)} will see it.`;
     const DOCTOR = {
       // The same tier as the alerts, from the escalation rules.
-      tier: { n: assessment.tier, word: tierInfo(assessment.tier).name, level: tierInfo(assessment.tier).level },
-      message: `Your recovery has dropped for 3 days. Your watch shows a resting heart rate of ${todayRow.resting_hr} bpm (usually about ${Math.round(baseline.resting_hr.mean)}), and your headband shows only ${todayRow.sleep_hours} h of sleep. Together that usually means you need rest, not illness, but let's keep an eye on it. That puts you at Tier ${assessment.tier} (${tierInfo(assessment.tier).name}), so ${tierInfo(assessment.tier).notify.charAt(0).toLowerCase() + tierInfo(assessment.tier).notify.slice(1)} will see it.`,
-      suggestions: ["Take today's exercise easy", "Log how rested you feel", "I'll check again tomorrow morning"],
+      tier: { n: assessment.tier, word: t.name, level: t.level },
+      message: PERSON.id === "crew-01"
+        ? `Your recovery has dropped for 3 days. Your watch shows a resting heart rate of ${todayRow.resting_hr} bpm (usually about ${Math.round(baseline.resting_hr.mean)}), and your headband shows only ${todayRow.sleep_hours} h of sleep. Together that usually means you need rest, not illness, but let's keep an eye on it. ${tierLine}`
+        : assessment.flags.length
+          ? `${assessment.flags.map((f) => f.detail).join(" ")} ${tierLine}`
+          : `Everything is steady today. Recovery is ${todayRow.recovery} and you slept ${todayRow.sleep_hours} h. ${tierLine}`,
+      suggestions: alerts[0] && alerts[0].actions ? alerts[0].actions.slice(0, 3) : ["Keep your usual routine", "Log how rested you feel", "I'll check again tomorrow morning"],
       basedOn: ["watch-01", "band-01", "strap-01"],
     };
 
     return {
-      astronaut: ASTRONAUT, devices: DEVICES, readings, days, baseline, alerts, band,
+      astronaut: ASTRONAUT, crew: window.SIRIUS_CREW.list, devices: DEVICES, readings, days, baseline, alerts, band,
       categories: CATEGORIES, tests: TESTS, history, doctor: DOCTOR, careerLimit: CAREER_LIMIT_MSV,
       escalation: assessment, live,
       // true when a reading is still made up (no live data for it on the latest day)
