@@ -1,4 +1,8 @@
-# Tylanauts – Astronaut Health Monitor
+# Siryius – Astronaut Health Hub
+
+By Team Tylanauts.
+
+> **New here? Read [docs/SUMMARY.md](docs/SUMMARY.md) first.** It's the one page with what we're building, what's decided, and what's left to do.
 
 Our team's project for the **NASA Space Apps Challenge 2026** (Manama local event).
 
@@ -20,6 +24,7 @@ add only once the software works. See the plan.
 
 | If you want to... | Read |
 | --- | --- |
+| Get the whole picture in one page (start here) | [docs/SUMMARY.md](docs/SUMMARY.md) |
 | See the plan, tasks and who's doing what at a glance | The **Mission Board** website (see `dashboard/README.md`) |
 | Know what we're building and who does what | [docs/PLAN.md](docs/PLAN.md) |
 | Pick a task | The Mission Board, or the repo's **Issues** tab |
