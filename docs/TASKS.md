@@ -1,13 +1,13 @@
 # Task board
 
-The live board is the repo's **Issues** tab: each task below is an issue.
-This file is the quick overview.
+Each task below is a GitHub issue. The **Mission Board** website shows them live,
+with who is doing what (link in the README). This file is just the starting list.
 
 **How to use it**
 
 1. Pick a task from **To do** that matches your role.
 2. On the issue, **assign yourself** (right-hand side, "Assignees"), so nobody else picks it.
-3. Move it to **Doing** here when you open your pull request, and to **Done** when it's merged.
+3. When you open your pull request, write `Closes #<number>` in it. When it's merged, the task moves to Done on the board by itself.
 4. Tasks should take 1–2 hours. If one is bigger, split it.
 
 ## To do
@@ -27,13 +27,3 @@ This file is the quick overview.
 | 11 | Write the pitch story and slide outline | Business / pitch |
 | 12 | Record the demo video | Business / pitch + lead |
 | 13 | Write the final submission description | Business / pitch + lead |
-
-## Doing
-
-| # | Task | Who |
-| --- | --- | --- |
-
-## Done
-
-| # | Task | Who |
-| --- | --- | --- |
