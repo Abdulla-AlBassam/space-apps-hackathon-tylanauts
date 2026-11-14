@@ -6,7 +6,7 @@ _As of 14 Nov 2026._
 
 The challenge gives us five reading resources and no datasets. Three are NASA Human Research Program pages on the hazards, risks and current research of spaceflight. Two are Canadian Space Agency articles on radiation monitoring and why science is done in space.
 
-They are most useful for the pitch and for realistic simulated data. Our strongest takeaways are NASA's five-hazard framing, specific figures like 1–1.5% bone loss a month and 70% of crew with eye swelling, and Artemis II's use of wrist actigraphy, which backs our wearable hub. Real data still has to come from the sources already in our repo.
+They are most useful for the pitch and for realistic simulated data. Our strongest takeaways are NASA's five-hazard framing, specific figures like 70% of crew with eye swelling and 16 sunrises a day disrupting sleep, and Artemis II's use of wrist actigraphy, which backs our wearable hub. Real data still has to come from the sources already in our repo.
 
 ## Resources at a glance
 
@@ -71,12 +71,11 @@ The resources are most useful for framing the pitch around NASA's own words, set
 | Our feature | What to take from the resources | Resource |
 | --- | --- | --- |
 | Pitch story | Frame the problem with NASA's five hazards. Distance from Earth is the core of our pitch: a three-year Mars mission with communication delays means the crew must monitor and act on their own health | 5 Hazards |
-| Health log categories | Tag each category with the NASA risk it addresses, so judges see we cover NASA's list (Heart, Sleep, Mind & mood, Radiation, Bone & muscle, Eyes) | Risks |
-| Simulated 30-day data (#3) | Drive the storyline with NASA figures: bone density down about 1–1.5% a month; about 70% chance of eye swelling; disrupted sleep from 16 sunrises a day | Risks |
+| Health log categories | Tag each category with the NASA risk it addresses, so judges see we cover NASA's list (Heart, Sleep, Mind & mood, Radiation, Eyes) | Risks |
+| Simulated 30-day data (#3) | Drive the storyline with NASA figures: about 70% chance of eye swelling; disrupted sleep from 16 sunrises a day | Risks |
 | Radiation card | Show neutrons as about 30% of ISS dose; name CANS as the kind of continuous monitor our hub would read from | CSA radiation |
 | Device hub and sleep score | Point to Artemis II's ARCHeR wrist actigraphy as proof NASA already relies on wearables for sleep and activity | Ongoing research |
 | Alerts (#6) | Write alerts around NASA's named effects: fainting risk after low blood pressure, cold sores and rashes as signs of immune change, run of low mood plus poor sleep | Risks |
-| Exercise tracking | Reference the Zero T2 study (exercise without a treadmill), which matters for small deep-space vehicles | Ongoing research |
 | AI doctor | The CSA explainer names communication delays and "less ability to rely on Earth for emergency medical assistance" as the reason crews need self-reliant tools | CSA explainer |
 | Shared data bank idea | Artemis II Standard Measures stores consistent health data for research: a model for exporting our hub data to the flight surgeon | Ongoing research |
 
@@ -85,7 +84,7 @@ The resources are most useful for framing the pitch around NASA's own words, set
 The resources give no raw data. Real astronaut vitals are private, so the team's plan to simulate readings stays the right one.
 
 - **For real numbers, use our own sources.** [DATA_SOURCES.md](DATA_SOURCES.md) already lists downloadable NASA data (OSDR studies, ISS radiation), and [HEALTH_MONITORING_SYSTEMS.md](HEALTH_MONITORING_SYSTEMS.md) covers the equipment.
-- **Risks we don't cover yet:** immune changes, balance and motion sickness, nutrition, teamwork. The cheapest to add is immune: an "early illness" warning from skin temperature plus resting heart rate (already in [DEVICE_HUB.md](DEVICE_HUB.md) as an idea).
+- **Risks we don't cover yet:** immune changes, balance and motion sickness, nutrition, teamwork. Bone and muscle are out of scope by team decision (14 Nov 2026). The cheapest to add is immune: an "early illness" warning from skin temperature plus resting heart rate (already in [DEVICE_HUB.md](DEVICE_HUB.md) as an idea).
 - **Eyes are in our schedule but not the MVP.** With 70% of ISS crew affected, a simple eye-check reminder (FD30, FD90, R-30) is worth showing in the demo.
 - **Few numbers on the hazard pages.** Quote the risk pages for figures, not the hazard pages, and link each figure in the pitch.
 - **Name-check the challenge resources in the submission.** Judges will know these five pages; citing them shows we used what we were given.
