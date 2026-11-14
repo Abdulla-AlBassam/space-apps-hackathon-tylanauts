@@ -3,7 +3,7 @@
  * SIMULATED DATA. Nothing here is a real astronaut's reading.
  *
  * What this file does, in plain English:
- * 1. Builds a list of body areas (heart, mind & sleep, eyes, radiation).
+ * 1. Builds a list of body areas (heart, mind & sleep, eyes, radiation, body mass).
  *    Numbers that the dashboard already simulates (heart rate, sleep, radiation, exercise)
  *    are read from window.HEALTH_DATA (data.js) so both pages tell the same story.
  *    The rest (mood score, eye exam, exercise plan) are made-up "hand-entered" results.
@@ -48,6 +48,13 @@ const recoveryAlert = H.alerts.find((a) => a.signals.includes("resting_hr"));
 const heartStatus = recoveryAlert ? recoveryAlert.level : outside("hrv_rmssd") ? "watch" : "good";
 const doseSpike = H.days.find((d) => d.radiation_dose > 1);
 const CAREER_LIMIT_MSV = 600; // NASA's career radiation limit (NASA-STD-3001)
+
+// Body mass: weighed once a week on the station's mass-measuring device (docs/MONITORING_SCHEDULE.md).
+// Made-up weekly weigh-ins for the demo; scales don't work in weightlessness, so the device
+// works out mass from how fast a known spring force moves the astronaut.
+const MASS = { preflight: 76.0, last: 74.9, previous: 75.1, daysSince: 3 };
+const massChangePct = ((MASS.last - MASS.preflight) / MASS.preflight) * 100;
+const massDevice = H.devices.find((d) => d.type === "scale");
 
 /*
  * Each area: where its glowing point sits on the body (x = sideways, y = height in metres,
@@ -130,6 +137,27 @@ const AREAS = [
     actions: ["No action needed now. Your flight surgeon can see these numbers."],
     link: null,
     help: "Outside Earth's protective magnetic field, astronauts get much more radiation than on the ground, which raises long-term health risks such as cancer. The badge on your chest measures the dose. NASA limits an astronaut's career total to 600 mSv.",
+  },
+  {
+    id: "mass",
+    side: "right",
+    icon: "scale",
+    name: "Body mass",
+    category: "Bone & muscle",
+    status: Math.abs(massChangePct) > 3 ? "watch" : "good",
+    point: [0, 1.08, 0.115],
+    facing: [0, 0, 1],
+    summary: `${MASS.last} kg at this week's weigh-in, ${massChangePct.toFixed(1)}% since launch. Next weigh-in in ${7 - MASS.daysSince} days.`,
+    readings: [
+      { name: "This week", value: MASS.last, unit: "kg", normal: `within 3% of pre-flight (${MASS.preflight} kg)`, out: Math.abs(massChangePct) > 3, source: `Hand-entered, ${MASS.daysSince} days ago` },
+      { name: "Change since last week", value: (MASS.last - MASS.previous).toFixed(1), unit: "kg", normal: "small week to week", out: false, source: "Hand-entered" },
+      { name: "Next weigh-in", value: `In ${7 - MASS.daysSince} days`, unit: "", normal: "weekly", out: false, source: massDevice ? `Reminder · ${massDevice.label}` : "Reminder" },
+    ],
+    actions: Math.abs(massChangePct) > 3
+      ? ["Log everything you eat and drink this week", "Talk to your flight surgeon about your meal plan"]
+      : ["No action needed. Keep logging meals and weigh in once a week."],
+    link: null,
+    help: "In space, losing weight can mean not eating enough, or losing muscle and bone. NASA sets each astronaut's food needs from their body mass (NASA-STD-3001, V1 4020), so a weekly weigh-in keeps the meal plan right. Bathroom scales don't work without gravity, so the station has a device that measures mass from movement instead.",
   },
 ];
 
