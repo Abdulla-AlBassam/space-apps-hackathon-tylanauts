@@ -579,71 +579,54 @@ td .chip { font-size: 12px; }
 .dim { color: var(--text-dim); }
 .empty { display: flex; align-items: center; gap: 8px; color: var(--text-dim); margin: 0; font-size: 14px; }
 
-/* ---------- AI doctor: a round button in the corner that opens a chat box ---------- */
-.doc-fab {
-  position: fixed;
-  right: 28px;
-  bottom: 28px;
-  z-index: 30;
-  display: grid;
-  place-items: center;
-  width: 60px;
-  height: 60px;
-  border: 0;
-  border-radius: 50%;
-  background: var(--bone);
-  color: var(--ink);
+/* ---------- Sirius voice: the logo button and mic in the corner (voice.js) ----------
+ * The logo's dial fills with ember while Sirius is speaking. A caption beside it shows
+ * what is being said or heard. */
+.voice {
+  position: fixed; right: 28px; bottom: 28px; z-index: 30;
+  display: flex; align-items: flex-end; gap: 10px;
+}
+.voice-main {
+  display: grid; place-items: center; width: 64px; height: 64px; flex: none;
+  border: 1px solid var(--rule); border-radius: 50%;
+  background: var(--ink); color: var(--bone);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-  cursor: pointer;
-  transition: background 0.2s;
+  cursor: pointer; transition: border-color 0.3s ease-in-out;
 }
-.doc-fab .ico { width: 28px; height: 28px; }
-.doc-fab:hover { background: #fff; }
-.doc-fab:focus-visible { outline: 2px solid var(--bone); outline-offset: 3px; }
-.doc-chat {
-  position: fixed;
-  right: 28px;
-  bottom: 102px;
-  z-index: 30;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  width: min(380px, calc(100vw - 32px));
-  max-height: min(600px, calc(100vh - 130px));
-  padding: 18px;
-  border-radius: 16px;
-  background: var(--ink);
-  border: 1px solid var(--rule);
+.voice-main:hover, .voice[data-state="speaking"] .voice-main { border-color: var(--slate); }
+.voice-main:focus-visible, .voice-small:focus-visible { outline: 2px solid var(--bone); outline-offset: 3px; }
+.voice-small {
+  display: grid; place-items: center; width: 44px; height: 44px; flex: none;
+  border: 0; border-radius: 50%; background: var(--bone); color: var(--ink);
+  cursor: pointer; transition: background 0.3s ease-in-out, color 0.3s ease-in-out;
+}
+.voice-small .ico { width: 20px; height: 20px; }
+.voice-small:hover { background: #fff; }
+.voice-mic { margin-bottom: 10px; }
+/* While listening the mic turns ember, the one accent colour, so it's clear it is on */
+.voice[data-state="listening"] .voice-mic { background: var(--ember); color: var(--ink); }
+.voice-caption {
+  align-self: flex-end; width: min(340px, calc(100vw - 160px)); margin-bottom: 6px;
+  padding: 14px 16px; border-radius: 14px;
+  background: var(--ink); border: 1px solid var(--rule);
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6);
-  animation: doc-in 0.2s ease-in-out;
+  animation: voice-in 0.3s ease-in-out;
 }
-.doc-chat[hidden] { display: none; }
-@keyframes doc-in { from { opacity: 0; transform: translateY(8px); } }
-.doc-head { display: flex; align-items: center; gap: 12px; }
-.doc-head > div { flex: 1; min-width: 0; }
-.doc-head h2 { margin: 0; display: flex; align-items: center; gap: 8px; font: 500 16px var(--font-sans); }
-.doc-head p { margin: 2px 0 0; }
-.doc-head .icon-btn { border: 0; }
-.doc-avatar { display: grid; place-items: center; width: 38px; height: 38px; border-radius: 50%; background: var(--bone); color: var(--ink); flex: none; }
-.doc-avatar .ico { width: 20px; height: 20px; }
-.doc-msgs { flex: 1; min-height: 120px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding-right: 2px; }
-.bubble { align-self: flex-start; max-width: 88%; background: rgba(242, 238, 230, 0.07); border-radius: 14px 14px 14px 4px; padding: 10px 13px; font-size: 13.5px; line-height: 1.5; }
-.bubble.me { align-self: flex-end; background: var(--bone); color: var(--ink); border-radius: 14px 14px 4px 14px; }
-.bubble ul { margin: 6px 0; padding-left: 18px; }
-.doc-quick { display: flex; flex-wrap: wrap; gap: 6px; }
-.doc-form { display: flex; gap: 8px; }
-.doc-form input {
+.voice-caption[hidden] { display: none; }
+@keyframes voice-in { from { opacity: 0; } }
+.voice-caption .label { margin: 0 0 6px; color: var(--text-faint); }
+.voice[data-state="speaking"] .voice-caption .label, .voice[data-state="listening"] .voice-caption .label { color: var(--ember); }
+.voice-text { margin: 0; font-size: 14px; line-height: 1.5; }
+.voice-type { display: flex; gap: 8px; margin-top: 10px; }
+.voice-type[hidden] { display: none; }
+.voice-type input {
   flex: 1; min-width: 0;
   font: 14px var(--font-sans); color: var(--text);
   background: transparent; border: 1px solid var(--slate); border-radius: 999px; padding: 9px 14px;
 }
-.doc-form input::placeholder, .form input::placeholder, .wiz-body input::placeholder { color: var(--text-faint); }
-.doc-form input:focus { outline: 2px solid var(--bone); outline-offset: 0; }
-.doc-send { display: grid; place-items: center; width: 40px; height: 40px; flex: none; border: 0; border-radius: 50%; background: var(--bone); color: var(--ink); cursor: pointer; }
-.doc-send:hover { background: #fff; }
-.doc-send:focus-visible { outline: 2px solid var(--bone); outline-offset: 2px; }
-.doc-disclaimer { margin: 0; display: flex; gap: 7px; align-items: center; font-size: 11.5px; color: var(--text-faint); }
-.doc-disclaimer .ico { width: 13px; height: 13px; }
+.voice-type .voice-small { width: 38px; height: 38px; }
+.voice-type input::placeholder, .form input::placeholder, .wiz-body input::placeholder { color: var(--text-faint); }
+.voice-type input:focus { outline: 2px solid var(--bone); outline-offset: 0; }
 
 /* ---------- Due list ---------- */
 .due-list { display: flex; flex-direction: column; }

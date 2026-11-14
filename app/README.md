@@ -12,7 +12,7 @@ python3 -m http.server 8000
 **No real astronaut data.** When a page opens, `data.js` reads the astronaut's readings from
 the backend (https://tylanauts-api.vercel.app). Those readings come from our device simulator
 (`simulator/simulate.py`). Anything the backend doesn't store yet (skin temperature, deep sleep,
-exercise, the health log schedule, devices, the AI doctor, the crew page) stays made up and shows
+exercise, the health log schedule, devices, the voice assistant's answers, the crew page) stays made up and shows
 a small **"Sample data"** tag. The tag disappears by itself once the backend has live data for it.
 
 If the backend can't be reached within 6 seconds, the whole page uses made-up data and says so
@@ -31,7 +31,7 @@ in a line at the top. Handy address-bar options:
 | `brand/` | Logo files (`sirius-mark.svg`, `favicon.svg`) and the designer's motion logo video (`sirius-motion.mp4`). |
 | `styles.css` | The main dashboard's layout and components. Colours and fonts come from `sirius.css`. |
 | `data.js` | Reads the astronaut's readings from the backend, fills any gaps with made-up readings (3 wearables and a radiation badge), then works out the scores and alerts. Pages wait for `window.HEALTH_READY` before drawing. |
-| `escalation.js` | Mariam's escalation rules (`docs/ESCALATION_RULES.md`): gives each day a tier from 0 (Nominal) to 4 (Emergency). The alerts and the AI doctor both use it. |
+| `escalation.js` | Mariam's escalation rules (`docs/ESCALATION_RULES.md`): gives each day a tier from 0 (Nominal) to 4 (Emergency). The alerts and the Sirius voice both use it. |
 | `app.js` | Draws everything from `data.js`, plus the `?` help pop-ups. |
 | `body-map.html` | **Body map** page: a 3D body you can turn, with glowing points where a health area needs attention. The same body map is the centrepiece of the Today page; this is its full-screen version ("Full screen" link on the map). |
 | `body-map.js` | Draws the 3D anatomy model with three.js and the list of body areas. Reads the same simulated data from `data.js`, so both pages tell the same story. |
@@ -93,9 +93,14 @@ what is coming up, the alerts, and each day's readings. It is not new data, just
   quiet list with nothing to do). The three counts at the top jump to their section.
 - **Body map labels** are an icon, a name and a status joined to the body by a thin line.
   Clicking one opens its details underneath. There are no view buttons: the body turns by itself.
-- **AI doctor** is the round button in the bottom right corner of every dashboard page. It
-  opens a chat box. The answers are scripted: `answer()` in `app.js` looks for key words in
-  the question and fills in today's simulated numbers. It is still only an idea preview.
+- **Sirius voice** (`voice.js`, replaces the old AI doctor chat box) is the round Sirius logo in
+  the bottom right corner. When the dashboard opens it reads out today's summary; clicking the
+  logo stops it (or replays it). The mic button beside it listens to a question such as "what's
+  my sleep?" and reads the number back. It uses the browser's free built-in speech (Web Speech
+  API): talking works in Chrome, Edge and Safari, listening works in Chrome and Edge (Chrome sends
+  the audio to Google to turn it into text). Browsers block sound until you've clicked the page,
+  so if it can't start by itself it waits for your first click. The answers are scripted:
+  `answer()` looks for key words. Add `?voice=0` to the address to turn it off.
 - **Health log** is kept to three things: what to do, what's coming up, and the latest results.
 - **Crew overview** answers three questions per shared pattern: who lines up, what the issue
   is, and a suggested fix. Under that is one plain table of everyone today.

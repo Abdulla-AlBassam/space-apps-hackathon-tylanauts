@@ -5,7 +5,7 @@
  *   #alerts  – every alert in full: what changed and what to do
  *   #calendar – one month at a time: each day's alerts, health checks and readings together
  *   #log     – health log: what's due, what's coming up, latest results, "Log a result"
- * The AI doctor is a round button in the corner of every page that opens a chat box.
+ * The Sirius voice (voice.js) reads out today's summary and answers spoken questions.
  *   #devices – my devices, how data flows, "Connect a device" walkthrough (a mock)
  * Every icon comes from icons.js (Lucide). No real astronaut data: readings come from our
  * device simulator through the backend, and anything still made up wears a "Sample data" tag.
@@ -15,7 +15,7 @@ window.APP_HANDLES_HELP = true; // tells body-map.js that this file shows the "?
 window.HEALTH_READY.then(function () {
 
   const H = window.HEALTH_DATA;
-  const { astronaut, devices, days, baseline, alerts, band, categories, tests, history, doctor } = H;
+  const { astronaut, devices, days, baseline, alerts, band, categories, tests, history } = H;
   const today = days[days.length - 1];
   const $ = (id) => document.getElementById(id);
   const ic = (name, cls) => window.icon(name, cls);
@@ -330,111 +330,6 @@ window.HEALTH_READY.then(function () {
     renderAlerts();
     renderWeek();
     renderCalendar();
-  });
-
-  /* ---------- AI doctor: a round button that opens a chat box ----------
-   * An idea preview. Nothing here talks to a real AI: answer() below picks a reply by
-   * looking for key words in the question, and fills it in with today's simulated numbers.
-   */
-  const fab = $("doc-fab"), chat = $("doc-chat");
-  fab.innerHTML = ic("bot");
-  const QUICK = ["How am I doing?", "What should I do today?", "Why is my recovery low?"];
-  const chatLog = [{ me: false, text: doctor.message }]; // the conversation so far
-  let summarySent = false;
-
-  function answer(question) {
-    const q = question.toLowerCase();
-    const has = (...words) => words.some((w) => q.includes(w));
-    const open = alerts.filter((a) => !a.done && a.level !== "info");
-    const top = open[0];
-    const usual = (m) => Math.round(baseline[m].mean);
-    // Symptoms jump straight to a tier (Mariam's symptom overrides, escalation.js).
-    const symptom = window.ESCALATION.symptomTier(q);
-    if (symptom && symptom.tier === 4) {
-      setDoctorTier(4);
-      summarySent = true;
-      toast("Emergency: crew, flight surgeon and mission control alerted");
-      return `<b>This is an emergency (Tier 4).</b> You mentioned "${symptom.symptom}". I've alerted your crewmates, your flight surgeon and mission control. Stop what you're doing, open the medical emergency checklist, and stay where your crew can reach you. A crewmate trained as Crew Medical Officer is on the way.`;
-    }
-    if (symptom && symptom.tier === 2) {
-      setDoctorTier(Math.max(2, doctor.tier.n));
-      return `Thanks for telling me about the ${symptom.symptom}. A new symptom puts you at Tier 2 (Caution): I'll ask again in 30 to 60 minutes, and it goes into your flight surgeon's daily summary. Is it getting worse, or do you also have chest pain, trouble breathing or changes in your vision? If so, tell me straight away.`;
-    }
-    if (has("surgeon", "summary", "send"))
-      return sendSummary();
-    if (has("what should", "what do i", "to do", "today", "advice", "help"))
-      return top
-        ? `Three things for today:<ul>${top.actions.map((x) => `<li>${x}</li>`).join("")}</ul>${dueItems().length ? `You also have ${dueItems().length} health checks due in your log.` : ""}`
-        : "Nothing urgent today. Keep to your normal exercise and sleep plan.";
-    if (has("why", "recovery", "tired", "fatigue"))
-      return `Recovery is ${today.recovery}% because three things moved together: resting heart rate ${today.resting_hr} bpm (usual ${usual("resting_hr")}), heart rate variability ${today.hrv_rmssd} ms (usual ${usual("hrv_rmssd")}) and ${today.sleep_hours} h of sleep. That pattern usually means you need rest, not that you are ill.`;
-    if (has("sleep", "rest"))
-      return `You slept ${today.sleep_hours} h last night; your normal is about ${usual("sleep_hours")} h. Aim for 8 hours in your sleep station tonight.`;
-    if (has("heart", "hrv", "pulse"))
-      return `Resting heart rate is ${today.resting_hr} bpm (usual ${usual("resting_hr")}) and heart rate variability is ${today.hrv_rmssd} ms (usual ${usual("hrv_rmssd")}). Both point to fatigue. I'll check again tomorrow morning.`;
-    if (has("radiation", "dose"))
-      return `${today.radiation_dose} mSv today and ${today.doseTotal} mSv this mission, which is ${today.doseLimitPct}% of the ${H.careerLimit} mSv career limit. Nothing to do.`;
-    if (has("mood", "mind", "stress", "feel"))
-      return `Your Mind score is ${today.mindScore}%, with mood ${today.mood}/5 in today's check-in and short sleep. Worth raising at your next private talk with the flight surgeon.`;
-    if (has("run", "exercise", "train", "workout", "gym"))
-      return "Swap it for a light bike session. Your heart needs an easier day, and you'll still keep up your fitness.";
-    if (has("how am i", "doing", "status", "overview", "ok", "okay"))
-      return `Recovery ${today.recovery}%, Mind ${today.mindScore}%, radiation at ${today.doseLimitPct}% of your limit. ${open.length ? `${open.length} thing${open.length === 1 ? "" : "s"} need your attention; the main one: ${top.title.toLowerCase()}.` : "Everything is in your normal range."}`;
-    return "In this demo I can talk about how you're doing, your recovery, sleep, heart, mood, radiation, and what to do today.";
-  }
-  function setDoctorTier(n) {
-    const t = window.ESCALATION.TIERS[n];
-    doctor.tier = { n, word: t.name, level: t.level };
-  }
-  function sendSummary() {
-    summarySent = true;
-    toast("Summary sent to the flight surgeon");
-    return `Sent to ${surgeon ? "you (flight surgeon)" : "your flight surgeon"}. From the Moon a message takes about 1.3 seconds each way; from Mars it can take up to 22 minutes.`;
-  }
-  function ask(question) {
-    if (!question) return;
-    chatLog.push({ me: true, text: question });
-    chatLog.push({ me: false, text: answer(question) });
-    renderDoctor();
-  }
-  function renderDoctor() {
-    const esc = (t) => t.replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
-    chat.innerHTML = `
-      <header class="doc-head">
-        <span class="doc-avatar">${ic("bot")}</span>
-        <div><h2>AI doctor ${helpBtn("doctor")}${sampleTag()}</h2><p>${pill(doctor.tier.level, `Tier ${doctor.tier.n} · ${doctor.tier.word}`)}</p></div>
-        <button type="button" class="icon-btn" id="doc-close" aria-label="Close the AI doctor">${ic("x")}</button>
-      </header>
-      <div class="doc-msgs" id="doc-msgs">${chatLog.map((m) => `<div class="bubble${m.me ? " me" : ""}">${m.me ? esc(m.text) : m.text}</div>`).join("")}</div>
-      <div class="doc-quick">
-        ${QUICK.map((x) => `<button type="button" class="btn-ghost small" data-ask="${x}">${x}</button>`).join("")}
-        <button type="button" class="btn-ghost small" data-ask="Send a summary to my flight surgeon" ${summarySent ? "disabled" : ""}>${ic(summarySent ? "check" : "send")}${summarySent ? "Summary sent" : "Send to flight surgeon"}</button>
-      </div>
-      <form class="doc-form" id="doc-form">
-        <input id="doc-input" autocomplete="off" placeholder="Ask about your health" aria-label="Ask the AI doctor">
-        <button type="submit" class="doc-send" aria-label="Send">${ic("send")}</button>
-      </form>
-      <p class="doc-disclaimer">${ic("shield-check")}Idea preview with scripted answers. Not a medical device.</p>`;
-    const msgs = $("doc-msgs");
-    msgs.scrollTop = msgs.scrollHeight;
-  }
-  function toggleDoctor(open) {
-    chat.hidden = !open;
-    fab.setAttribute("aria-expanded", open);
-    fab.classList.toggle("open", open);
-    fab.innerHTML = ic(open ? "x" : "bot");
-    if (open) { renderDoctor(); $("doc-input").focus(); }
-  }
-  fab.addEventListener("click", () => toggleDoctor(chat.hidden));
-  chat.addEventListener("click", (e) => {
-    if (e.target.closest("#doc-close")) return toggleDoctor(false);
-    const b = e.target.closest("[data-ask]");
-    if (b) { ask(b.dataset.ask); $("doc-input").focus(); }
-  });
-  chat.addEventListener("submit", (e) => {
-    e.preventDefault();
-    ask($("doc-input").value.trim());
-    $("doc-input").focus();
   });
 
   /* ---------- Health log: what's due ---------- */
@@ -1042,7 +937,6 @@ window.HEALTH_READY.then(function () {
     bodymap: ["Body map", "A 3D body with a label for each health area. The line shows where on the body it is. Orange marks an area that needs attention. Click a label to open its details. Drag to turn the body."],
     contributors: ["Overview", "The pieces that make up the score selected above, and which device or check-in each one comes from. This is the hub at work: one score built from several devices. Click Recovery, Radiation or Mind to switch."],
     alerts: ["Alerts", "How many things need your attention and how serious they are. Open the card to see what changed and what to do about it. Each alert has a tier from 0 (Nominal) to 4 (Emergency) and says who is told. Two or more Tier 1 signs at once make Tier 2, which is how combining devices catches things one device would miss. Each rule shows where its number comes from: Published (a guideline or NASA document), Adapted (a published number fitted to our tiers) or Design (our own choice, for a flight surgeon to review)."],
-    doctor: ["AI doctor (idea)", "A preview of an idea we're exploring: an assistant that explains your data in plain words, suggests simple actions, and sends a summary to a real flight surgeon when something is serious. Its tier comes from the same escalation rules as the alerts. Mention a symptom like a headache and it moves you to Tier 2; chest pain or trouble breathing jumps straight to Tier 4. The answers are scripted for the demo. Serious issues go to a real doctor."],
     week: ["This week", "Seven days at a glance: two days back, today and four days ahead. An orange dot means something needs attention that day, a light dot means a health check is planned. Click a day to see its list. Calendar opens the whole month."],
     calendar: ["Calendar", "Each day gathers three things: alerts, health checks (due, overdue or planned) and that day's readings. Past days show the recovery score, in orange if it was below Steady. Use the buttons at the top to show only one kind or one health area. Click a day to see its details."],
     due: ["Due today", "Health checks you type in yourself, like blood pressure or a mood check, plus any device that hasn't synced for 24 hours. Click Log to add a result."],
