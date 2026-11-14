@@ -10,10 +10,11 @@ Event page: https://www.spaceappschallenge.org/2026/local-events/manama/?tab=det
 
 ## Our idea (early stage)
 
-A "Whoop for astronauts": software that collects health readings from a wearable
-(for the hackathon, realistic **simulated** data), turns them into a few simple
-daily scores, and tells the astronaut in plain language what is changing and what
-to do about it. The details are still being decided. See the plan.
+A "Whoop for astronauts": **software first.** A dashboard that takes health
+readings (for the hackathon, realistic **simulated** data), turns them into a few
+simple daily scores, and tells the astronaut in plain language what is changing and
+what to do about it. A physical watch or wearable is **secondary**: something we
+add only once the software works. See the plan.
 
 ## Start here
 
