@@ -62,13 +62,13 @@ Rocket Red as a background; contrast of at least 4.5:1; never use colour alone t
 always add a word or icon. The guide suggests a 60-30-10 split (60% main colour, 30% secondary,
 10% accent).
 
-**One gap: the palette has no green**, and health apps use green for "good". Our suggestion is to
-add one green of our own, for example `#3DDC97` (this is our choice, not a brand colour).
+**One gap: the palette has no green**, and health apps use green for "good". We considered adding
+one, but the decision (section 5) is to use Blue Yonder for "Normal" instead.
 
 Contrast checks we ran on Deep Blue `#07173F` (4.5 is the minimum for normal text):
-white 17.5, Neon Yellow 15.5, our green 9.9, Blue Yonder 5.7, Rocket Red **4.0**, Neon Blue **3.1**.
-So Rocket Red is fine for icons, bars and large numbers, but small red text needs a lighter red
-(for example `#FF5A36`, which scores 5.6; again our choice).
+white 17.5, Neon Yellow 15.5, Blue Yonder 5.7, Rocket Red **4.0**, Neon Blue **3.1**.
+So Rocket Red is fine for icons, bars and large numbers, but small red text should be white with
+a red icon beside it.
 
 ### Fonts (Space Apps brand guide, all free on Google Fonts)
 
@@ -153,7 +153,7 @@ no free source found). Don't treat anything about those as researched.
 
 | State | Colour | Icon + word |
 | --- | --- | --- |
-| Normal | Blue Yonder or green | check, "Normal" |
+| Normal | Blue Yonder | check, "Normal" |
 | Caution | Neon Yellow | triangle, "Watch" |
 | Alert | Rocket Red | exclamation, "Act now" |
 
@@ -173,12 +173,15 @@ bands and tuning later; this is a `docs/PLAN.md` decision, not a design one.
 
 ---
 
-## 5. Open questions for the team
-1. What are our three headline scores? (Recovery, Strain, Sleep like Whoop, or something
-   space-specific like Recovery, Radiation, Mind?)
-2. Is the screen for the astronaut only, or also the flight surgeon on Earth? (That changes how
-   much raw data we show.)
-3. Do we want the green, or keep strictly to brand colours and use Blue Yonder for "normal"?
+## 5. Decisions (answered by Abdulla, 14 Nov)
+1. **Headline scores:** Recovery, Strain and Sleep, for now.
+2. **Who it's for:** both the astronaut and the flight surgeon on Earth. The app has a switch;
+   the flight surgeon view adds a table of raw readings and which device each came from.
+3. **Colours:** strictly brand colours for now. So "Normal" uses Blue Yonder, not a green.
+   Small "Act now" labels use
+   white text with a red icon instead, since Rocket Red is too dark for small text.
+
+The first build of the dashboard is in `app/` (see `app/README.md`).
 
 ---
 
