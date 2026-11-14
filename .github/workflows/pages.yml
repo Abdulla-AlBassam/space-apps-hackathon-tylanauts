@@ -1,0 +1,36 @@
+# Publishes the app/ folder (the astronaut dashboard) to GitHub Pages.
+# It runs by itself every time something is merged into main, and you can
+# also start it by hand from the repo's "Actions" tab ("Run workflow").
+# The site appears at https://abdulla-albassam.github.io/space-apps-hackathon-tylanauts/
+name: Publish dashboard to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+    paths: ["app/**", ".github/workflows/pages.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Only one publish at a time; a newer push replaces an older one still waiting.
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: app
+      - id: deploy
+        uses: actions/deploy-pages@v4
