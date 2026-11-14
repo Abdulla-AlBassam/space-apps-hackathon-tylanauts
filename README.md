@@ -1,6 +1,6 @@
 # Sirius – Astronaut Health Hub
 
-By Team Tylanauts.
+By Team Tylonauts.
 
 > **New here? Read [docs/SUMMARY.md](docs/SUMMARY.md) first.** It's the one page with what we're building, what's decided, and what's left to do.
 
