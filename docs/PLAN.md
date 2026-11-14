@@ -4,6 +4,30 @@ Short on purpose. If something here is wrong, change it in a pull request.
 
 ## 1. Goal
 
+### Product vision
+
+**One hub for every wearable.** Our app receives readings from whatever devices
+an astronaut wears (watch, chest strap, headband, and more), converts them into
+one common format, and combines them. Combining devices gives better analysis
+than relying on one device for each piece of information: readings can be
+cross-checked, the most accurate device is used for each measurement, and
+patterns across devices can be spotted.
+
+What this means in practice:
+
+- **Backend:** one webhook (a web address a device sends its data to) for each
+  device type, which converts that device's data into our common format.
+- **Analysis:** rules that combine readings from different devices into scores
+  and alerts.
+- **Frontend:** a "Connect a device" walkthrough (a mock-up: every step just
+  clicks Next) and a "My devices" page listing each astronaut's devices.
+- **Demo:** simulated devices send data to real webhook addresses on a small
+  server, so we need no real hardware but the data really flows through the hub.
+
+Full proposal (data flow, which combinations of devices are well established and
+which are speculative, the connect screens, the devices page):
+[DEVICE_HUB.md](DEVICE_HUB.md).
+
 **Software comes first.** The dashboard and its features are the product. A real
 watch or wearable is secondary: we only work on it after the MVP below is done.
 Until then, all health readings come from simulated data.
@@ -18,9 +42,11 @@ Build a demo that shows an astronaut:
 
 If we only finish this, we still have something to show the judges:
 
-- [ ] Simulated data for one astronaut across a mission (e.g. 30 days).
-- [ ] One dashboard screen showing today's readings and scores.
-- [ ] A **Recovery score** worked out from sleep, resting heart rate and heart-rate variability.
+- [ ] Simulated feeds from at least **three devices** (e.g. watch, chest strap, headband) for one astronaut across a mission (e.g. 30 days), sent to the hub's webhooks.
+- [ ] Each device's data converted into the **one common format**.
+- [ ] One dashboard screen showing today's readings and scores, and which device each reading came from.
+- [ ] A **Recovery score** that combines sleep, resting heart rate and heart-rate variability from more than one device.
+- [ ] A mock **Connect a device** walkthrough and a **My devices** page.
 - [ ] At least **one alert** (e.g. "recovery has dropped 3 days in a row, here's what to do").
 - [ ] A pitch deck and a short demo video.
 
@@ -32,8 +58,8 @@ bone and muscle loss, a view for the flight surgeon on Earth.
 astronaut that explains their data, suggests actions, and escalates serious
 cases to the flight surgeon on Earth. See [AI_DOCTOR.md](AI_DOCTOR.md).
 
-**Last priority:** connecting a real watch or wearable (or a mock-up of one for the
-pitch). Only start this once everything above works.
+**Last priority:** connecting a real watch or wearable. Only start this once
+everything above works.
 
 **Feature idea (not decided yet): crew overview.** One page that rolls every
 astronaut's health into a single crew score, shows each person against each
@@ -57,15 +83,17 @@ Put your name in the table when you've agreed on your role.
 
 ## 4. Decisions to make in the first hour
 
-1. **Tech stack.** What the app is built with. Pick whatever most of the four developers already know. Write the answer here.
-2. **The data shape.** The exact fields one day of data has (e.g. `date`, `sleep_hours`, `resting_hr`, `hrv_ms`, ...). Frontend and backend agree on this early so both can build at the same time.
-3. **Which scores and alerts are in the MVP.**
+1. **Tech stack.** What the app is built with, including how the hub receives data (the webhooks). Pick whatever most of the four developers already know.
+2. **The common data format.** The fields every reading has once it reaches the hub, whatever device it came from (e.g. `astronaut_id`, `device_id`, `device_type`, `metric`, `value`, `unit`, `time`). Frontend and backend agree on this early so both can build at the same time.
+3. **Which devices we simulate**, and what each one measures.
+4. **Which combined scores and alerts are in the MVP**, and which device we trust most when two report the same thing.
 
 | Decision | Answer |
 | --- | --- |
 | Tech stack | _TBD_ |
-| Data shape | _TBD_ (link to the file once written) |
-| MVP scores & alerts | _TBD_ |
+| Common data format | _TBD_ (link to the file once written) |
+| Devices we simulate | Watch, chest strap, headband |
+| MVP scores, alerts and device priority | _TBD_ |
 
 ## 5. Timeline
 
