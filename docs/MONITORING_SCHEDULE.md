@@ -5,6 +5,27 @@ astronaut themselves, or a fellow crew member. Built from the tools in
 [HEALTH_MONITORING_SYSTEMS.md](HEALTH_MONITORING_SYSTEMS.md) and the starter list in
 [HEALTH_LOG.md](HEALTH_LOG.md), checked against NASA sources on 14 Nov 2026.
 
+## How this follows NASA's guidelines
+
+NASA's health standard, **NASA-STD-3001**, says *what* must be monitored but not *how
+often*. Each program writes the schedule in its own Medical Operations Requirements
+Document, which isn't public, and flight surgeons adjust it per crew member
+([V1 6008, V1 6009](https://www.nasa.gov/wp-content/uploads/2025/08/ochmo-tb-044-medical-operations.pdf)).
+So this schedule uses published NASA mission schedules where we found them, and our
+own proposals elsewhere, each labelled.
+
+| NASA requirement | What it requires | How this schedule meets it |
+| --- | --- | --- |
+| [V1 3003](https://www.nasa.gov/wp-content/uploads/2024/02/ochmo-mtb-001-sans.pdf) In-mission preventive health care | Resources to monitor physical and psychological well-being during the mission | Sections 1–4: continuous wearables, daily check-ins, periodic tests |
+| [V1 3004](https://www.nasa.gov/wp-content/uploads/2024/02/ochmo-mtb-001-sans.pdf) In-mission medical care | Ability to diagnose and treat medical conditions in flight | Section 3: crewmate exams and tests with on-board equipment |
+| [V2 7045](https://www.nasa.gov/wp-content/uploads/2024/02/ochmo-mtb-001-sans.pdf) Medical equipment usability | Equipment usable by non-physician crew | Every manual test is one an astronaut or crewmate can run |
+| [V1 4020](https://www.nasa.gov/wp-content/uploads/2024/02/ochmo-mtb-001-sans.pdf) In-mission nutrient intake | 100% of each crew member's nutrient and energy needs, calculated from body mass | Daily food log and weekly body mass |
+| [V2 6004](https://www.nasa.gov/wp-content/uploads/2024/02/ochmo-mtb-001-sans.pdf) Habitat carbon dioxide | 1-hour average CO₂ no higher than 3 mmHg | Continuous CO₂ reading, alert above 3 mmHg |
+| [V2 6022](https://www.nasa.gov/wp-content/uploads/2024/02/ochmo-mtb-001-sans.pdf) Atmospheric alerting | Alert the crew when air readings leave safe limits | App alerts on CO₂ |
+| [V1 4030](https://www.nasa.gov/wp-content/uploads/2023/03/radiation-protection-technical-brief-ochmo.pdf) Career radiation limit | Career effective dose below 600 mSv | Daily and mission dose totals shown against 600 mSv |
+| [V2 6161, V2 6162](https://www.nasa.gov/wp-content/uploads/2023/03/radiation-protection-technical-brief-ochmo.pdf) Radiation monitoring | Monitor radiation in the habitat and for each crew member | Station monitors plus a personal dosimeter |
+| [Medical operations, section 6](https://www.nasa.gov/reference/6-0-medical-operations/) | Private medical and psychological conferences "on a routine basis" | Section 4: weekly and every-2-weeks conferences |
+
 **Basis** says how sure we are of each frequency:
 
 - **NASA**: a NASA document states this schedule.
@@ -30,8 +51,8 @@ raises a "device not synced in 24 hours" alert if data stops arriving.
 | Sleep duration and stages | Sleep | Headband or watch ([Actiwatch](https://ntrs.nasa.gov/api/citations/20090014820/downloads/20090014820.pdf)-style) | Every night | NASA wears actigraphy for the whole mission ([source](https://ntrs.nasa.gov/api/citations/20200001281/downloads/20200001281.pdf)) |
 | Activity and light exposure | Sleep | Watch | Continuous | NASA, same source |
 | Exercise sessions (type, minutes, load) | Bone & muscle | Watch, plus the exercise machines' own logs | Every session; about 600 min a week in total ([study](https://pmc.ncbi.nlm.nih.gov/articles/PMC9898566)) | NASA |
-| Radiation dose | Radiation | Personal active dosimeter | Continuous; app shows daily and mission totals | NASA ([Crew Active Dosimeters](https://ntrs.nasa.gov/api/citations/20250002757/downloads/Slides_Seminar_2025.pdf)) |
-| Cabin CO₂ | Environment | Station / personal CO₂ monitor | Continuous | NASA (individual CO₂ monitoring is a planned ISS activity) |
+| Radiation dose | Radiation | Personal active dosimeter | Continuous; app shows daily and mission totals against the 600 mSv career limit | NASA ([Crew Active Dosimeters](https://ntrs.nasa.gov/api/citations/20250002757/downloads/Slides_Seminar_2025.pdf); V2 6162, V1 4030) |
+| Cabin CO₂ | Environment | Station / personal CO₂ monitor | Continuous; alert if the 1-hour average passes 3 mmHg | NASA (limit from V2 6004; individual CO₂ monitoring is a planned ISS activity) |
 
 ## 2. Manual: the astronaut does it themselves
 
@@ -40,11 +61,11 @@ raises a "device not synced in 24 hours" alert if data stops arriving.
 | Mood (1–5) and symptoms | Mind & mood | App check-in | Daily | Ours |
 | "How rested do you feel?" (1–5) | Sleep | App check-in | Daily, on waking | Ours |
 | Blood pressure | Heart | Automatic cuff, typed in (or sent by a smart cuff) | Daily | Ours |
-| Food and water intake | Bone & muscle | App log (NASA uses an app called EveryWear) | Daily | Ours (NASA does this; no frequency found) |
-| Body mass | Bone & muscle | Mass-measuring device (SLAMMD), typed in | Weekly | Ours |
+| Food and water intake | Bone & muscle | App log (NASA uses an app called EveryWear) | Daily | Ours, supporting V1 4020 (no frequency stated) |
+| Body mass | Bone & muscle | Mass-measuring device (SLAMMD), typed in | Weekly | Ours; V1 4020 bases nutrition on body mass |
 | Vision test (near/far acuity, Amsler grid) and questionnaire | Eyes | Eye chart and grid, results typed in | FD30, FD90, R-30 | NASA ([SANS schedule](https://ntrs.nasa.gov/api/citations/20180004916/downloads/20180004916.pdf)) |
-| Cognitive test (WinSCAT / Cognition) | Mind & mood | 10–16 minute test on a laptop or tablet | Monthly | Ours (NASA uses these routinely; no frequency found) |
-| Hearing test | Hearing | Self-run hearing app with headphones | Monthly | Ours |
+| Cognitive test (WinSCAT / Cognition) | Mind & mood | 10–16 minute test on a laptop or tablet | Monthly, compared with the astronaut's own pre-flight baseline | NASA: WinSCAT is a medical requirement for long-duration crew, [taken monthly](https://ntrs.nasa.gov/citations/20100036584) |
+| Hearing test | Hearing | Self-run test on a laptop with headphones (NASA's On-Orbit Hearing Assessment) | Monthly, for missions longer than 30 days | Partly NASA: [routine for crew on orbit over 30 days](https://ntrs.nasa.gov/citations/20240009887); monthly is ours |
 | Radiation dose before and after a spacewalk | Radiation | Read the dosimeter, typed in | Every spacewalk | NASA |
 
 ## 3. Manual: a fellow crew member does it
@@ -76,10 +97,11 @@ Not entered in the app, but the app shows them as reminders.
 
 ## Notes
 
-- **Change from HEALTH_LOG.md:** it proposes a monthly fitness test. NASA's maximum
-  bike test is about every **90 days**, plus arrival and departure. The app should
-  follow NASA's schedule. A lighter monthly check could be added if the team wants
-  one, labelled as ours.
+- **HEALTH_LOG.md is updated to match:** the fitness test is now about every 90 days
+  (it said monthly), and the cognitive test is marked as NASA's schedule rather than ours.
+- **Annual checks on Earth:** NASA also re-certifies every astronaut medically once a
+  year ([V1 3001](https://www.nasa.gov/wp-content/uploads/2024/02/ochmo-mtb-001-sans.pdf)).
+  That happens on the ground, so it isn't in this in-flight schedule.
 - **Derived conference frequencies** come from NASA's estimate of total crew time for a
   6-month mission ([Crew Time Analysis of Planned Medical Activities](https://ntrs.nasa.gov/api/citations/20230015627/downloads/Med%20Crew%20Time%20Analysis.pdf)).
   They assume a session of about 15 minutes; NASA-STD-3001 only says conferences are

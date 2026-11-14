@@ -37,13 +37,16 @@ list these activities but do not say how often they happen.
 | Sleep | Hours slept, sleep quality | Device (headband / watch) | Every night |
 | Sleep | "How rested do you feel?" (1-5) | Hand-entered | Daily (ours) |
 | Mind & mood | Mood check (1-5) and symptoms | Hand-entered | Daily (ours) |
-| Mind & mood | Cognitive test (like NASA's WinSCAT) | Hand-entered | Monthly (ours) |
-| Mind & mood | Private psychological conference | Reminder only | Every 2 weeks (ours) |
+| Mind & mood | Cognitive test (like NASA's WinSCAT) | Hand-entered | Monthly (NASA) |
+| Mind & mood | Private psychological conference | Reminder only | Every 2 weeks (worked out from NASA crew time) |
 | Radiation | Personal dose | Device (simulated dosimeter) | Daily |
 | Radiation | Dose before and after a spacewalk | Hand-entered | Each spacewalk (NASA does this) |
 | Bone & muscle | Exercise session (type, minutes) | Device (watch) | Daily |
 | Bone & muscle | Body mass | Hand-entered | Weekly (ours) |
-| Bone & muscle | Fitness test (treadmill or bike) | Hand-entered | Monthly (ours) |
+| Bone & muscle | Fitness test (treadmill or bike) | Hand-entered | About every 90 days, plus arrival and departure (NASA) |
+
+See [MONITORING_SCHEDULE.md](MONITORING_SCHEDULE.md) for the full schedule, who does each
+test, and the NASA requirement behind it.
 
 **Later categories** (not in the first version): Blood & immune (hematocrit,
 urine test), Eyes (eye chart, grid test, eye scans: NASA schedules these on
