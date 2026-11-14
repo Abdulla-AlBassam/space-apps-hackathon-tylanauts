@@ -1,0 +1,21 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://tylanauts.example/schemas/astro/heart-rate-variability-1.0.json",
+  "title": "Heart Rate Variability",
+  "description": "Variation in time between heartbeats. Not covered by Open mHealth; follows its conventions.",
+  "type": "object",
+  "properties": {
+    "heart_rate_variability": {
+      "allOf": [
+        { "$ref": "https://w3id.org/ieee/ieee-1752-schema/unit-value-1.0.json" },
+        { "properties": { "unit": { "enum": ["ms"] } } }
+      ]
+    },
+    "algorithm": { "type": "string", "enum": ["RMSSD", "SDNN"] },
+    "effective_time_frame": { "$ref": "https://w3id.org/ieee/ieee-1752-schema/time-frame-1.0.json" },
+    "temporal_relationship_to_sleep": {
+      "$ref": "https://w3id.org/openmhealth/schemas/omh/temporal-relationship-to-sleep-1.x.json"
+    }
+  },
+  "required": ["heart_rate_variability", "effective_time_frame"]
+}

@@ -1,0 +1,18 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://tylanauts.example/schemas/astro/mood-1.0.json",
+  "title": "Mood",
+  "description": "Self-reported mood on a 1 (very low) to 5 (very good) scale. Not covered by Open mHealth; follows its conventions.",
+  "type": "object",
+  "properties": {
+    "mood_rating": {
+      "allOf": [
+        { "$ref": "https://w3id.org/ieee/ieee-1752-schema/unit-value-1.0.json" },
+        { "properties": { "unit": { "enum": ["score"] }, "value": { "minimum": 1, "maximum": 5 } } }
+      ]
+    },
+    "note": { "type": "string", "maxLength": 2000 },
+    "effective_time_frame": { "$ref": "https://w3id.org/ieee/ieee-1752-schema/time-frame-1.0.json" }
+  },
+  "required": ["mood_rating", "effective_time_frame"]
+}
