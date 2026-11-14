@@ -3,9 +3,8 @@
  * It replaces the old AI doctor chat box.
  *
  * What it does:
- *   - When the dashboard opens, it reads out a short summary of today.
- *   - The round Sirius button in the corner stops it talking (or, when it is quiet,
- *     reads the summary again).
+ *   - Click the round Sirius logo in the corner and it reads out a short summary of
+ *     today. Click it again while it talks to stop it. It never starts by itself.
  *   - The mic button next to it listens to a question, like "what's my sleep?",
  *     and reads that number back.
  *
@@ -16,13 +15,8 @@
  *     Chrome sends the audio to Google to do this, so it needs the internet.
  *     Where it isn't available, a small text box appears instead.
  *
- * Browsers don't let a page start making sound before the person has clicked or
- * pressed a key on it. So if speaking straight away is blocked, Sirius waits for
- * the first click or key press anywhere on the page and starts then.
- *
  * The answers are scripted: answer() looks for key words in the question and
- * fills in today's numbers from window.HEALTH_DATA. Add ?voice=0 to the address
- * to turn the voice off.
+ * fills in today's numbers from window.HEALTH_DATA.
  */
 window.HEALTH_READY.then(function () {
   const H = window.HEALTH_DATA;
@@ -32,7 +26,6 @@ window.HEALTH_READY.then(function () {
   const ic = (name) => window.icon(name);
   const synth = window.speechSynthesis;
   const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-  const off = /[?&]voice=0\b/.test(location.search);
 
   /* ---------- The buttons and the caption ---------- */
   const root = $("voice");
@@ -92,43 +85,15 @@ window.HEALTH_READY.then(function () {
       const u = new SpeechSynthesisUtterance(part.trim());
       if (voice) u.voice = voice;
       u.rate = 1;
-      u.onstart = () => { started = true; setState("speaking"); textEl.textContent = part.trim(); };
+      u.onstart = () => { setState("speaking"); textEl.textContent = part.trim(); };
       if (i === parts.length - 1) u.onend = () => { if (state === "speaking") { setState("idle"); textEl.textContent = text; } };
-      u.onerror = (e) => {
-        if (e.error === "not-allowed") waitForClick();
-        else if (e.error !== "interrupted" && e.error !== "canceled") setState("idle");
-      };
+      u.onerror = (e) => { if (e.error !== "interrupted" && e.error !== "canceled") setState("idle"); };
       synth.speak(u);
     });
   }
   function hush() {
     if (synth) synth.cancel();
     setState("idle", "Sirius (stopped)");
-  }
-
-  /* ---------- Speaking as soon as the page opens ---------- */
-  let started = false;
-  function waitForClick() {
-    if (state === "waiting" || started) return;
-    if (synth) synth.cancel();
-    setState("waiting");
-    show("Click anywhere to hear today's summary.");
-    const go = (e) => {
-      document.removeEventListener("pointerdown", go, true);
-      document.removeEventListener("keydown", go, true);
-      // A click on the Sirius buttons is handled by the buttons themselves.
-      if (e.target.closest && e.target.closest("#voice")) return;
-      if (state === "waiting") say(summary());
-    };
-    document.addEventListener("pointerdown", go, true);
-    document.addEventListener("keydown", go, true);
-  }
-  function greet() {
-    if (off) return;
-    say(summary());
-    // Some browsers block it without saying so: if nothing has started after a
-    // moment, assume it was blocked and wait for a click.
-    setTimeout(() => { if (!started) waitForClick(); }, 1500);
   }
 
   /* ---------- Listening ---------- */
@@ -276,10 +241,7 @@ window.HEALTH_READY.then(function () {
   // For testing from the browser console: SIRIUS_VOICE.ask("what's my sleep")
   window.SIRIUS_VOICE = { ask, say, hush, summary, answer };
 
+  // Sirius stays quiet until the logo is clicked.
   setState("idle");
   caption.hidden = true;
-  // Wait for the intro video (if it is playing) to finish before talking over it.
-  const intro = document.querySelector(".intro");
-  if (!intro) greet();
-  else new MutationObserver((m, obs) => { if (!document.body.contains(intro)) { obs.disconnect(); greet(); } }).observe(document.body, { childList: true });
 });
