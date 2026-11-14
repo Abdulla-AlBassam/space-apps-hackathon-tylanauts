@@ -35,6 +35,13 @@ cases to the flight surgeon on Earth. See [AI_DOCTOR.md](AI_DOCTOR.md).
 **Last priority:** connecting a real watch or wearable (or a mock-up of one for the
 pitch). Only start this once everything above works.
 
+**Feature idea (not decided yet): crew overview.** One page that rolls every
+astronaut's health into a single crew score, shows each person against each
+health category in a grid, and points out **crew patterns**: the same problem in
+several people at once (for example everyone sleeping badly after a schedule
+change, or mood down across the crew). A shared pattern usually means a shared
+cause, so the fix is different from helping one person. Mock: `app/crew.html`.
+
 ## 3. Roles
 
 | Role | Person | Owns |
