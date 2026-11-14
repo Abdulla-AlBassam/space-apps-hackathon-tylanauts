@@ -93,7 +93,7 @@ const AREAS = [
   },
   {
     id: "eyes",
-    side: "left",
+    side: "right",
     icon: "eye",
     name: "Eyes (SANS)",
     category: "Eyes",
@@ -131,7 +131,7 @@ const AREAS = [
   },
   {
     id: "bone",
-    side: "right",
+    side: "left",
     icon: "bone",
     name: "Bones (spine & hips)",
     category: "Bone & muscle",
@@ -482,10 +482,41 @@ spinBtn.addEventListener("click", () => { spinning = !spinning; spinBtn.setAttri
 
 // Thin lines from each label to its glowing point: out from the label, then an angled
 // run to the point. Lines to points on the far side of the body are dashed and faint.
+// Line each label up with the height of its body part (the brain's label at head height,
+// the legs' label at the thighs). Labels in one column never overlap: a label that would
+// is pushed down, and the column is pushed back up if it runs off the bottom.
+const LABEL_GAP = 16;
+function placeLabels(sr) {
+  for (const side of ["left", "right"]) {
+    const col = cols[side];
+    const cr = col.getBoundingClientRect();
+    const items = markers
+      .filter((m) => m.area.side === side && Number.isFinite(m.ay))
+      .map((m) => {
+        const el = tags[m.area.id];
+        const head = el.querySelector(".bm-tag-head") || el;
+        const h = el.offsetHeight;
+        const headH = Math.min(head.offsetHeight || h, 64);
+        return { el, h, top: m.ay + sr.top - cr.top - headH / 2 };
+      })
+      .sort((a, b) => a.top - b.top);
+    let next = 0;
+    for (const it of items) { it.top = Math.max(it.top, next); next = it.top + it.h + LABEL_GAP; }
+    let limit = cr.height;
+    for (let i = items.length - 1; i >= 0; i--) { items[i].top = Math.min(items[i].top, limit - items[i].h); limit = items[i].top - LABEL_GAP; }
+    for (const it of items) it.el.style.transform = `translateY(${Math.max(0, it.top).toFixed(1)}px)`;
+  }
+}
+
 function drawLeaders() {
-  if (!leaderSvg.isConnected || getComputedStyle(cols.left).position !== "absolute") { leaderSvg.innerHTML = ""; return; }
+  if (!leaderSvg.isConnected || getComputedStyle(cols.left).position !== "absolute") {
+    leaderSvg.innerHTML = "";
+    Object.values(tags).forEach((el) => (el.style.transform = "")); // small screens: plain list
+    return;
+  }
   const sr = stageEl.getBoundingClientRect();
   if (!sr.width || !sr.height) return; // the page with the body on it is hidden
+  placeLabels(sr);
   leaderSvg.setAttribute("viewBox", `0 0 ${sr.width} ${sr.height}`);
   let html = "";
   for (const m of markers) {
@@ -560,6 +591,10 @@ function frame(now) {
     m.el.style.transform = `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px)`;
     m.el.classList.toggle("behind", behind && m.area.id !== selectedId);
     m.sx = x; m.sy = y; m.behind = behind;
+    // Screen height of this spot on the body's centre line: stays put as the body turns,
+    // so the labels don't bob up and down while it spins
+    tmp.set(0, body.localToWorld(normal.copy(m.local)).y, 0).project(camera);
+    m.ay = (-tmp.y * 0.5 + 0.5) * height;
   }
   drawLeaders();
   requestAnimationFrame(frame);
