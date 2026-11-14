@@ -3,6 +3,7 @@
  * Pages (switched with the left rail, using the address bar's #):
  *   #today   – scores (each with a Sirius health dial), 3D body map (body-map.js), a small alerts card, what's due, vitals, trends
  *   #alerts  – every alert in full: what changed and what to do
+ *   #calendar – one month at a time: each day's alerts, health checks and readings together
  *   #log     – health log: what's due, what's coming up, latest results, "Log a result"
  * The AI doctor is a round button in the corner of every page that opens a chat box.
  *   #devices – my devices, how data flows, "Connect a device" walkthrough (a mock)
@@ -48,6 +49,7 @@
   const PAGES = [
     { id: "today", label: "Today", icon: "house" },
     { id: "alerts", label: "Alerts", icon: "bell" },
+    { id: "calendar", label: "Calendar", icon: "calendar" },
     { id: "log", label: "Log", icon: "clipboard-list" },
     { id: "devices", label: "Devices", icon: "watch" },
   ];
@@ -280,6 +282,8 @@
     const a = alerts[+b.dataset.alert];
     a.done = !a.done;
     renderAlerts();
+    renderWeek();
+    renderCalendar();
   });
 
   /* ---------- AI doctor: a round button that opens a chat box ----------
@@ -315,7 +319,7 @@
     if (has("mood", "mind", "stress", "feel"))
       return `Your Mind score is ${today.mindScore}%, with mood ${today.mood}/5 in today's check-in and short sleep. Worth raising at your next private talk with the flight surgeon.`;
     if (has("run", "exercise", "train", "workout", "gym"))
-      return "Swap it for a light bike session. Your heart needs an easier day, and you'll still protect your bones and muscles.";
+      return "Swap it for a light bike session. Your heart needs an easier day, and you'll still keep up your fitness.";
     if (has("how am i", "doing", "status", "overview", "ok", "okay"))
       return `Recovery ${today.recovery}%, Mind ${today.mindScore}%, radiation at ${today.doseLimitPct}% of your limit. ${open.length ? `${open.length} thing${open.length === 1 ? "" : "s"} need your attention; the main one: ${top.title.toLowerCase()}.` : "Everything is in your normal range."}`;
     return "In this demo I can talk about how you're doing, your recovery, sleep, heart, mood, radiation, and what to do today.";
@@ -395,13 +399,7 @@
           <a class="btn-ghost small" href="#devices">${ic("wifi-off")}Check</a>
         </div>`));
     const empty = `<p class="empty">${ic("circle-check")}Nothing due. You're all caught up.</p>`;
-    // Today shows the three most urgent; the Health log shows them all.
-    const TOP = 3;
-    $("due-today").innerHTML = rows.length
-      ? rows.slice(0, TOP).join("") + (rows.length > TOP ? `<p class="due-more">+ ${rows.length - TOP} more in the health log</p>` : "")
-      : empty;
     $("due-full").innerHTML = rows.join("") || empty;
-    head("due-heading", "calendar-clock", `Due today <span class="count">${items.length + unsynced.length}</span>`);
     head("log-due-heading", "calendar-clock", `To do <span class="count">${items.length + unsynced.length}</span>`);
 
     // Coming up: the next few checks that aren't due yet
@@ -413,11 +411,224 @@
         <span class="due-when">${t.dueInDays === 1 ? "Tomorrow" : `In ${t.dueInDays} days`}</span>
       </div>`)
       .join("");
-    $("due-all").innerHTML = ic("clipboard-list") + "Health log";
+    renderWeek();      // the "This week" strip on Today
+    renderCalendar();  // and the Calendar page, so both stay up to date after a result is logged
   }
   document.addEventListener("click", (e) => {
     const b = e.target.closest("[data-log]");
     if (b) openLogModal(b.dataset.log);
+  });
+
+  /* ---------- Calendar ----------
+   * One place for things that used to be spread around: what is due today, what is
+   * coming up, the alerts, and each day's readings. Two views use the same list of events:
+   *   - "This week" on Today: a strip of seven days, with the chosen day's list under it
+   *   - the Calendar page: a whole month, filters, and the chosen day in a side card
+   */
+  const PERIOD = { Daily: 1, Weekly: 7, Monthly: 30, "Every 2 weeks": 14 };
+  const DAY_MS = 86400000;
+  const todayISO = today.date;
+  const toDate = (iso) => new Date(iso + "T00:00:00Z");
+  const addDays = (iso, n) => new Date(toDate(iso).getTime() + n * DAY_MS).toISOString().slice(0, 10);
+  const daysFromToday = (iso) => Math.round((toDate(iso) - toDate(todayISO)) / DAY_MS);
+  const dayByDate = Object.fromEntries(days.map((d) => [d.date, d]));
+  const fmtLong = (iso) => toDate(iso).toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", timeZone: "UTC" });
+  const shortName = (name) => name.replace(/ \(.*\)$/, "");
+  // "Today 07:00", "Yesterday 21:10", "8 days ago" -> how many days back that was
+  const daysAgoOf = (when) => (/^(Today|Just now)/.test(when) ? 0 : /^Yesterday/.test(when) ? 1 : +(when.match(/(\d+) days ago/) || [0, -1])[1]);
+
+  const cal = {
+    weekDay: todayISO,                 // the day picked in the "This week" strip
+    day: todayISO,                     // the day picked on the Calendar page
+    month: todayISO.slice(0, 7),       // the month shown on the Calendar page, as "2026-11"
+    filter: "all",                     // all | alert | check | reading | a health category id
+  };
+
+  // Everything that belongs to one day, as a plain list. Each item has a kind
+  // (alert, check or reading) and a health category, which the filters use.
+  function eventsOn(iso) {
+    const n = daysFromToday(iso);
+    const list = [];
+    for (const a of alerts) if (a.date === iso) list.push({ kind: "alert", cat: a.cat, level: a.done ? "good" : a.level, title: a.title, done: a.done });
+
+    if (n >= 0) {
+      const daily = [];
+      for (const t of typedTests()) {
+        const period = PERIOD[t.every];
+        if (!period) continue;
+        if (n === 0) {
+          if (t.dueInDays <= 0) list.push({ kind: "check", cat: t.cat, t, title: t.name, level: t.dueInDays < 0 ? "act" : "watch", word: t.dueInDays < 0 ? `Overdue ${-t.dueInDays} day${t.dueInDays < -1 ? "s" : ""}` : "Due today" });
+          continue;
+        }
+        const first = t.dueInDays > 0 ? t.dueInDays : period; // if it's due now, the next one is a full period away
+        if (n >= first && (n - first) % period === 0) (period === 1 ? daily : list).push({ kind: "check", cat: t.cat, t, title: t.name, sub: t.every });
+      }
+      // Daily checks would fill every future day, so they are folded into one quiet line
+      if (daily.length) list.push({ kind: "check", cat: daily.map((e) => e.cat), daily: true, title: "Daily checks", sub: daily.map((e) => shortName(e.title)).join(", ") });
+    }
+
+    const d = dayByDate[iso];
+    if (d) {
+      const b = baseline;
+      list.push({ kind: "reading", cat: "heart", icon: "heart-pulse", title: "Recovery", value: d.recovery, level: band(d.recovery) });
+      list.push({ kind: "reading", cat: "sleep", icon: "moon", title: "Sleep", value: `${d.sleep_hours} h`, level: d.sleep_hours < b.sleep_hours.low ? "watch" : "good" });
+      list.push({ kind: "reading", cat: "mind", icon: "brain", title: "Mind", value: d.mindScore, level: band(d.mindScore) });
+      list.push({ kind: "reading", cat: "radiation", icon: "radiation", title: "Radiation dose", value: `${d.radiation_dose} mSv`, level: d.radiation_dose > 1 ? "watch" : "good" });
+    }
+    for (const h of history) if (h.source === "typed" && daysAgoOf(h.when) === -n) list.push({ kind: "reading", cat: h.cat, icon: catOf(h.cat).icon, title: h.test, sub: "Typed in", value: h.value, level: h.out ? "watch" : "good" });
+    return list;
+  }
+  const matches = (e, f) => f === "all" || e.kind === f || [].concat(e.cat).includes(f);
+  const needsAttention = (e) => e.kind !== "reading" && (e.level === "act" || e.level === "watch");
+
+  // The small marks under a date: an ember dot if something needs attention that day,
+  // a bone dot if a health check is planned.
+  function marks(list) {
+    const hot = list.some(needsAttention);
+    const planned = list.some((e) => e.kind === "check" && !e.daily && !needsAttention(e));
+    return `<span class="mk-row">${hot ? '<i class="mk mk-hot"></i>' : ""}${planned ? '<i class="mk mk-plan"></i>' : ""}</span>`;
+  }
+
+  // One line in a day's list
+  function eventRow(e, iso) {
+    const n = daysFromToday(iso);
+    if (e.kind === "alert") {
+      return `<a class="due due-link" href="#alerts"><span class="due-ico is-${e.level}">${ic("bell")}</span>
+        <div class="due-text"><b>${e.title}</b>${e.done ? pill("good", "Done") : pill(e.level)}</div>${ic("chevron-right", "dim")}</a>`;
+    }
+    if (e.kind === "check") {
+      const icon = e.device ? e.device.icon : e.daily ? "calendar-clock" : catOf(e.t.cat).icon;
+      const action = e.device ? `<a class="btn-ghost small" href="#devices">${ic("wifi-off")}Check</a>`
+        : e.word && e.t.how !== "reminder" ? `<button type="button" class="btn-ghost small" data-log="${e.t.id}">${ic("plus")}Log</button>`
+        : e.word ? "" : `<span class="due-when">${n === 1 ? "Tomorrow" : `In ${n} days`}</span>`;
+      return `<div class="due"><span class="due-ico">${ic(icon)}</span>
+        <div class="due-text"><b>${e.title}</b>${e.word ? pill(e.level, e.word) : `<span>${e.sub}</span>`}</div>${action}</div>`;
+    }
+    return `<div class="due"><span class="due-ico">${ic(e.icon)}</span>
+      <div class="due-text"><b>${e.title}</b>${e.sub ? `<span>${e.sub}</span>` : ""}</div>
+      <span class="due-value${e.level === "good" ? "" : " is-watch"}">${e.value}</span></div>`;
+  }
+  const missionDayOf = (iso) => astronaut.missionDay + daysFromToday(iso);
+  const dateLine = (iso) => `${daysFromToday(iso) === 0 ? "Today · " : ""}${fmtLong(iso)} · Mission day ${missionDayOf(iso)}`;
+
+  /* "This week" on Today: two days back, today, four days ahead */
+  function renderWeek() {
+    head("due-heading", "calendar-days", "This week");
+    $("due-all").innerHTML = "Calendar" + ic("chevron-right");
+    let html = "";
+    for (let n = -2; n <= 4; n++) {
+      const iso = addDays(todayISO, n);
+      const list = eventsOn(iso);
+      const dt = toDate(iso);
+      html += `<button type="button" class="wk-day${n === 0 ? " is-today" : ""}${n < 0 ? " is-past" : ""}${iso === cal.weekDay ? " selected" : ""}" data-day="${iso}" aria-pressed="${iso === cal.weekDay}" aria-label="${fmtLong(iso)}">
+        <span class="wk-name">${dt.toLocaleDateString("en-GB", { weekday: "short", timeZone: "UTC" })}</span>
+        <span class="wk-num">${dt.getUTCDate()}</span>${marks(list)}</button>`;
+    }
+    $("week-strip").innerHTML = html;
+
+    // Under the strip: the chosen day. Readings are left out here because Today already
+    // shows them; the Calendar page has everything.
+    const iso = cal.weekDay;
+    const all = eventsOn(iso).filter((e) => e.kind !== "reading" || daysFromToday(iso) < 0);
+    // Alerts are folded into one line here (the Alerts card above has the detail),
+    // which leaves room for the checks that are due.
+    const open = all.filter((e) => e.kind === "alert" && needsAttention(e));
+    const list = all.filter((e) => !open.includes(e));
+    list.sort((a, b) => (a.level === "act" ? 0 : a.level === "watch" ? 1 : 2) - (b.level === "act" ? 0 : b.level === "watch" ? 1 : 2));
+    const alertsRow = open.length
+      ? `<a class="due due-link" href="#alerts"><span class="due-ico is-watch">${ic("bell")}</span>
+          <div class="due-text"><b>${open.length} alert${open.length === 1 ? "" : "s"} need${open.length === 1 ? "s" : ""} attention</b><span>${open[0].title}${open.length > 1 ? `, and ${open.length - 1} more` : ""}</span></div>${ic("chevron-right", "dim")}</a>`
+      : "";
+    const TOP = 3;
+    $("week-date").textContent = dateLine(iso);
+    $("due-today").innerHTML = list.length || alertsRow
+      ? alertsRow + list.slice(0, TOP).map((e) => eventRow(e, iso)).join("") + (list.length > TOP ? `<p class="due-more"><a href="#calendar" data-open-day="${iso}">+ ${list.length - TOP} more in the calendar</a></p>` : "")
+      : `<p class="empty">${ic("circle-check")}Nothing planned for this day.</p>`;
+  }
+  $("week-strip").addEventListener("click", (e) => {
+    const b = e.target.closest("[data-day]");
+    if (!b) return;
+    cal.weekDay = b.dataset.day;
+    renderWeek();
+  });
+  // "Calendar" and "+ more" open the Calendar page on the day you were looking at
+  document.addEventListener("click", (e) => {
+    if (e.target.closest("#due-all, [data-open-day]")) { cal.day = cal.weekDay; cal.month = cal.day.slice(0, 7); renderCalendar(); }
+  });
+
+  /* The Calendar page */
+  head("cal-title", "calendar", "Calendar");
+  const FILTERS = [
+    { id: "all", label: "All" },
+    { id: "alert", label: "Alerts", icon: "bell" },
+    { id: "check", label: "Checks", icon: "calendar-clock" },
+    { id: "reading", label: "Readings", icon: "activity" },
+  ].concat(categories.map((c) => ({ id: c.id, label: c.name, icon: c.icon })));
+  function renderCalendar() {
+    $("cal-filters").innerHTML = FILTERS.map((f) => `<button type="button" data-filter="${f.id}" aria-selected="${f.id === cal.filter}">${f.icon ? ic(f.icon) : ""}${f.label}</button>`).join("");
+    const [y, m] = cal.month.split("-").map(Number);
+    const first = new Date(Date.UTC(y, m - 1, 1));
+    $("cal-month").innerHTML = ic("calendar-days") + first.toLocaleDateString("en-GB", { month: "long", year: "numeric", timeZone: "UTC" });
+    $("cal-nav").innerHTML = `<button type="button" class="icon-btn" data-month="-1" aria-label="Previous month">${ic("chevron-left")}</button>
+      <button type="button" class="btn-ghost small" data-month="0">Today</button>
+      <button type="button" class="icon-btn" data-month="1" aria-label="Next month">${ic("chevron-right")}</button>`;
+
+    // Weeks start on Monday. Days from the months either side fill the first and last rows.
+    const lead = (first.getUTCDay() + 6) % 7;
+    const daysInMonth = new Date(Date.UTC(y, m, 0)).getUTCDate();
+    const cells = Math.ceil((lead + daysInMonth) / 7) * 7;
+    const startISO = addDays(first.toISOString().slice(0, 10), -lead);
+    let html = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((d) => `<span class="cal-wd label">${d}</span>`).join("");
+    for (let i = 0; i < cells; i++) {
+      const iso = addDays(startISO, i);
+      const list = eventsOn(iso).filter((e) => matches(e, cal.filter));
+      const n = daysFromToday(iso);
+      // Up to two short labels: things needing attention first, then planned checks
+      const named = list.filter((e) => e.kind !== "reading" && !e.daily).sort((a, b) => needsAttention(b) - needsAttention(a));
+      const labels = named.slice(0, 2).map((e) => `<span class="cal-ev${needsAttention(e) ? " is-watch" : ""}">${shortName(e.title)}</span>`).join("") +
+        (named.length > 2 ? `<span class="cal-ev dim">+ ${named.length - 2} more</span>` : "");
+      // Past days also show that day's recovery score, in ember if it was below Steady
+      const rec = list.find((e) => e.kind === "reading" && e.title === "Recovery");
+      html += `<button type="button" class="cal-cell${iso.slice(0, 7) === cal.month ? "" : " is-out"}${n === 0 ? " is-today" : ""}${iso === cal.day ? " selected" : ""}" data-day="${iso}" aria-pressed="${iso === cal.day}" aria-label="${fmtLong(iso)}, ${list.length} item${list.length === 1 ? "" : "s"}">
+        <span class="cal-top"><span class="cal-num">${toDate(iso).getUTCDate()}</span>${rec && n < 0 ? `<span class="cal-rec${rec.level === "good" ? "" : " is-watch"}" title="Recovery that day">${rec.value}</span>` : marks(list)}</span>
+        ${labels}</button>`;
+    }
+    $("cal-grid").innerHTML = html;
+    $("cal-legend").innerHTML = `<span><i class="mk mk-hot"></i>Needs attention</span><span><i class="mk mk-plan"></i>Health check planned</span><span><b class="cal-rec">82</b>Recovery score that day</span>`;
+
+    // The chosen day, in the card on the right
+    const list = eventsOn(cal.day).filter((e) => matches(e, cal.filter));
+    const groups = [["alert", "Alerts"], ["check", "Health checks"], ["reading", "Readings"]];
+    $("cal-day").innerHTML = `<div class="panel-head"><h2>${ic("calendar")}${daysFromToday(cal.day) === 0 ? "Today" : daysFromToday(cal.day) === 1 ? "Tomorrow" : daysFromToday(cal.day) === -1 ? "Yesterday" : fmtDate(cal.day)}</h2></div>
+      <p class="cal-day-title">${fmtLong(cal.day)}</p>
+      <p class="label">Mission day ${missionDayOf(cal.day)} of ${astronaut.missionLength}</p>` +
+      (list.length
+        ? groups.map(([kind, title]) => {
+            const rows = list.filter((e) => e.kind === kind);
+            return rows.length ? `<h3 class="label cal-group">${title}</h3><div class="due-list">${rows.map((e) => eventRow(e, cal.day)).join("")}</div>` : "";
+          }).join("")
+        : `<p class="empty cal-empty">${ic("circle-check")}Nothing here for this day${cal.filter === "all" ? "" : " with this filter"}.</p>`);
+  }
+  $("cal-filters").addEventListener("click", (e) => {
+    const b = e.target.closest("[data-filter]");
+    if (b) { cal.filter = b.dataset.filter; renderCalendar(); }
+  });
+  $("cal-nav").addEventListener("click", (e) => {
+    const b = e.target.closest("[data-month]");
+    if (!b) return;
+    if (b.dataset.month === "0") { cal.day = todayISO; cal.month = todayISO.slice(0, 7); }
+    else {
+      const [y, m] = cal.month.split("-").map(Number);
+      cal.month = new Date(Date.UTC(y, m - 1 + Number(b.dataset.month), 1)).toISOString().slice(0, 7);
+    }
+    renderCalendar();
+  });
+  $("cal-grid").addEventListener("click", (e) => {
+    const b = e.target.closest("[data-day]");
+    if (!b) return;
+    cal.day = b.dataset.day;
+    cal.month = cal.day.slice(0, 7);
+    renderCalendar();
   });
 
   /* ---------- Health log page ---------- */
@@ -767,6 +978,8 @@
     contributors: ["Overview", "The pieces that make up the score selected above, and which device or check-in each one comes from. This is the hub at work: one score built from several devices. Click Recovery, Radiation or Mind to switch."],
     alerts: ["Alerts", "How many things need your attention and how serious they are. Open the card to see what changed and what to do about it. Some warnings only appear when two devices are combined, which is the point of the hub. Alert is shown only when several signals agree."],
     doctor: ["AI doctor (idea)", "A preview of an idea we're exploring: an assistant that explains your data in plain words, suggests simple actions, and sends a summary to a real flight surgeon when something is serious. The answers are scripted for the demo. Serious issues go to a real doctor."],
+    week: ["This week", "Seven days at a glance: two days back, today and four days ahead. An orange dot means something needs attention that day, a light dot means a health check is planned. Click a day to see its list. Calendar opens the whole month."],
+    calendar: ["Calendar", "Each day gathers three things: alerts, health checks (due, overdue or planned) and that day's readings. Past days show the recovery score, in orange if it was below Steady. Use the buttons at the top to show only one kind or one health area. Click a day to see its details."],
     due: ["Due today", "Health checks you type in yourself, like blood pressure or a mood check, plus any device that hasn't synced for 24 hours. Click Log to add a result."],
     next: ["Coming up", "The next health checks on your schedule. How often each one happens is our own proposal; NASA's documents list the tests but not always how often."],
     history: ["Latest results", "The newest device readings and typed-in results, with where each one came from. Results outside the healthy range are marked in orange."],

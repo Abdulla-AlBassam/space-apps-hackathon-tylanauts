@@ -15,7 +15,7 @@ python3 -m http.server 8000
 
 | File | What it does |
 | --- | --- |
-| `index.html` | The page layout: left rail, header, and four pages switched by the rail: Today (scores, body map, alerts card, AI doctor, vitals, trend), Alerts, Health log and Devices. |
+| `index.html` | The page layout: left rail, header, and five pages switched by the rail: Today (scores, body map, alerts card, vitals, this week, trend), Alerts, Calendar, Health log and Devices. |
 | `sirius.css` | **The Sirius visual identity**, shared by every page: the four colours, the two fonts, the logo and the health dial. Change a brand colour here and it changes everywhere. |
 | `sirius.js` | Draws the brand pieces: the logo (`SIRIUS.mark`), the health dial used as the score meter (`SIRIUS.dial`), the moving logo for loading (`SIRIUS.loading`) and the intro video. |
 | `brand/` | Logo files (`sirius-mark.svg`, `favicon.svg`) and the designer's motion logo video (`sirius-motion.mp4`). |
@@ -51,6 +51,21 @@ The look follows the designer's guide: `docs/design/sirius-identity/Sirius_visua
   colours fade, nothing bounces, spins or glows.
 - **Still true:** we can't use the NASA logo.
 
+## Calendar
+
+The calendar brings together things that used to be in separate places: what is due today,
+what is coming up, the alerts, and each day's readings. It is not new data, just one view of it.
+
+- **This week (on Today):** seven days in a row (two back, today, four ahead). An orange dot means
+  something needs attention that day; a light dot means a health check is planned. Click a day to
+  see its list. This replaced the old "Due today" list.
+- **Calendar page (left rail):** one month at a time. Past days show that day's recovery score.
+  The buttons at the top show only alerts, checks, readings, or one health area. Click a day to
+  see everything for it in the card on the right, and log a result from there.
+- **In the code:** `eventsOn(date)` in `app.js` builds the list for one day from the alerts, the
+  health check schedule (`tests` in `data.js`) and the daily readings. Both views use it.
+  Daily checks are folded into one line on future days so they don't fill the month.
+
 ## How the pages are laid out
 
 - **Few boxes on purpose.** Sections sit straight on the background with space between them
@@ -84,7 +99,7 @@ The look follows the designer's guide: `docs/design/sirius-identity/Sirius_visua
 
 ## Body map
 
-- **The 3D body is a real anatomy model** (skeleton, heart, brain, eyes, thigh muscles and a faint
+- **The 3D body is a real anatomy model** (skeleton, heart, brain, eyes and a faint
   skin outline) drawn in an X-ray style. It comes from **BodyParts3D**, © The Database Center for
   Life Science, licensed under CC BY 4.0. We must keep the credit shown at the bottom of the page.
   Details and how to rebuild it: `models/README.md`.
@@ -92,8 +107,9 @@ The look follows the designer's guide: `docs/design/sirius-identity/Sirius_visua
   body map needs an internet connection. The model itself (`models/body.glb`, about 3.8 MB) ships
   with the app, so open the page through a local server (see the top of this file), not by
   double-clicking the HTML file.
-- **Six body areas:** heart, mind/mood/sleep, eyes (SANS), radiation dose, bones (spine and hips)
-  and leg muscles. The matching part of the model glows in that area's status colour. Each area has
+- **Four body areas:** heart, mind/mood/sleep, eyes (SANS) and radiation dose. Bone density and
+  muscle are not tracked (removed on 14 Nov 2026), so the skeleton is only the picture of the body
+  and the thigh muscles in the model file are not drawn. The matching part of the model glows in that area's status colour. Each area has
   readings with normal ranges, a `?` explaining why it matters in space, and what to do. The list
   lives in `AREAS` at the top of `body-map.js`.
 - **Moving it into the main dashboard later:** copy the three parts of `body-map.html`
