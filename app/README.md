@@ -22,6 +22,9 @@ python3 -m http.server 8000
 | `body-map.html` | **Body map** page: a 3D body you can turn, with glowing points where a health area needs attention. Linked from the left rail ("Body"). |
 | `body-map.js` | Draws the 3D anatomy model with three.js and the list of body areas. Reads the same simulated data from `data.js`, so both pages tell the same story. |
 | `body-map.css` | Styling for the body map page (same brand colours and fonts). |
+| `crew.html` | **Crew overview** mock: one crew score, a grid of every astronaut against every health category, and "crew patterns" that link people who share the same drop. Not linked from the main dashboard yet. |
+| `crew.js` | Makes 14 days of simulated scores for a crew of six, finds the patterns, and draws the page. Self-contained: it doesn't use `data.js`. |
+| `crew.css` | Styling for the crew page. Self-contained: it doesn't load `styles.css`, so restyling the main dashboard can't break it. |
 | `models/body.glb` | The 3D anatomy model (from BodyParts3D, CC BY 4.0). See `models/README.md`. |
 
 ## Things to know
@@ -52,3 +55,20 @@ python3 -m http.server 8000
 - **Moving it into the main dashboard later:** copy the three parts of `body-map.html`
   (`#bm-list`, `#bm-stage`, `#bm-detail`) and its import map into `index.html`, and load
   `body-map.js` as a module.
+
+## Crew overview
+
+- **The idea:** a bird's-eye view of the whole crew. The crew score is the average of each
+  person's overall score, but because an average can hide one person struggling, people are
+  also counted by their *weakest* category, and the grid always shows everyone.
+- **Crew patterns:** when 3 or more people drop in the same category over the same days
+  (15 or more points under their own normal), the page calls it a crew pattern, joins those
+  people with a dashed line in the grid, and lists shared events from the mission log that
+  happened around the same time. One or two people dropping is listed separately as personal.
+  The numbers are at the top of `crew.js` (`DROP`, `CREW_MIN`) and are placeholders.
+- **Astronaut / Flight surgeon switch:** the Astronaut view hides crewmates' names
+  ("Crewmate B"). That's a suggestion for the team to decide, not a settled rule.
+- **The simulated story:** a solar event on day 134 (everyone, now recovered), lost family
+  calls from day 135 (mood, 3 people), a sleep schedule change on day 139 (sleep, 4 people),
+  a spacewalk on day 140 (radiation, 2 people) and the commander's heart drift that the main
+  dashboard also shows.
