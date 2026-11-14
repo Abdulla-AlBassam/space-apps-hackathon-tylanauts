@@ -4,6 +4,10 @@ Short on purpose. If something here is wrong, change it in a pull request.
 
 ## 1. Goal
 
+**Software comes first.** The dashboard and its features are the product. A real
+watch or wearable is secondary: we only work on it after the MVP below is done.
+Until then, all health readings come from simulated data.
+
 Build a demo that shows an astronaut:
 
 1. **What their body is doing**: a dashboard of daily health readings.
@@ -23,6 +27,9 @@ If we only finish this, we still have something to show the judges:
 Nice-to-haves only **after** the MVP works: a daily mood/symptom check-in,
 trends over the whole mission, radiation-dose tracking, exercise tracking for
 bone and muscle loss, a view for the flight surgeon on Earth.
+
+**Last priority:** connecting a real watch or wearable (or a mock-up of one for the
+pitch). Only start this once everything above works.
 
 ## 3. Roles
 
