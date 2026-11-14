@@ -1,5 +1,6 @@
 /*
- * SIMULATED DATA. Nothing in this file is a real astronaut's reading.
+ * Nothing in this file is a real astronaut's reading: the live data comes from our device
+ * simulator (simulator/simulate.py), and the rest is made up here.
  *
  * What this file does, in plain English:
  * 1. Pretends three wearables (a watch, a chest strap, a headband) plus a radiation
@@ -12,8 +13,14 @@
  * heart rate rising and sleep getting shorter, so the Recovery score drops three days
  * in a row and the dashboard raises an alert. That's the MVP alert from the plan.
  *
- * When the real backend exists, replace `generateReadings()` with a fetch from it.
- * Everything below it can stay the same.
+ * Live data: on page load this file asks the backend (tylanauts-api.vercel.app) for the
+ * astronaut's readings. Readings the backend has replace the made-up ones; readings it
+ * doesn't have yet (skin temperature, deep sleep, exercise) stay made up. Pages can ask
+ * HEALTH_DATA.isSample(metric) to show a "Sample data" tag. If the backend can't be
+ * reached, everything falls back to the made-up readings and HEALTH_DATA.live.source
+ * says "sample".
+ *
+ * Pages wait for `window.HEALTH_READY` (a promise) before drawing.
  */
 
 (function () {
@@ -63,9 +70,9 @@
     return 0;
   }
 
-  function generateReadings() {
+  function generateReadings(today) {
+    seed = 7; // start the random numbers from the beginning every time
     const readings = [];
-    const today = new Date("2026-11-14T07:00:00Z");
 
     for (let i = 0; i < DAYS; i++) {
       const date = new Date(today.getTime() - (DAYS - 1 - i) * 86400000);
@@ -153,7 +160,9 @@
 
       // Mood (1 to 5) is typed in by the astronaut in the daily check-in, not measured by a device.
       const fromEnd = days.length - 1 - days.indexOf(d);
-      d.mood = clamp(Math.round(4 + noise(0.6) - (fromEnd <= 2 ? 1 : 0) - (fromEnd === 0 ? 0.6 : 0)), 1, 5);
+      // If the backend sent a mood for this day, use it; otherwise make one up.
+      const madeUpMood = clamp(Math.round(4 + noise(0.6) - (fromEnd <= 2 ? 1 : 0) - (fromEnd === 0 ? 0.6 : 0)), 1, 5);
+      if (d.mood == null) d.mood = madeUpMood;
       // Mind score (placeholder): mostly mood, plus sleep, as a 0-100 number.
       d.mindScore = Math.round(clamp((d.mood / 5) * 70 + Math.pow(d.sleep_hours / 8, 2) * 30, 0, 100));
       // Radiation: share of the career limit used so far.
@@ -279,39 +288,131 @@
     }
   }
 
-  const readings = generateReadings();
-  const days = groupByDay(readings);
-  const baseline = addScores(days);
-  const alerts = buildAlerts(days, baseline);
-  // For the calendar: the day each alert belongs to, and its health category.
-  const spikeDay = days.find((d) => d.radiation_dose > 1);
-  for (const a of alerts) {
-    const isSpike = a.level === "info" && a.signals.includes("radiation_dose");
-    a.date = isSpike && spikeDay ? spikeDay.date : days[days.length - 1].date;
-    a.cat = a.device ? "device" : isSpike ? "radiation" : a.combined ? "sleep" : "heart";
+  /* ---------- Putting it together ---------- */
+  // Turns a list of readings into everything the pages draw. `live` says which readings
+  // came from the backend.
+  function build(readings, live) {
+    const days = groupByDay(readings);
+    const baseline = addScores(days);
+    const alerts = buildAlerts(days, baseline);
+    // For the calendar: the day each alert belongs to, and its health category.
+    const spikeDay = days.find((d) => d.radiation_dose > 1);
+    for (const a of alerts) {
+      const isSpike = a.level === "info" && a.signals.includes("radiation_dose");
+      a.date = isSpike && spikeDay ? spikeDay.date : days[days.length - 1].date;
+      a.cat = a.device ? "device" : isSpike ? "radiation" : a.combined ? "sleep" : "heart";
+    }
+
+    // Recent log entries: device readings and typed-in results in one history.
+    const todayRow = days[days.length - 1];
+    const yRow = days[days.length - 2];
+    const history = [
+      { when: "Today 07:00", test: "Hours slept", cat: "sleep", value: `${todayRow.sleep_hours} h`, source: "band-01", out: todayRow.sleep_hours < baseline.sleep_hours.low },
+      { when: "Today 07:00", test: "Resting heart rate", cat: "heart", value: `${todayRow.resting_hr} bpm`, source: "watch-01", out: todayRow.resting_hr > baseline.resting_hr.high },
+      { when: "Today 07:00", test: "Personal dose", cat: "radiation", value: `${todayRow.radiation_dose} mSv`, source: "dosi-01", out: false },
+      { when: "Yesterday 21:10", test: "Mood check", cat: "mind", value: `${yRow.mood} / 5`, source: "typed", note: "Tired, slight headache", out: yRow.mood < 3 },
+      { when: "Yesterday 08:05", test: "Blood pressure", cat: "heart", value: "118/76 mmHg", source: "typed", out: false },
+    ];
+
+    // The AI doctor (idea only, see docs/AI_DOCTOR.md). Scripted messages for the demo.
+    const DOCTOR = {
+      tier: { n: 2, word: "Watch", level: "watch" },
+      message: `Your recovery has dropped for 3 days. Your watch shows a resting heart rate of ${todayRow.resting_hr} bpm (usually about ${Math.round(baseline.resting_hr.mean)}), and your headband shows only ${todayRow.sleep_hours} h of sleep. Together that usually means you need rest, not illness, but let's keep an eye on it.`,
+      suggestions: ["Take today's exercise easy", "Log how rested you feel", "I'll check again tomorrow morning"],
+      basedOn: ["watch-01", "band-01", "strap-01"],
+    };
+
+    return {
+      astronaut: ASTRONAUT, devices: DEVICES, readings, days, baseline, alerts, band,
+      categories: CATEGORIES, tests: TESTS, history, doctor: DOCTOR, careerLimit: CAREER_LIMIT_MSV,
+      live,
+      // true when a reading is still made up (no live data for it on the latest day)
+      isSample: (metric) => !live.metrics.includes(metric),
+    };
   }
 
-  // Recent log entries: device readings and typed-in results in one history.
-  const todayRow = days[days.length - 1];
-  const yRow = days[days.length - 2];
-  const history = [
-    { when: "Today 07:00", test: "Hours slept", cat: "sleep", value: `${todayRow.sleep_hours} h`, source: "band-01", out: todayRow.sleep_hours < baseline.sleep_hours.low },
-    { when: "Today 07:00", test: "Resting heart rate", cat: "heart", value: `${todayRow.resting_hr} bpm`, source: "watch-01", out: todayRow.resting_hr > baseline.resting_hr.high },
-    { when: "Today 07:00", test: "Personal dose", cat: "radiation", value: `${todayRow.radiation_dose} mSv`, source: "dosi-01", out: false },
-    { when: "Yesterday 21:10", test: "Mood check", cat: "mind", value: `${yRow.mood} / 5`, source: "typed", note: "Tired, slight headache", out: yRow.mood < 3 },
-    { when: "Yesterday 08:05", test: "Blood pressure", cat: "heart", value: "118/76 mmHg", source: "typed", out: false },
-  ];
-
-  // The AI doctor (idea only, see docs/AI_DOCTOR.md). Scripted messages for the demo.
-  const DOCTOR = {
-    tier: { n: 2, word: "Watch", level: "watch" },
-    message: `Your recovery has dropped for 3 days. Your watch shows a resting heart rate of ${todayRow.resting_hr} bpm (usually about ${Math.round(baseline.resting_hr.mean)}), and your headband shows only ${todayRow.sleep_hours} h of sleep. Together that usually means you need rest, not illness, but let's keep an eye on it.`,
-    suggestions: ["Take today's exercise easy", "Log how rested you feel", "I'll check again tomorrow morning"],
-    basedOn: ["watch-01", "band-01", "strap-01"],
+  /* ---------- Reading live data from the backend ---------- */
+  // ?api=http://localhost:8001/api/v1 in the address bar points the page at a local backend.
+  const API_BASE = new URLSearchParams(location.search).get("api") || "https://tylanauts-api.vercel.app/api/v1";
+  const WAIT_MS = 6000; // after this long without an answer, use the made-up data
+  // Backend metric id -> the name this file uses.
+  const DASHBOARD_NAMES = {
+    "heart-rate": "resting_hr",
+    "oxygen-saturation": "spo2",
+    "heart-rate-variability": "hrv_rmssd",
+    "respiratory-rate": "resp_rate",
+    "sleep-duration": "sleep_hours",
+    "radiation-dose": "radiation_dose",
+    "mood": "mood",
   };
+  // The backend spells some units the standard's way; show them the way the pages do.
+  const UNITS = { "beats/min": "bpm", C: "°C", score: "/5" };
 
-  window.HEALTH_DATA = {
-    astronaut: ASTRONAUT, devices: DEVICES, readings, days, baseline, alerts, band,
-    categories: CATEGORIES, tests: TESTS, history, doctor: DOCTOR, careerLimit: CAREER_LIMIT_MSV,
-  };
+  async function fetchLiveReadings(astronautId) {
+    const since = new Date(Date.now() - 60 * 86400000).toISOString();
+    const url = `${API_BASE}/subjects/${encodeURIComponent(astronautId)}/data-points?start=${since}&limit=5000`;
+    const stop = new AbortController();
+    const timer = setTimeout(() => stop.abort(), WAIT_MS);
+    try {
+      const response = await fetch(url, { signal: stop.signal });
+      if (!response.ok) throw new Error(`the server answered ${response.status}`);
+      const records = await response.json();
+      const rows = [];
+      for (const rec of records) {
+        const metric = DASHBOARD_NAMES[rec.metric];
+        if (!metric || typeof rec.values.value !== "number") continue; // not used by the pages yet
+        const body = rec.data_point.body;
+        const unit = Object.values(body).find((v) => v && typeof v === "object" && "unit" in v)?.unit;
+        const deviceId = rec.device_id || "typed";
+        rows.push({
+          astronaut_id: rec.subject_id,
+          device_id: deviceId,
+          device_type: (DEVICES.find((d) => d.id === deviceId) || {}).type || "typed",
+          metric,
+          value: rec.values.value,
+          unit: UNITS[unit] || unit,
+          // Periods like sleep count for the day they end on.
+          time: rec.effective_end || rec.effective_start,
+        });
+      }
+      return rows;
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
+  // Live readings win; made-up ones fill whatever the backend doesn't have yet.
+  function mergeReadings(liveRows) {
+    const latest = liveRows.reduce((max, r) => (r.time > max ? r.time : max), "");
+    const lastDay = latest.slice(0, 10);
+    // Line the made-up days up with the live ones, so both describe the same 30 days.
+    const sample = generateReadings(new Date(lastDay + "T07:00:00Z"));
+    const firstDay = sample[0].time.slice(0, 10);
+    const recent = liveRows.filter((r) => r.time.slice(0, 10) >= firstDay);
+    const have = new Set(recent.map((r) => r.time.slice(0, 10) + "|" + r.metric));
+    const filler = sample.filter((r) => !have.has(r.time.slice(0, 10) + "|" + r.metric));
+    const metrics = [...new Set(recent.filter((r) => r.time.slice(0, 10) === lastDay).map((r) => r.metric))];
+    return { readings: filler.concat(recent).sort((a, b) => (a.time < b.time ? -1 : 1)), metrics };
+  }
+
+  function useSample(reason) {
+    if (reason) console.warn("[Sirius] Using sample data:", reason);
+    window.HEALTH_DATA = build(generateReadings(new Date("2026-11-14T07:00:00Z")), { source: "sample", metrics: [], reason: reason || "" });
+    return window.HEALTH_DATA;
+  }
+
+  // ?sample in the address bar skips the backend (handy for working offline).
+  window.HEALTH_READY = /[?&]sample\b/.test(location.search)
+    ? Promise.resolve(useSample("asked for with ?sample"))
+    : fetchLiveReadings(ASTRONAUT.id)
+        .then((rows) => {
+          if (!rows.length) return useSample(`the server has no readings for ${ASTRONAUT.id} yet`);
+          const { readings, metrics } = mergeReadings(rows);
+          window.HEALTH_DATA = build(readings, { source: "live", metrics, reason: "" });
+          return window.HEALTH_DATA;
+        })
+        .catch((err) => {
+          console.warn("[Sirius] Backend error:", err);
+          return useSample(err.name === "AbortError" ? "the server took too long to answer" : "couldn't reach the server");
+        });
 })();
