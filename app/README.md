@@ -15,17 +15,30 @@ python3 -m http.server 8000
 
 | File | What it does |
 | --- | --- |
-| `index.html` | The page layout: header, score cards, vitals, trend chart, alerts, check-in, devices. |
+| `index.html` | The page layout: left rail, header, and four pages switched by the rail: Today (scores, body map, alerts card, AI doctor, vitals, trend), Alerts, Health log and Devices. |
 | `styles.css` | All the styling. Colours and fonts come only from the Space Apps brand guide (see `docs/design/DESIGN_BRIEF.md`). |
 | `data.js` | Makes 30 days of simulated readings from 3 wearables and a radiation badge, in the common format from `docs/PLAN.md`, then works out the scores and alerts. |
 | `app.js` | Draws everything from `data.js`, plus the moving star background and the `?` help pop-ups. |
-| `body-map.html` | **Body map** page: a 3D body you can turn, with glowing points where a health area needs attention. Linked from the left rail ("Body"). |
+| `body-map.html` | **Body map** page: a 3D body you can turn, with glowing points where a health area needs attention. The same body map is the centrepiece of the Today page; this is its full-screen version ("Full screen" link on the map). |
 | `body-map.js` | Draws the 3D anatomy model with three.js and the list of body areas. Reads the same simulated data from `data.js`, so both pages tell the same story. |
 | `body-map.css` | Styling for the body map page (same brand colours and fonts). |
-| `crew.html` | **Crew overview** mock: one crew score, a grid of every astronaut against every health category, and "crew patterns" that link people who share the same drop. Not linked from the main dashboard yet. |
+| `crew.html` | **Crew overview** mock: one crew score, a grid of every astronaut against every health category, and "crew patterns" that link people who share the same drop. Linked from the left rail ("Crew"). |
 | `crew.js` | Makes 14 days of simulated scores for a crew of six, finds the patterns, and draws the page. Self-contained: it doesn't use `data.js`. |
 | `crew.css` | Styling for the crew page. Self-contained: it doesn't load `styles.css`, so restyling the main dashboard can't break it. |
 | `models/body.glb` | The 3D anatomy model (from BodyParts3D, CC BY 4.0). See `models/README.md`. |
+
+## How the pages are laid out
+
+- **Few boxes on purpose.** Sections sit straight on the background with space between them
+  (`.panel` in `styles.css` has no border or fill). Only things that should stand out get a
+  soft box (`.card`): the selected score, the alerts card, the AI doctor, and the health-log
+  and device tiles. Please keep new sections unboxed unless they really need to stand out.
+- **Statuses are an icon and a coloured word** (`.pill`), with no outline.
+- **Alerts:** Today shows one small card with how many alerts are open and how serious they
+  are. Clicking it opens the Alerts page (`#alerts`), which lists each alert with what changed
+  and what to do. Both are drawn by `renderAlerts()` in `app.js`.
+- **Body map labels** are an icon, a name and a status joined to the body by a thin line.
+  Clicking one opens its details underneath.
 
 ## Things to know
 

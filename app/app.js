@@ -1,7 +1,8 @@
 /*
  * Draws the whole dashboard from window.HEALTH_DATA (made in data.js).
  * Pages (switched with the left rail, using the address bar's #):
- *   #today   – score cards, 3D body map (body-map.js), alerts, AI doctor, vitals, trends
+ *   #today   – scores, 3D body map (body-map.js), a small alerts card, AI doctor, vitals, trends
+ *   #alerts  – every alert in full: what changed and what to do
  *   #log     – health check log: categories, what's due, schedule, history, "Log a result"
  *   #devices – my devices, how data flows, "Connect a device" walkthrough (a mock)
  * Every icon comes from icons.js (Lucide). All data is simulated.
@@ -44,14 +45,15 @@
   /* ---------- Rail and page switching ---------- */
   const PAGES = [
     { id: "today", label: "Today", icon: "house" },
-    { id: "log", label: "Health log", icon: "clipboard-list" },
+    { id: "alerts", label: "Alerts", icon: "bell" },
+    { id: "log", label: "Log", icon: "clipboard-list" },
     { id: "devices", label: "Devices", icon: "watch" },
   ];
+  // The name and logo are placeholders until the team's design language and logo arrive.
   $("rail").innerHTML =
-    `<span class="rail-mark" title="Siryius">${ic("orbit")}</span>` +
-    PAGES.map((p) => `<a href="#${p.id}" data-page="${p.id}">${ic(p.icon)}<span>${p.label}</span></a>`).join("") +
-    `<a href="crew.html">${ic("users")}<span>Crew</span></a>` +
-    `<a href="body-map.html">${ic("person-standing")}<span>Full body</span></a>`;
+    `<a class="brand" href="#today" aria-label="Siryius home"><span class="logo-box" title="Logo placeholder">Logo</span><span>Siryius</span></a>` +
+    PAGES.map((p) => `<a class="rail-link" href="#${p.id}" data-page="${p.id}" title="${p.label}">${ic(p.icon)}<span>${p.label}</span>${p.id === "alerts" ? `<i class="rail-count" id="rail-count"></i>` : ""}</a>`).join("") +
+    `<a class="rail-link" href="crew.html" title="Crew overview">${ic("users")}<span>Crew</span></a>`;
 
   function showPage() {
     const id = (location.hash || "#today").slice(1);
@@ -64,19 +66,10 @@
   window.addEventListener("hashchange", () => { showPage(); window.scrollTo(0, 0); });
 
   /* ---------- Header ---------- */
-  $("brand").innerHTML = '<span class="logo-box" title="Logo placeholder">Logo</span><span>Siryius</span>'; // placeholder until the real logo and design language arrive
   $("astro-name").textContent = astronaut.name;
   $("astro-mission").innerHTML = ic("rocket") + astronaut.mission;
   $("mission-label").innerHTML = `${ic("calendar")}Day <b>${astronaut.missionDay}</b> of ${astronaut.missionLength}`;
   $("mission-fill").style.width = (astronaut.missionDay / astronaut.missionLength) * 100 + "%";
-
-  function renderStatusPill() {
-    const open = alerts.filter((a) => !a.done);
-    const level = open.some((a) => a.level === "act") ? "act" : open.some((a) => a.level === "watch") ? "watch" : "good";
-    const el = $("status-pill");
-    el.className = "status-pill is-" + level;
-    el.innerHTML = ic(STATUS_ICON[level]) + (level === "good" ? "All normal" : level === "watch" ? "Keep an eye on" : "Needs action");
-  }
 
   /* ---------- Astronaut / flight surgeon switch ---------- */
   let surgeon = false;
@@ -146,7 +139,7 @@
   function renderScores() {
     $("scores").innerHTML = SCORES.map(
       (s) => `
-      <div class="panel score${s.key === selectedScore ? " selected" : ""}" role="button" tabindex="0"
+      <div class="score${s.key === selectedScore ? " selected" : ""}" role="button" tabindex="0"
            data-score="${s.key}" aria-pressed="${s.key === selectedScore}"
            aria-label="${s.title} ${s.value} ${s.unit}. Show what's behind it">
         ${ring(s)}
@@ -221,25 +214,70 @@
 
   /* ---------- Body map heading ---------- */
   head("bm-heading", "person-standing", "Body map");
-  $("bm-full").innerHTML = ic("person-standing") + "Full screen";
 
-  /* ---------- Alerts ---------- */
-  head("alerts-heading", "bell-ring", "Alerts and actions");
+  /* ---------- Alerts ----------
+   * On Today there is one small card: how many alerts are open and how serious they are.
+   * Clicking it opens the Alerts page (#alerts), which lists each alert in full.
+   */
+  head("alerts-title", "bell-ring", "Alerts and actions");
+  function alertCounts() {
+    const open = alerts.filter((a) => !a.done);
+    return {
+      act: open.filter((a) => a.level === "act").length,
+      watch: open.filter((a) => a.level === "watch").length,
+      info: alerts.filter((a) => a.level === "info").length,
+    };
+  }
+  const countsHtml = (c) =>
+    [["act", c.act], ["watch", c.watch], ["info", c.info]]
+      .filter(([, n]) => n > 0)
+      .map(([level, n]) => `<span class="pill is-${level}">${ic(STATUS_ICON[level])}<b>${n}</b> ${WORDS[level]}</span>`)
+      .join("");
   function renderAlerts() {
+    const c = alertCounts();
+    const needs = c.act + c.watch; // "For info" alerts don't need anything doing
+    const level = c.act ? "act" : c.watch ? "watch" : "good";
+    const top = alerts.find((a) => !a.done && a.level !== "info");
+
+    // The small card on Today
+    $("alerts-card").innerHTML = `
+      <div class="panel-head"><h2>${ic("bell-ring")}Alerts</h2>${helpBtn("alerts")}<span class="spacer"></span><a class="link-btn" href="#alerts">View all${ic("chevron-right")}</a></div>
+      <div class="alerts-sum">
+        <b class="alerts-num is-${level}">${needs}</b>
+        <p class="alerts-line">${needs ? `need${needs === 1 ? "s" : ""} your<br>attention` : "Nothing needs<br>your attention"}</p>
+      </div>
+      <div class="alerts-levels">${countsHtml(c) || pill("good", "All normal")}</div>
+      ${top ? `<p class="alerts-top"><span class="is-${top.level}">${ic(STATUS_ICON[top.level])}</span>${top.title}</p>` : ""}`;
+
+    // The count on the left rail
+    const rc = $("rail-count");
+    rc.textContent = needs || "";
+    rc.className = "rail-count is-" + level;
+    rc.hidden = !needs;
+
+    // The Alerts page
+    $("alert-counts").innerHTML = countsHtml(c);
     $("alert-list").innerHTML = alerts
       .map(
-        (a, i) => `<div class="alert ${a.level}${a.done ? " done" : ""}">
-        <div class="alert-top">${pill(a.level)}${a.combined ? `<span class="badge">${ic("sparkles")}Combined devices</span>` : ""}${a.device ? `<span class="badge">${ic("wifi-off")}Device</span>` : ""}</div>
-        <h3>${a.title}</h3>
-        <p>${a.detail}</p>
-        <div class="chips">${(a.sources || []).map(deviceChip).join("")}</div>
-        <ul>${a.actions.map((x) => `<li>${x}</li>`).join("")}</ul>
-        ${a.level === "info" ? "" : `<button type="button" class="btn-ghost" data-alert="${i}">${ic(a.done ? "refresh-cw" : "check")}${a.done ? "Undo" : "Mark as done"}</button>`}
-      </div>`
+        (a, i) => `<article class="alert ${a.level}${a.done ? " done" : ""}">
+        <div class="alert-what">
+          <div class="alert-top">${pill(a.level)}${a.combined ? `<span class="badge">${ic("sparkles")}Combined devices</span>` : ""}${a.device ? `<span class="badge">${ic("wifi-off")}Device</span>` : ""}</div>
+          <h3>${a.title}</h3>
+          <p>${a.detail}</p>
+          <div class="chips">${(a.sources || []).map(deviceChip).join("")}</div>
+        </div>
+        <div class="alert-do">
+          <h4>${ic("clipboard-list")}What to do</h4>
+          <ul>${a.actions.map((x) => `<li>${x}</li>`).join("")}</ul>
+          ${a.level === "info" ? "" : `<button type="button" class="btn-ghost" data-alert="${i}">${ic(a.done ? "refresh-cw" : "check")}${a.done ? "Undo" : "Mark as done"}</button>`}
+        </div>
+      </article>`
       )
       .join("");
-    renderStatusPill();
   }
+  $("alerts-card").addEventListener("click", (e) => {
+    if (!e.target.closest(".help, a")) location.hash = "#alerts"; // the whole card opens the Alerts page
+  });
   $("alert-list").addEventListener("click", (e) => {
     const b = e.target.closest("[data-alert]");
     if (!b) return;
@@ -256,12 +294,11 @@
       <div class="panel-head"><h2>${ic("bot")}AI doctor</h2>${helpBtn("doctor")}<span class="spacer"></span><span class="badge">${ic("sparkles")}Idea preview</span></div>
       <div class="doc-tier">${pill(d.tier.level, `Tier ${d.tier.n} · ${d.tier.word}`)}<span class="doc-based">Based on ${d.basedOn.map((id) => `<span title="${deviceLabel(id)}">${ic(device(id).icon)}</span>`).join("")}</span></div>
       <div class="bubble">${ic("bot", "bubble-ico")}<p>${d.message}</p></div>
-      <div class="chips">${d.suggestions.map((s) => `<span class="chip">${ic("check")}${s}</span>`).join("")}</div>
       ${doctorState.asked ? `<div class="bubble me"><p>Should I skip today's run?</p></div>
         <div class="bubble">${ic("bot", "bubble-ico")}<p>Swap it for a light bike session. Your heart needs an easier day, and you'll still protect your bones and muscles.</p></div>` : ""}
       <div class="doc-actions">
-        <button type="button" class="btn-ghost" id="doc-ask" ${doctorState.asked ? "disabled" : ""}>${ic("message-circle")}Ask: should I skip my run?</button>
-        <button type="button" class="btn-primary small" id="doc-send" ${doctorState.sent ? "disabled" : ""}>${ic(doctorState.sent ? "check" : "send")}${doctorState.sent ? "Summary sent" : "Send summary to flight surgeon"}</button>
+        <button type="button" class="btn-ghost" id="doc-ask" ${doctorState.asked ? "disabled" : ""}>${ic("message-circle")}Should I skip my run?</button>
+        <button type="button" class="btn-primary small" id="doc-send" ${doctorState.sent ? "disabled" : ""}>${ic(doctorState.sent ? "check" : "send")}${doctorState.sent ? "Summary sent" : "Send to flight surgeon"}</button>
       </div>
       ${doctorState.sent ? `<p class="doc-note">${ic("satellite")}Sent to ${surgeon ? "you (flight surgeon)" : "your flight surgeon"}. From the Moon a message takes about 1.3 seconds each way; from Mars it can take up to 22 minutes.</p>` : ""}
       <p class="doc-disclaimer">${ic("shield-check")}Suggestions only. Not a medical device. Serious issues go to a real doctor.</p>`;
@@ -286,7 +323,7 @@
     const html =
       items
         .map(({ t, level, word }) => `<div class="due">
-          <span class="due-ico">${ic(catOf(t.cat).icon)}</span>
+          <span class="due-ico is-good">${ic(catOf(t.cat).icon)}</span>
           <div class="due-text"><b>${t.name}</b><span>${catOf(t.cat).name} · ${t.every}</span></div>
           ${pill(level, word)}
           ${t.how === "reminder" ? "" : `<button type="button" class="btn-ghost small" data-log="${t.id}">${ic("plus")}Log</button>`}
@@ -294,7 +331,7 @@
         .join("") +
       unsynced
         .map((d) => `<div class="due">
-          <span class="due-ico">${ic(d.icon)}</span>
+          <span class="due-ico is-good">${ic(d.icon)}</span>
           <div class="due-text"><b>${d.label} not synced</b><span>Last reading ${Math.round(d.lastSyncHours)} h ago</span></div>
           ${pill("watch", "24 h+")}
           <a class="btn-ghost small" href="#devices">${ic("wifi-off")}Check</a>
@@ -334,7 +371,7 @@
         const next = typedTests().filter((t) => t.cat === c.id).sort((a, b) => a.dueInDays - b.dueInDays)[0];
         const last = history.find((h) => h.cat === c.id);
         const st = catStatus(c);
-        return `<div class="panel cat">
+        return `<div class="card cat">
           <div class="cat-top"><span class="cat-ico is-${st}">${ic(c.icon)}</span>${pill(st)}</div>
           <h3>${c.name}</h3>
           <p>${ic("history")}Last: ${last ? `${last.test}, ${last.when.toLowerCase()}` : "nothing yet"}</p>
@@ -433,15 +470,15 @@
       .map((d) => {
         const stale = d.lastSyncHours >= 24;
         const synced = d.lastSyncHours < 1 ? `${Math.max(1, Math.round(d.lastSyncHours * 60))} min ago` : `${Math.round(d.lastSyncHours)} h ago`;
-        return `<div class="panel dev${stale ? " stale" : ""}">
-          <div class="dev-top"><span class="dev-ico">${ic(d.icon)}</span>
+        return `<div class="card dev${stale ? " stale" : ""}">
+          <div class="dev-top"><span class="dev-ico is-good">${ic(d.icon)}</span>
             <div><h3>${d.label}</h3><p class="dim">${d.model}</p></div>
             ${stale ? pill("watch", "Not synced") : pill("good", "Connected")}</div>
           <div class="dev-stats">
             <span>${ic(stale ? "wifi-off" : "wifi")}Synced ${synced}</span>
             <span class="${d.battery < 25 ? "is-watch" : ""}">${ic(batteryIcon(d.battery))}${d.battery}%</span>
           </div>
-          <div class="chips">${d.measures.map((m) => `<span class="chip">${ic("activity")}${m}</span>`).join("")}</div>
+          <p class="dev-measures">${d.measures.join(" · ")}</p>
           <div class="hook"><span>${ic("webhook")}</span><code>hub.tylanauts.app/hooks/${d.id}</code>
             <button type="button" class="icon-btn" data-copy="https://hub.tylanauts.app/hooks/${d.id}" aria-label="Copy webhook address">${ic("copy")}</button></div>
         </div>`;
@@ -561,9 +598,8 @@
       return `<div class="vital ${out ? "out" : ""}">
         <div class="vital-name"><span class="vital-ico ${out ? "is-watch" : "is-good"}">${ic(v.icon)}</span>${v.name} ${helpBtn(v.help)}</div>
         <div class="vital-value">${shown}<small>${v.unit}</small></div>
-        <div class="vital-flag">${out ? pill("watch", "Outside normal") : pill("good", "Normal for you")}</div>
-        <div class="${out ? "is-watch" : "is-good"}">${sparkline(days.slice(-14).map((d) => d[v.metric]), b ? b.low : null, b ? b.high : null)}</div>
-        <div class="vital-src">${ic(src.icon)}${src.label}</div>
+        <div class="vital-flag">${out ? pill("watch", "Outside normal") : pill("good", "Normal")}</div>
+        <div class="${out ? "is-watch" : "is-good"}" title="Last 14 days, from your ${src.label.toLowerCase()}">${sparkline(days.slice(-14).map((d) => d[v.metric]), b ? b.low : null, b ? b.high : null)}</div>
       </div>`;
     }).join("");
   }
@@ -689,15 +725,15 @@
     recovery: ["Recovery", "How ready your body is today, from 0 to 100%. It compares last night's heart rate variability, resting heart rate and sleep with your own normal, using three different devices. 67% and up is Normal, 34 to 66% is Watch, 33% and below is Act now. (Placeholder formula for the demo.)"],
     radiation: ["Radiation", "Your total radiation dose this mission, from your radiation badge, and how much of NASA's 600 mSv career limit that is. The ring shows the share of the limit used."],
     mind: ["Mind", "How you're doing mentally, from 0 to 100%. Mostly your daily mood check-in, plus how well you slept. Isolation and confinement are real risks on long missions. (Placeholder formula for the demo.)"],
-    bodymap: ["Body map", "A 3D body with a label for each health area. The line shows where on the body it is. Colours show today's status. Click a label to open its details. Drag to turn the body."],
+    bodymap: ["Body map", "A 3D body with a label for each health area. The line shows where on the body it is. Colours show today's status. Click a label to open its details. Drag to turn the body. Full screen also lets you zoom."],
     contributors: ["What's behind the score", "The pieces that make up the score you selected, and which device or check-in each one comes from. Click a different score card to switch."],
-    alerts: ["Alerts and actions", "What changed and what to do about it. Some warnings only appear when two devices are combined, which is the point of the hub. Act now is shown only when several signals agree."],
+    alerts: ["Alerts", "How many things need your attention and how serious they are. Open the card to see what changed and what to do about it. Some warnings only appear when two devices are combined, which is the point of the hub. Act now is shown only when several signals agree."],
     doctor: ["AI doctor (idea)", "A preview of an idea we're exploring: an assistant that explains your data in plain words, suggests simple actions, and sends a summary to a real flight surgeon when something is serious. These messages are scripted for the demo."],
     due: ["Due today", "Health checks you type in yourself, like blood pressure or a mood check, plus any device that hasn't synced for 24 hours. Click Log to add a result."],
     schedule: ["Schedule", "Every test in the health log and how often it happens. Device readings fill in automatically. Most frequencies are our own proposal; NASA's documents list the tests but not always how often."],
     history: ["History", "Device readings and typed-in results together, newest first, with where each one came from. Results outside the healthy range are flagged."],
     flow: ["How data flows", "Each wearable sends readings to its own web address (a webhook). The hub turns them into one common format and combines them, so it can spot patterns no single device could."],
-    vitals: ["Vitals", "Overnight readings from your devices. The shaded strip in each mini chart is your normal range. A reading outside it gets a yellow outline."],
+    vitals: ["Vitals", "Overnight readings from your devices. The shaded strip in each mini chart is your normal range. A reading outside it is marked in yellow."],
     trend: ["30-day trend", "The line shows the last 30 days. The shaded band is your normal range, worked out from your own earlier days. Yellow dots mark days outside it."],
     raw: ["Raw readings", "The numbers behind the dashboard, with the device each one came from. Shown in the flight surgeon view only."],
     rhr: ["Resting heart rate", "Your heart rate while fully at rest overnight. A rise of several beats above your normal can mean fatigue, illness or stress."],
@@ -725,7 +761,7 @@
   document.addEventListener("focusout", (e) => { if (e.target.closest(".help") && !pinned) hideHelp(); });
   document.addEventListener("click", (e) => {
     const b = e.target.closest(".help");
-    if (b) { e.stopPropagation(); pinned = pinned === b ? null : b; pinned ? showHelp(b) : hideHelp(); }
+    if (b) { e.stopPropagation(); e.preventDefault(); pinned = pinned === b ? null : b; pinned ? showHelp(b) : hideHelp(); }
     else if (pinned) { pinned = null; hideHelp(); }
   }, true);
   window.addEventListener("scroll", () => !pinned && hideHelp(), { passive: true });
