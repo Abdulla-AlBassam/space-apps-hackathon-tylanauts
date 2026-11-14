@@ -29,6 +29,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/configure-pages@v5
+      # Browsers keep a copy of each file for about 10 minutes. Adding "?v=<this commit>" to the
+      # links to our own .css and .js files makes every publish look like new files, so a normal
+      # page refresh always shows the latest version. Only the published copy is changed.
+      - name: Stamp the file links with this version
+        run: sed -i -E 's/(href|src)="([A-Za-z0-9_-]+\.(css|js))"/\1="\2?v='"${GITHUB_SHA::8}"'"/g' app/*.html
       - uses: actions/upload-pages-artifact@v3
         with:
           path: app
