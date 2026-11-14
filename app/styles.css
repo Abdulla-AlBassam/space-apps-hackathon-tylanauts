@@ -810,6 +810,13 @@ td .chip { font-size: 12px; }
 .vital-flag .sample-tag { margin-left: 0; }
 .vital-flag .pill + .sample-tag { margin-left: 8px; }
 
+/* Escalation details on an alert: who is told, and each rule with where its number comes from */
+.alert-notify { display: flex; align-items: center; gap: 6px; margin: 8px 0 0; font-size: 13.5px; color: var(--text-dim); }
+.alert-notify svg { width: 14px; height: 14px; flex: none; }
+.alert-rules { margin: 8px 0 0; padding-left: 18px; font-size: 13px; color: var(--text-dim); }
+.alert-rules li { margin: 2px 0; }
+.rule-src { margin-left: 6px; font: 400 10px var(--font-mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+
 /* ---------- Today: Vitals and This week sit flush ----------
  * The two sections share a row. Their headings get the same height so the tops line up,
  * and the vitals stretch to the height of the week panel: each vital's small chart sits at
