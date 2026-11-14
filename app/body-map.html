@@ -3,10 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Siryius · Body map</title>
+<title>Sirius · Body map</title>
+<link rel="icon" type="image/svg+xml" href="brand/favicon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&family=Fira+Sans:wght@700;900&family=Overpass:wght@400;600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400&family=IBM+Plex+Sans:wght@400;500&display=swap">
+<link rel="stylesheet" href="sirius.css">
 <link rel="stylesheet" href="styles.css">
 <link rel="stylesheet" href="body-map.css">
 </head>
@@ -20,16 +22,16 @@
 <header class="bm-top">
   <a class="bm-back" href="index.html">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
-    Siryius
+    <span id="bm-logo"></span><span class="wordmark">Sirius</span>
   </a>
   <div class="who">
     <h1>Body map</h1>
     <p id="bm-astro">Astronaut</p>
   </div>
   <div class="bm-legend" aria-label="Colour key">
-    <span><i class="dot is-good"></i>Normal</span>
+    <span><i class="dot is-good"></i>Steady</span>
     <span><i class="dot is-watch"></i>Watch</span>
-    <span><i class="dot is-act"></i>Act now</span>
+    <span><i class="dot is-act"></i>Alert</span>
   </div>
 </header>
 
@@ -38,16 +40,22 @@
     <!-- body-map.js adds the 3D canvas, the glowing points, and the labels with their lines -->
     <div class="bm-markers" id="bm-markers"></div>
     <p class="bm-hint">Drag to turn&nbsp; • &nbsp;scroll to zoom&nbsp; • &nbsp;click a label</p>
-    <p class="bm-loading" id="bm-loading">Loading the 3D body&hellip;</p>
+    <div class="bm-loading" id="bm-loading"></div>
     <p class="bm-fallback" id="bm-fallback" hidden>The 3D view couldn&rsquo;t start because this browser has WebGL turned off. The labels still work.</p>
   </section>
 </div>
 
-<p class="footer-note">Simulated data for a demo. Siryius is built by Team Tylanauts for NASA Space Apps 2026.<br>
+<p class="footer-note">Simulated data for a demo. Sirius is built by Team Tylanauts for NASA Space Apps 2026.<br>
 3D anatomy: <a href="https://dbarchive.biosciencedbc.jp/en/bodyparts3d/lic.html">BodyParts3D</a>, &copy; The Database Center for Life Science, licensed under <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>. Simplified and recoloured for this page.</p>
 
 <div class="help-pop" id="help-pop" role="tooltip"></div>
 
+<script src="sirius.js"></script>
+<script>
+  // The logo beside "Sirius", and the motion logo while the 3D body loads
+  document.getElementById("bm-logo").innerHTML = SIRIUS.mark(24, { label: "" });
+  document.getElementById("bm-loading").innerHTML = SIRIUS.loading("Loading the 3D body");
+</script>
 <script src="icons.js"></script>
 <script src="data.js"></script>
 <script type="importmap">

@@ -51,8 +51,7 @@ If we only finish this, we still have something to show the judges:
 - [ ] A pitch deck and a short demo video.
 
 Nice-to-haves only **after** the MVP works: a daily mood/symptom check-in,
-trends over the whole mission, radiation-dose tracking, exercise tracking for
-bone and muscle loss, a view for the flight surgeon on Earth.
+trends over the whole mission, radiation-dose tracking, a view for the flight surgeon on Earth.
 
 **Feature idea (not decided yet):** a personal AI "doctor" assistant for each
 astronaut that explains their data, suggests actions, and escalates serious
@@ -124,7 +123,7 @@ sources are in [HEALTH_LOG.md](HEALTH_LOG.md).
 
 First version:
 
-- [ ] A catalogue of tests for five categories: Heart, Sleep, Mind & mood, Radiation, Bone & muscle.
+- [ ] A catalogue of tests for four categories: Heart, Sleep, Mind & mood, Radiation. (Bone density and muscle were dropped on 14 Nov 2026.)
 - [ ] Hand-entered results saved and shown in one history with device readings.
 - [ ] A **Today** screen with what is due and overdue, and a **log entry** form.
 - [ ] A **history & trends** chart per test.

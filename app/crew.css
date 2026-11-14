@@ -1,50 +1,19 @@
 /*
- * Crew overview page. This file stands on its own (it does not load styles.css), so the
- * main dashboard can be restyled without breaking this page.
- * Colours and fonts come only from the Space Apps brand guide (docs/design/DESIGN_BRIEF.md).
+ * Crew overview page. Colours, fonts, the logo and the health dial come from sirius.css
+ * (the Sirius visual identity). This file has the rest, and does not load styles.css, so
+ * the main dashboard can be restyled without breaking this page.
  */
-:root {
-  /* Space Apps brand colours */
-  --deep-blue: #07173F;
-  --electric-blue: #0042A6;
-  --neon-blue: #0960E1;
-  --blue-yonder: #2E96F5;   /* Normal */
-  --neon-yellow: #EAFE07;   /* Watch (accent only, never a background) */
-  --rocket-red: #E43700;    /* Act now */
-  --martian-red: #8E1100;   /* dark red fill behind "Act now" */
-  --white: #FFFFFF;
-
-  /* Transparent versions of the brand colours (no new hues) */
-  --text: var(--white);
-  --text-dim: rgba(255, 255, 255, 0.66);
-  --text-faint: rgba(255, 255, 255, 0.42);
-  --panel: rgba(7, 23, 63, 0.72);
-  --panel-strong: rgba(7, 23, 63, 0.9);
-  --line: rgba(46, 150, 245, 0.18);
-  --line-strong: rgba(46, 150, 245, 0.4);
-  --card: rgba(46, 150, 245, 0.07);  /* the soft fill behind the selected pattern */
-  --hair: rgba(255, 255, 255, 0.08); /* thin divider lines between rows */
-
-  --font-display: "Fira Sans", "Helvetica Neue", Arial, sans-serif;
-  --font-body: "Overpass", "Helvetica Neue", Arial, sans-serif;
-  --font-data: "Fira Code", ui-monospace, Menlo, Consolas, monospace;
-
-  --radius: 14px;
-  color-scheme: dark;
-}
-
 *, *::before, *::after { box-sizing: border-box; }
 html, body { min-height: 100%; }
 body {
   margin: 0;
-  background: var(--deep-blue);
+  background: var(--ink);
   color: var(--text);
   font-family: var(--font-body);
   font-size: 15px;
-  line-height: 1.45;
+  line-height: 1.5;
   -webkit-font-smoothing: antialiased;
 }
-#space { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 0; display: block; }
 
 .cw {
   position: relative;
@@ -59,10 +28,7 @@ body {
   padding-right: max(28px, env(safe-area-inset-right, 0px));
 }
 
-/* ---------- Status colours and icons (same rules as the main dashboard) ---------- */
-.is-good { color: var(--blue-yonder); }
-.is-watch { color: var(--neon-yellow); }
-.is-act { color: var(--rocket-red); }
+/* ---------- Icons (status colours come from sirius.css) ---------- */
 .ico { width: 16px; height: 16px; flex: none; }
 .cat-ico { width: 20px; height: 20px; flex: none; }
 .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
@@ -72,36 +38,40 @@ body {
 .cw-back {
   display: inline-flex; align-items: center; gap: 6px;
   padding: 7px 10px 7px 4px; border-radius: 999px;
-  color: var(--text-dim); text-decoration: none; font-weight: 600; font-size: 13px;
+  color: var(--text-dim); text-decoration: none; font-size: 12px;
 }
+.cw-back .sirius-mark { margin-right: 2px; }
 .cw-back svg { width: 16px; height: 16px; }
 .cw-back:hover, .cw-back:focus-visible { color: var(--text); background: var(--card); outline: none; }
-.cw-who h1 { margin: 0; font-family: var(--font-display); font-weight: 700; font-size: 26px; letter-spacing: -0.01em; }
-.cw-who p { margin: 2px 0 0; color: var(--text-dim); font-size: 14px; }
+.cw-who h1 { margin: 0; font-weight: 500; font-size: 28px; line-height: 1.2; }
+.cw-who p { margin: 4px 0 0; color: var(--muted); font: 400 12px var(--font-mono); letter-spacing: 0.12em; text-transform: uppercase; }
 .cw-top-right { margin-left: auto; display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
 
 .switch { display: inline-flex; padding: 3px; border-radius: 999px; background: var(--card); }
-.switch button { border: 0; background: transparent; color: var(--text-dim); font: 600 13px var(--font-body); padding: 6px 14px; border-radius: 999px; cursor: pointer; }
-.switch button[aria-pressed="true"] { background: var(--electric-blue); color: var(--text); }
-.switch button:focus-visible { outline: 2px solid var(--blue-yonder); outline-offset: 1px; }
+.switch button { border: 0; background: transparent; color: var(--text-dim); font: 500 13px var(--font-body); padding: 6px 14px; border-radius: 999px; cursor: pointer; }
+.switch button[aria-pressed="true"] { background: var(--bone); color: var(--ink); }
+.switch button:focus-visible { outline: 2px solid var(--bone); outline-offset: 2px; }
 
 /* ---------- Section headings ---------- */
 .sec-head { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
 .sec-head h2 {
-  margin: 0; font-family: var(--font-display); font-weight: 700; font-size: 13px;
-  letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-dim);
+  margin: 0; font: 400 12.5px var(--font-mono);
+  letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted);
 }
 .sec-head .spacer { flex: 1; }
-.cw-legend { display: flex; gap: 16px; font-size: 12.5px; font-weight: 600; }
+.cw-legend { display: flex; gap: 16px; font: 400 11.5px var(--font-mono); letter-spacing: 0.12em; text-transform: uppercase; }
+.cw-legend .is-good { color: var(--muted); }
 .cw-legend span { display: inline-flex; align-items: center; gap: 6px; }
 .empty { margin: 0; color: var(--text-dim); }
 
-/* ---------- Crew score: one big number and one sentence ---------- */
-.cw-score { display: flex; align-items: center; gap: 20px; }
-.cw-score-num { font: 900 72px/0.9 var(--font-display); }
-.cw-score-title { margin: 0; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font: 700 18px var(--font-display); }
-.cw-score-note { margin: 4px 0 0; color: var(--text-dim); font-size: 14.5px; }
-.level-word { display: inline-flex; align-items: center; gap: 6px; font: 700 13px var(--font-body); }
+/* ---------- Crew score: a health dial (the logo's 24 ticks) and one sentence ---------- */
+.cw-score { display: flex; align-items: center; gap: 28px; }
+.cw-score-title { margin: 0; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font: 500 22px var(--font-display); }
+.cw-score-note { margin: 6px 0 0; color: var(--text-dim); font-size: 15px; }
+.level-word { display: inline-flex; align-items: center; gap: 6px; font: 400 12px var(--font-mono); letter-spacing: 0.12em; text-transform: uppercase; }
+.level-word.lvl-good { color: var(--muted); }
+.level-word.lvl-watch { color: var(--ember); }
+.level-word.lvl-act { background: var(--ember); color: var(--ink); padding: 3px 9px 3px 7px; border-radius: 999px; }
 
 /* ---------- Shared patterns: who | the issue | a suggested fix ---------- */
 .insights { display: flex; flex-direction: column; }
@@ -117,26 +87,26 @@ body {
   transition: background 0.2s;
 }
 .insight:first-child { border-top: 0; }
-.insight:hover { background: rgba(46, 150, 245, 0.04); }
-.insight:focus-visible { outline: 2px solid var(--blue-yonder); outline-offset: 2px; }
-.insight.selected { background: var(--card); border-radius: 18px; border-top-color: transparent; }
+.insight:hover { background: rgba(242, 238, 230, 0.03); }
+.insight:focus-visible { outline: 2px solid var(--bone); outline-offset: 2px; }
+.insight.selected { background: var(--card); border-radius: 16px; border-top-color: transparent; }
 .insight.selected + .insight { border-top-color: transparent; }
 .in-who { display: flex; flex-direction: column; gap: 8px; }
 .avatars { display: flex; }
-.avatars .avatar { margin-left: -8px; box-shadow: 0 0 0 2px var(--deep-blue); }
+.avatars .avatar { margin-left: -8px; box-shadow: 0 0 0 2px var(--ink); }
 .avatars .avatar:first-child { margin-left: 0; }
 .avatar {
   display: inline-grid; place-items: center; width: 34px; height: 34px; flex: none;
-  border-radius: 50%; background: var(--electric-blue);
-  font: 700 11.5px var(--font-display); color: var(--white);
+  border-radius: 50%; background: var(--slate);
+  font: 400 11.5px var(--font-mono); color: var(--bone);
 }
 .in-count { font-size: 13px; color: var(--text-dim); }
-.in-count b { color: var(--text); font: 700 15px var(--font-display); }
-.in-issue h3 { margin: 0; display: flex; align-items: center; gap: 10px; font: 700 20px var(--font-display); }
+.in-count b { color: var(--text); font: 400 15px var(--font-mono); }
+.in-issue h3 { margin: 0; display: flex; align-items: center; gap: 10px; font: 500 20px var(--font-display); color: var(--ember); }
 .in-issue h3 span { color: var(--text); }
 .in-issue h3 .cat-ico { width: 24px; height: 24px; }
 .in-issue p { margin: 4px 0 0 34px; color: var(--text-dim); font-size: 14px; }
-.in-fix h4 { margin: 0 0 4px; font: 700 11.5px var(--font-display); letter-spacing: 0.1em; text-transform: uppercase; color: var(--blue-yonder); }
+.in-fix h4 { margin: 0 0 4px; font: 400 11.5px var(--font-mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
 .in-fix p { margin: 0; font-size: 14.5px; }
 
 /* ---------- Everyone today: a plain table of numbers ---------- */
@@ -144,42 +114,43 @@ body {
 .cw-grid { width: 100%; border-collapse: collapse; }
 .cw-grid th, .cw-grid td { padding: 12px 10px; border-bottom: 1px solid var(--hair); text-align: center; }
 .cw-grid tbody tr:last-child th, .cw-grid tbody tr:last-child td { border-bottom: 0; }
-.cw-grid thead th { color: var(--text-faint); font: 600 12px var(--font-body); white-space: nowrap; padding-top: 0; }
+.cw-grid thead th { color: var(--muted); font: 400 11.5px var(--font-mono); letter-spacing: 0.1em; text-transform: uppercase; white-space: nowrap; padding-top: 0; }
 .cw-grid thead th .cat-ico { width: 16px; height: 16px; vertical-align: -3px; margin-right: 6px; }
 .cw-grid thead th.on { color: var(--text); }
 .cw-grid th[scope="row"] { text-align: left; padding-left: 0; font-weight: 400; }
 .person { display: flex; align-items: center; gap: 12px; }
-.person-name { font-weight: 700; font-size: 14.5px; white-space: nowrap; }
+.person-name { font-weight: 500; font-size: 14.5px; white-space: nowrap; }
 .person-role { font-size: 12.5px; color: var(--text-faint); white-space: nowrap; }
-.you { margin-left: 8px; padding: 1px 7px; border-radius: 999px; background: rgba(46, 150, 245, 0.2); font: 700 10.5px var(--font-body); color: var(--text); }
+.you { margin-left: 8px; padding: 1px 7px; border-radius: 999px; background: var(--bone); font: 400 10px var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink); }
 .cell {
   display: inline-flex; align-items: center; justify-content: center; gap: 6px;
   min-width: 68px; padding: 6px 10px; border-radius: 999px;
-  font: 500 15px var(--font-data); font-variant-numeric: tabular-nums;
+  font: 400 15px var(--font-data); font-variant-numeric: tabular-nums;
 }
+/* Steady scores stay quiet, Watch is ember text, Alert is a solid ember tag */
 .cell.lvl-good { color: var(--text-faint); }
-.cell.lvl-watch { color: var(--neon-yellow); }
-.cell.lvl-act { color: var(--white); }
-.cell.lvl-act .ico { color: var(--rocket-red); }
-/* The scores that belong to the selected pattern get a soft highlight */
-.cell.hit { background: rgba(234, 254, 7, 0.12); box-shadow: inset 0 0 0 1px rgba(234, 254, 7, 0.5); }
+.cell.lvl-watch { color: var(--ember); }
+.cell.lvl-act { background: var(--ember); color: var(--ink); }
+/* The scores that belong to the selected pattern get an outline */
+.cell.hit { box-shadow: inset 0 0 0 1px var(--ember); }
+.cell.lvl-act.hit { box-shadow: 0 0 0 2px var(--ink), 0 0 0 3px var(--ember); }
 
 /* ---------- "?" help pop-ups (same look as the main dashboard) ---------- */
 .help {
   display: inline-grid; place-items: center; width: 18px; height: 18px; padding: 0;
-  border-radius: 50%; border: 1px solid var(--line-strong); background: transparent;
-  color: var(--text-dim); font: 700 11px var(--font-body); cursor: help; flex: none;
+  border-radius: 50%; border: 1px solid var(--slate); background: transparent;
+  color: var(--text-dim); font: 400 11px var(--font-mono); cursor: help; flex: none;
   transition: background 0.2s, color 0.2s;
 }
-.help:hover, .help:focus-visible, .help.open { background: var(--blue-yonder); color: var(--deep-blue); border-color: var(--blue-yonder); outline: none; }
+.help:hover, .help:focus-visible, .help.open { background: var(--bone); color: var(--ink); border-color: var(--bone); outline: none; }
 .help-pop {
   position: fixed; z-index: 50; max-width: 290px; padding: 12px 14px; border-radius: 10px;
-  background: var(--deep-blue); border: 1px solid var(--line-strong); box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45);
+  background: var(--ink); border: 1px solid var(--rule); box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
   color: var(--text); font: 400 13px/1.5 var(--font-body); pointer-events: none;
   opacity: 0; transform: translateY(4px); transition: opacity 0.15s, transform 0.15s;
 }
 .help-pop.show { opacity: 1; transform: none; }
-.help-pop b { font-family: var(--font-display); display: block; margin-bottom: 4px; }
+.help-pop b { display: block; margin-bottom: 4px; }
 
 .footer-note { color: var(--text-faint); font-size: 12px; text-align: center; margin: 4px 0 0; }
 

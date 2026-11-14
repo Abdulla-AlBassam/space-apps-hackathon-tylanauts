@@ -2,8 +2,8 @@
  * Crew overview page. SIMULATED DATA: none of these people or readings are real.
  *
  * What this file does, in plain English:
- * 1. Makes up 14 days of daily scores (0 to 100) for a crew of six, in the five
- *    health-log categories: heart, sleep, mood, radiation, bone & muscle.
+ * 1. Makes up 14 days of daily scores (0 to 100) for a crew of six, in the four
+ *    health-log categories: heart, sleep, mood, radiation.
  * 2. Rolls everyone into one crew score, and works out a crew average per category.
  * 3. Looks for "crew patterns": the same category dropping for 3 or more people
  *    over the same days. One or two people dropping is shown separately, because
@@ -17,8 +17,7 @@
  * - Day 135: the comms window for private family calls is lost; mood slips for 3 crew.
  * - Day 139: the sleep schedule moves 2 hours earlier for docking; sleep drops for 4 crew.
  * - Day 140: two crew do a spacewalk and pick up extra radiation (just two, so not a pattern).
- * - The commander's heart readings drift (matches the story on the main dashboard),
- *   and one person slowly skips exercise (bone & muscle).
+ * - The commander's heart readings drift (matches the story on the main dashboard).
  *
  * When the real backend exists, replace makeCrewData() with a request to it.
  */
@@ -50,7 +49,6 @@
     sleep: '<path d="M19 14.5A7.5 7.5 0 0 1 9.5 5a7.5 7.5 0 1 0 9.5 9.5z"/>',
     mood: '<circle cx="12" cy="12" r="8"/><path d="M8.8 14.2a4 4 0 0 0 6.4 0M9.5 9.8v.3M14.5 9.8v.3"/>',
     radiation: '<circle cx="12" cy="12" r="1.8"/><path d="M12 3.5a8.5 8.5 0 0 1 7.4 4.3l-4.6 2.6M4.6 7.8A8.5 8.5 0 0 1 12 3.5M4.6 7.8l4.6 2.6M12 20.5v-5.2M12 20.5a8.5 8.5 0 0 0 7.4-4.3M12 20.5a8.5 8.5 0 0 1-7.4-4.3"/>',
-    bone: '<path d="M6.5 6.5l11 11M4 9l5-5M15 20l5-5M2.5 10.5l1.5-1.5M20 15l1.5-1.5M10.5 2.5L9 4M13.5 21.5L15 20"/>',
   };
   const icon = (key, cls = "cat-ico") =>
     `<svg class="${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${CAT_ICONS[key]}</svg>`;
@@ -60,7 +58,6 @@
     { key: "sleep", name: "Sleep", help: "c-sleep" },
     { key: "mood", name: "Mood", help: "c-mood" },
     { key: "radiation", name: "Radiation", help: "c-radiation" },
-    { key: "bone", name: "Bone & muscle", help: "c-bone" },
   ];
 
   // Things that happened to the whole crew (or part of it). Simulated mission log.
@@ -77,18 +74,17 @@
     sleep: "Review the sleep schedule with mission control, and keep hard tasks out of tomorrow morning.",
     mood: "Plan a shared crew meal, and ask the ground team for family calls as soon as comms allow.",
     radiation: "Nothing to do now. The doses are logged in each person's mission total.",
-    bone: "Check the exercise equipment and make room for it in the schedule.",
   };
   // Used as "Sleep is down for 4 of 6".
-  const ISSUE_WORDS = { heart: "Heart scores are down", sleep: "Sleep is down", mood: "Mood is down", radiation: "Radiation dose is up", bone: "Exercise is down" };
+  const ISSUE_WORDS = { heart: "Heart scores are down", sleep: "Sleep is down", mood: "Mood is down", radiation: "Radiation dose is up" };
 
   /* ---------- Status helpers (same cut-offs as the main dashboard) ---------- */
   const band = (score) => (score >= 67 ? "good" : score >= 34 ? "watch" : "act");
-  const WORDS = { good: "Normal", watch: "Watch", act: "Act now", info: "For info" };
+  const WORDS = { good: "Steady", watch: "Watch", act: "Alert", info: "For info" };
   const ICONS = {
     good: '<svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="8" cy="8" r="6.5"/><path d="M5 8.2l2 2 4-4.2"/></svg>',
     watch: '<svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8 1.8l6.6 12H1.4z" stroke-linejoin="round"/><path d="M8 6.5v3.2M8 11.6v.3"/></svg>',
-    act: '<svg class="ico" viewBox="0 0 16 16" fill="currentColor"><circle cx="8" cy="8" r="7.2"/><path d="M8 4v4.8M8 11v.4" stroke="#07173F" stroke-width="1.9" stroke-linecap="round"/></svg>',
+    act: '<svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5.3 1.5h5.4l3.8 3.8v5.4l-3.8 3.8H5.3l-3.8-3.8V5.3z" stroke-linejoin="round"/><path d="M8 4.8v3.6M8 10.9v.3" stroke-linecap="round"/></svg>',
     info: '<svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="8" cy="8" r="6.5"/><path d="M8 7.2v4M8 4.8v.3"/></svg>',
   };
   const helpBtn = (key) => `<button type="button" class="help" data-help="${key}" aria-label="What is this?">?</button>`;
@@ -119,12 +115,11 @@
       return solar + eva;
     }
     if (cat === "heart" && id === "crew-01" && day >= 139) return -[10, 22, 33, 44][day - 139];
-    if (cat === "bone" && id === "crew-06") return -1.6 * (day - FIRST_DAY);
     return 0;
   }
 
   function makeCrewData() {
-    const typical = { heart: 82, sleep: 80, mood: 81, radiation: 86, bone: 80 };
+    const typical = { heart: 82, sleep: 80, mood: 81, radiation: 86 };
     return CREW.map((person) => {
       const scores = {};
       for (const c of CATS) {
@@ -146,7 +141,7 @@
   for (const p of crew) {
     p.normal = {};
     for (const c of CATS) p.normal[c.key] = Math.round(average(p.scores[c.key].slice(0, BASE_DAYS)));
-    // Each person's overall score today: the average of their five categories.
+    // Each person's overall score today: the average of their four categories.
     p.overall = Math.round(average(CATS.map((c) => p.scores[c.key][T])));
   }
   const crewAvg = (cat, i) => Math.round(average(crew.map((p) => p.scores[cat][i])));
@@ -210,6 +205,7 @@
   const catName = (key) => CATS.find((c) => c.key === key).name;
 
   /* ---------- 4a. Header ---------- */
+  $("cw-logo").innerHTML = SIRIUS.mark(24, { label: "" });
   $("cw-mission").textContent = `${MISSION.name} · day ${MISSION.today} of ${MISSION.length} · crew of ${CREW.length}`;
   for (const lvl of ["good", "watch", "act"]) $("lg-" + lvl).innerHTML = ICONS[lvl] + WORDS[lvl];
 
@@ -219,9 +215,9 @@
     const change = crewScore - crewScoreWeekAgo;
     const n = live.length;
     $("cw-score").innerHTML = `
-      <b class="cw-score-num is-${level}">${crewScore}</b>
+      ${SIRIUS.dial(crewScore, level, crewScore, 132)}
       <div>
-        <p class="cw-score-title">Crew score ${helpBtn("crew-score")} <span class="level-word is-${level}">${ICONS[level]}${WORDS[level]}</span></p>
+        <p class="cw-score-title">Crew score ${helpBtn("crew-score")} <span class="level-word lvl-${level}">${ICONS[level]}${WORDS[level]}</span></p>
         <p class="cw-score-note">${change < 0 ? "Down " + -change : change > 0 ? "Up " + change : "No change"} from a week ago. ${n ? `${n} shared pattern${n === 1 ? "" : "s"} right now.` : "No shared patterns right now."}</p>
       </div>`;
   }
@@ -238,7 +234,7 @@
           <span class="in-count"><b>${pt.people.length}</b> of ${crew.length} crew</span>
         </div>
         <div class="in-issue">
-          <h3 class="is-${pt.level}">${icon(pt.cat)}<span>${ISSUE_WORDS[pt.cat]}</span></h3>
+          <h3>${icon(pt.cat)}<span>${ISSUE_WORDS[pt.cat]}</span></h3>
           <p>Since day ${pt.startDay}${cause ? `, after ${cause.short}` : ""}.</p>
         </div>
         <div class="in-fix">
@@ -272,7 +268,7 @@
         const v = p.scores[c.key][T];
         const lvl = band(v);
         const hit = sel && sel.cat === c.key && hitIds.has(p.id);
-        // Normal scores stay quiet; only Watch and Act now get an icon and colour.
+        // Steady scores stay quiet; only Watch and Alert get an icon and the ember colour.
         html += `<td><span class="cell lvl-${lvl}${hit ? " hit" : ""}" title="${label(p)}, ${c.name}: ${v}, ${WORDS[lvl]}">${lvl === "good" ? "" : ICONS[lvl]}${v}</span></td>`;
       }
       html += `</tr>`;
@@ -302,9 +298,9 @@
   /* ---------- "?" help pop-ups ---------- */
   const HELP = {
     view: ["Who is viewing", "Flight surgeon view shows everyone's name. Astronaut view keeps your own name and shows crewmates as \"Crewmate B\" and so on, so people can see the crew picture without seeing each other's private health details. (An idea for the team to decide.)"],
-    "crew-score": ["Crew score", "Everyone's health rolled into one number, from 0 to 100: the average of each person's five health areas. One number can hide one person struggling, so the table below always shows everyone. Placeholder formula for the demo."],
+    "crew-score": ["Crew score", "Everyone's health rolled into one number, from 0 to 100: the average of each person's four health areas. One number can hide one person struggling, so the table below always shows everyone. Placeholder formula for the demo."],
     patterns: ["Where the crew lines up", `When ${CREW_MIN} or more people drop in the same health area over the same days (at least ${DROP} points under their own normal), it usually points to a shared cause, like the schedule or a stressful event, rather than one person's health. Click a row to highlight those people in the table below.`],
-    grid: ["Everyone today", "Each row is one astronaut and each column is one health area. The number is today's score from 0 to 100. Yellow means Watch and red means Act now. A score on its own, like one person's heart, is personal rather than crew-wide."],
+    grid: ["Everyone today", "Each row is one astronaut and each column is one health area. The number is today's score from 0 to 100. Orange text means Watch and a solid orange tag means Alert. A score on its own, like one person's heart, is personal rather than crew-wide."],
   };
   const pop = $("help-pop");
   let pinned = null;
@@ -348,48 +344,6 @@
     }
   });
   window.addEventListener("scroll", () => !pinned && hideHelp(), { passive: true });
-
-  /* ---------- Star background (a lighter copy of the main dashboard's) ---------- */
-  const canvas = $("space");
-  const ctx = canvas.getContext("2d");
-  let W = 0, Hc = 0, stars = [];
-  function resizeSky() {
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
-    W = window.innerWidth; Hc = window.innerHeight;
-    canvas.width = W * dpr; canvas.height = Hc * dpr;
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    stars = Array.from({ length: Math.round((W * Hc) / 5200) }, () => {
-      const depth = Math.random();
-      return {
-        a: Math.random() * Math.PI * 2,
-        r: Math.sqrt(Math.random()) * Math.hypot(W, Hc) * 1.1,
-        size: 0.4 + depth * 1.4,
-        speed: 0.00002 + depth * 0.00005,
-        alpha: 0.25 + depth * 0.6,
-        twinkle: Math.random() * Math.PI * 2,
-        blue: Math.random() < 0.3,
-      };
-    });
-  }
-  function sky(t) {
-    ctx.fillStyle = "#07173F";
-    ctx.fillRect(0, 0, W, Hc);
-    const cx = W * 0.15, cy = Hc * 1.35;
-    for (const s of stars) {
-      s.a += s.speed * 16;
-      const sx = cx + Math.cos(s.a) * s.r, sy = cy + Math.sin(s.a) * s.r;
-      if (sx < -4 || sx > W + 4 || sy < -4 || sy > Hc + 4) continue;
-      const tw = 0.75 + 0.25 * Math.sin(t * 0.0012 + s.twinkle);
-      ctx.fillStyle = s.blue ? `rgba(46,150,245,${s.alpha * tw})` : `rgba(255,255,255,${s.alpha * tw})`;
-      ctx.beginPath();
-      ctx.arc(sx, sy, s.size, 0, Math.PI * 2);
-      ctx.fill();
-    }
-    if (!reduceMotion) requestAnimationFrame(sky);
-  }
-  window.addEventListener("resize", resizeSky);
-  resizeSky();
-  requestAnimationFrame(sky);
 
   /* ---------- First draw ---------- */
   function renderAll() {

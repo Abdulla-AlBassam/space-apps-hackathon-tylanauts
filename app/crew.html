@@ -3,11 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Siryius · Crew overview</title>
+<title>Sirius · Crew overview</title>
+<link rel="icon" type="image/svg+xml" href="brand/favicon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&family=Fira+Sans:wght@700;900&family=Overpass:wght@400;600;700&display=swap">
-<!-- crew.css has everything this page needs, so it keeps working while styles.css changes -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400&family=IBM+Plex+Sans:wght@400;500&display=swap">
+<!-- sirius.css is the shared brand (colours, fonts, logo, dial). crew.css has the rest this page
+     needs, so it keeps working while styles.css changes. -->
+<link rel="stylesheet" href="sirius.css">
 <link rel="stylesheet" href="crew.css">
 </head>
 <body>
@@ -20,13 +23,11 @@
   Under that, one small table shows everyone today. Everything is drawn by crew.js.
   All data is simulated.
 -->
-<canvas id="space" aria-hidden="true"></canvas>
-
 <main class="cw">
   <header class="cw-top">
-    <a class="cw-back" href="index.html" aria-label="Back to Siryius">
+    <a class="cw-back" href="index.html" aria-label="Back to Sirius">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
-      Siryius
+      <span id="cw-logo"></span><span class="wordmark">Sirius</span>
     </a>
     <div class="cw-who">
       <h1>Crew overview</h1>
@@ -68,11 +69,12 @@
     <div class="cw-grid-wrap"><table class="cw-grid" id="grid"></table></div>
   </section>
 
-  <p class="footer-note">Simulated crew and data for a demo. Siryius is built by Team Tylanauts for NASA Space Apps 2026.</p>
+  <p class="footer-note">Simulated crew and data for a demo. Sirius is built by Team Tylanauts for NASA Space Apps 2026.</p>
 </main>
 
 <div class="help-pop" id="help-pop" role="tooltip"></div>
 
+<script src="sirius.js"></script>
 <script src="crew.js"></script>
 </body>
 </html>

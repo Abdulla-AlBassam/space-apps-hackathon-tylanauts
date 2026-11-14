@@ -3,16 +3,16 @@
  * SIMULATED DATA. Nothing here is a real astronaut's reading.
  *
  * What this file does, in plain English:
- * 1. Builds a list of body areas (heart, mind & sleep, eyes, radiation, bones, muscles).
+ * 1. Builds a list of body areas (heart, mind & sleep, eyes, radiation).
  *    Numbers that the dashboard already simulates (heart rate, sleep, radiation, exercise)
  *    are read from window.HEALTH_DATA (data.js) so both pages tell the same story.
  *    The rest (mood score, eye exam, exercise plan) are made-up "hand-entered" results.
- * 2. Draws an X-ray style anatomy model with three.js: skeleton, heart, brain, eyes, thigh
- *    muscles and a faint skin outline. The model (models/body.glb) is made from BodyParts3D,
+ * 2. Draws an X-ray style anatomy model with three.js: skeleton, heart, brain, eyes
+ *    and a faint skin outline. The model (models/body.glb) is made from BodyParts3D,
  *    © The Database Center for Life Science, licensed under CC BY 4.0 (see models/README.md).
  *    three.js itself is MIT-licensed and loaded from a CDN.
  * 3. Puts a clickable glowing point on the body for each area. Its colour is the status
- *    (blue = Normal, yellow = Watch, red = Act now). Clicking it turns the body to face
+ *    (bone = Steady, ember = Watch or Alert). Clicking it turns the body to face
  *    you and opens the details panel on the right.
  *
  * To move this into the main dashboard later: copy the three parts of body-map.html
@@ -31,9 +31,11 @@ const round = (n, d = 0) => Number(n.toFixed(d));
 
 /* ---------- 1. The body areas and their (simulated) status ---------- */
 
-// Brand colours for each status (Space Apps brand kit).
-const STATUS_COLOUR = { good: 0x2e96f5, watch: 0xeafe07, act: 0xe43700 };
-const STATUS_WORD = { good: "Normal", watch: "Watch", act: "Act now" };
+// Sirius identity colours. Ember is the only colour that asks for attention, so an area
+// that is fine stays a quiet bone-grey and only Watch and Alert areas light up in ember.
+const BONE = 0xf2eee6, EMBER = 0xff5a36, SLATE = 0x5b6472, MUTED = 0xa9a59c;
+const STATUS_COLOUR = { good: MUTED, watch: EMBER, act: EMBER };
+const STATUS_WORD = { good: "Steady", watch: "Watch", act: "Alert" };
 const ic = (name, cls) => (window.icon ? window.icon(name, cls) : "");
 const ICONS = { good: ic("circle-check"), watch: ic("triangle-alert"), act: ic("octagon-alert") };
 
@@ -93,7 +95,7 @@ const AREAS = [
   },
   {
     id: "eyes",
-    side: "left",
+    side: "right",
     icon: "eye",
     name: "Eyes (SANS)",
     category: "Eyes",
@@ -128,42 +130,6 @@ const AREAS = [
     actions: ["No action needed now. Your flight surgeon can see these numbers."],
     link: null,
     help: "Outside Earth's protective magnetic field, astronauts get much more radiation than on the ground, which raises long-term health risks such as cancer. The badge on your chest measures the dose. NASA limits an astronaut's career total to 600 mSv.",
-  },
-  {
-    id: "bone",
-    side: "right",
-    icon: "bone",
-    name: "Bones (spine & hips)",
-    category: "Bone & muscle",
-    status: "watch",
-    point: [0, 1.0, -0.108],
-    facing: [0, 0, -1],
-    summary: "Two resistance-exercise sessions were missed this week. These sessions are the main way to protect bone in space.",
-    readings: [
-      { name: "Resistance sessions this week", value: "4 of 6", unit: "", normal: "6 of 6", out: true, source: "Hand-entered" },
-      { name: "Body mass", value: 78.4, unit: "kg", normal: "77–80", out: false, source: "Hand-entered, 3 days ago" },
-    ],
-    actions: ["Fit in the missed resistance session today or tomorrow", "Keep heavy lifting to the planned weights"],
-    link: null,
-    help: "Without gravity loading the skeleton, astronauts can lose about 1 to 1.5% of bone mass in the hips and spine each month. Bone density is scanned before and after the mission; during the mission, daily resistance exercise is the main protection, so it is tracked here.",
-  },
-  {
-    id: "muscle",
-    side: "right",
-    icon: "dumbbell",
-    name: "Leg muscles",
-    category: "Bone & muscle",
-    status: "good",
-    point: [-0.09, 0.68, 0.082],
-    facing: [0, 0, 1],
-    summary: "Leg strength is holding close to your pre-flight level.",
-    readings: [
-      { name: "Exercise today", value: Math.round(today.exercise_minutes), unit: "min", normal: "daily", out: false, source: deviceLabel(today.sources.exercise_minutes) },
-      { name: "Leg strength test", value: 97, unit: "% of pre-flight", normal: "90% or more", out: false, source: "Hand-entered, monthly" },
-    ],
-    actions: ["No action needed. Keep up the daily treadmill and bike sessions."],
-    link: null,
-    help: "Leg and back muscles shrink when they aren't used, and in microgravity they barely work to hold you up. Daily treadmill, bike and resistance exercise keeps them strong for the return to gravity.",
   },
 ];
 
@@ -329,25 +295,23 @@ function xray(colour, core, edge, { onTop = false } = {}) {
   });
 }
 
-// Materials for each part of the model. Bones are pale X-ray white, skin is a faint
-// blue outline, and the parts linked to a body area take that area's status colour.
+// Materials for each part of the model. Bones are bone-white, skin is a faint slate
+// outline, and the parts linked to a body area take that area's status colour.
 const statusOf = (id) => AREAS.find((a) => a.id === id).status;
 const MATERIALS = {
-  skin: xray(0x2e96f5, 0.0, 0.22),
-  skeleton: xray(0xdce8ff, 0.035, 0.5),
-  spine: xray(STATUS_COLOUR[statusOf("bone")], 0.05, 0.6),
+  skin: xray(SLATE, 0.0, 0.5),
+  skeleton: xray(BONE, 0.03, 0.42),
   heart: xray(STATUS_COLOUR[statusOf("heart")], 0.12, 0.9, { onTop: true }),
   brain: xray(STATUS_COLOUR[statusOf("mind")], 0.05, 0.6, { onTop: true }),
   eyes: xray(STATUS_COLOUR[statusOf("eyes")], 0.15, 0.9, { onTop: true }),
-  muscle: xray(STATUS_COLOUR[statusOf("muscle")], 0.02, 0.35),
 };
+// The spine and hips are drawn like the rest of the skeleton.
+MATERIALS.spine = MATERIALS.skeleton;
 // Which body area lights up which part of the model (used for pulsing and selecting)
 const organs = {
   heart: [MATERIALS.heart],
   mind: [MATERIALS.brain],
   eyes: [MATERIALS.eyes],
-  bone: [MATERIALS.spine],
-  muscle: [MATERIALS.muscle],
 };
 
 // Radiation badge: a small card clipped on the chest (not part of the anatomy model)
@@ -360,7 +324,7 @@ organs.radiation = [badgeMat];
 /*
  * The anatomy model (models/body.glb). It comes from BodyParts3D, a free 3D atlas of an
  * adult male body: © The Database Center for Life Science, licensed under CC BY 4.0.
- * tools/build_body_model.py picks the bones, heart, brain, eyes, thigh muscles and skin
+ * tools/build_body_model.py picks the bones, heart, brain, eyes and skin
  * out of it, makes them lighter for the web, and saves them as named parts.
  */
 const loader = new GLTFLoader();
@@ -369,6 +333,7 @@ loader.load(
   (gltf) => {
     gltf.scene.traverse((o) => {
       if (!o.isMesh) return;
+      if (o.name === "muscle") { o.visible = false; return; } // muscles are not tracked, so they are not drawn
       const mat = MATERIALS[o.name];
       if (!mat) return;
       if (!o.geometry.attributes.normal) o.geometry.computeVertexNormals();
@@ -385,21 +350,6 @@ loader.load(
   }
 );
 markerLayer.hidden = true;
-
-// --- Around the body: a field of stars. The main dashboard already has its own moving
-// star background (the #space canvas), so stars are only added on the full-screen page. ---
-const stars = new THREE.Group();
-if (!document.getElementById("space")) {
-  const starGeo = new THREE.BufferGeometry();
-  const starPos = [];
-  for (let i = 0; i < 700; i++) {
-    const v = new THREE.Vector3().randomDirection().multiplyScalar(6 + Math.random() * 10);
-    starPos.push(v.x, v.y + 1, v.z);
-  }
-  starGeo.setAttribute("position", new THREE.Float32BufferAttribute(starPos, 3));
-  stars.add(new THREE.Points(starGeo, new THREE.PointsMaterial({ color: 0xffffff, size: 0.035, transparent: true, opacity: 0.7, depthWrite: false })));
-}
-scene.add(stars);
 
 /* ---------- 4. Glowing points (HTML buttons that follow the 3D body) ---------- */
 
@@ -530,7 +480,6 @@ function frame(now) {
   body.rotation.y = view.yaw;
   camera.position.set(0, view.lookY + Math.sin(view.pitch) * view.dist, Math.cos(view.pitch) * view.dist);
   camera.lookAt(0, view.lookY, 0);
-  stars.rotation.y = now * 0.00002;
   const scanY = reduceMotion ? -1 : ((now * 0.00035) % 2.3) - 0.2;
   for (const mat of Object.values(MATERIALS)) mat.uniforms.uScan.value = scanY;
 
