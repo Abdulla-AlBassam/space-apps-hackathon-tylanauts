@@ -297,15 +297,17 @@ window.HEALTH_READY.then(function () {
       </article>`;
     return `<article class="alert ${a.level}${a.done ? " done" : ""}">
       <div class="alert-what">
-        ${alertBadges(a) ? `<div class="alert-top">${alertBadges(a)}</div>` : ""}
+        ${a.level === "act" || alertBadges(a) ? `<div class="alert-top">${a.level === "act" ? pill("act") : ""}${alertBadges(a)}</div>` : ""}
         <h4>${a.title}</h4>
         <p>${a.detail}</p>
         <div class="chips">${(a.sources || []).map(deviceChip).join("")}</div>
       </div>
       <div class="alert-do">
-        <h5>${ic("clipboard-list")}What to do</h5>
-        <ul>${a.actions.map((x) => `<li>${x}</li>`).join("")}</ul>
-        <button type="button" class="${a.level === "act" && !a.done ? "btn-primary" : "btn-ghost"}" data-alert="${i}">${ic(a.done ? "refresh-cw" : "check")}${a.done ? "Undo" : "Mark as done"}</button>
+        <div class="alert-steps">
+          <h5>${ic("clipboard-list")}What to do</h5>
+          <ul>${a.actions.map((x) => `<li>${x}</li>`).join("")}</ul>
+        </div>
+        <button type="button" class="${a.done ? "btn-ghost" : "btn-primary"}" data-alert="${i}">${ic(a.done ? "refresh-cw" : "check")}${a.done ? "Undo" : "Mark as done"}</button>
       </div>
     </article>`;
   }

@@ -283,3 +283,7 @@
 @media (prefers-reduced-motion: reduce) {
   .bm-marker .bm-ring { animation: none; }
 }
+
+/* The page header is a solid block, like on the other pages. This page doesn't scroll on a
+ * desktop screen, so the block is simply the first thing at the top. */
+.bm-top { margin: 12px 16px 0; padding: 16px 24px 16px 16px; border-radius: 16px; background: var(--head); }

@@ -378,7 +378,7 @@ body {
 .alert-tab.is-empty b, .alert-tab.is-empty span { color: var(--text-faint); }
 
 .alert-list { display: flex; flex-direction: column; gap: 64px; margin-top: 12px; }
-.alert-sec { scroll-margin-top: 24px; }
+.alert-sec { scroll-margin-top: 150px; } /* clears the sticky page header */
 .alert-sec-head { display: flex; align-items: center; gap: 16px; margin-bottom: 20px; }
 .alert-sec-head h3 { margin: 0; font-weight: 500; font-size: 26px; line-height: 1.2; }
 .alert-sec-head p { margin: 2px 0 0; font-size: 14.5px; color: var(--text-dim); }
@@ -417,7 +417,8 @@ body {
 .alert.act {
   display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 20px 48px;
   padding: 30px 32px; border-radius: var(--radius);
-  background: var(--card); box-shadow: inset 3px 0 0 var(--ember);
+  /* The cue for "act today" is a warm ember tint on the whole card, plus the Alert tag above the title */
+  background: color-mix(in srgb, var(--ember) 11%, var(--head));
 }
 .alert.act h4 { font-size: 26px; }
 .alert.act .alert-what p { font-size: 16px; }
@@ -429,7 +430,10 @@ body {
   padding: 22px 24px; border-radius: var(--radius); background: var(--card);
 }
 .alert.watch h4 { font-size: 19px; }
-.alert.watch .alert-do { margin-top: auto; padding-top: 16px; border-top: 1px solid var(--hair); }
+/* Steps on the left, the white "Mark as done" button on the right */
+.alert.watch .alert-do { margin-top: auto; padding-top: 16px; border-top: 1px solid var(--hair); display: flex; align-items: flex-end; gap: 16px; flex-wrap: wrap; }
+.alert.watch .alert-steps { flex: 1; min-width: 180px; }
+.alert.watch .alert-do button { margin: 0 0 0 auto; }
 
 /* For info: a quiet list, no cards */
 .sec-info .alert-sec-body { gap: 0; }
@@ -842,3 +846,27 @@ td .chip { font-size: 12px; }
 /* When the list on the right is the shorter side, spread its rows so its last row still ends
  * level with the charts. Only with three or more rows, so one or two items stay together at the top. */
 .layout-even .due-list:has(> :nth-child(3)) { flex: 1; justify-content: space-between; }
+
+/* ---------- Page headers: a solid block that stays at the top while you scroll ----------
+ * Alerts, Calendar, Health log and Devices each have a title block (.view-head). On Today the
+ * block is the bar with the astronaut's name. The block is a lighter tone than the page so it
+ * reads as a header, and it sticks to the top. The ink-coloured shadow above it hides anything
+ * scrolling past in the small gap over the block.
+ */
+.view-head, .main:has(#view-today:not([hidden])) .topbar {
+  position: sticky; top: 12px; z-index: 20;
+  align-items: center;
+  padding: 18px 24px;
+  border-radius: 16px;
+  background: var(--head);
+  box-shadow: 0 -14px 0 var(--ink);
+}
+.view-head .view-title { font-size: 28px; }
+.view-head .view-sub { margin-top: 4px; font-size: 14px; }
+.view-head .alert-tab { background: rgba(242, 238, 230, 0.06); padding: 8px 14px; min-width: 96px; gap: 4px; }
+.view-head .alert-tab b { font-size: 24px; }
+@media (max-width: 640px) {
+  /* On a phone the header stays a block but scrolls away, so it doesn't cover the small screen */
+  .view-head, .main:has(#view-today:not([hidden])) .topbar { position: static; padding: 16px; box-shadow: none; }
+  .view-head .alert-tab { min-width: 0; padding: 8px 10px; }
+}
