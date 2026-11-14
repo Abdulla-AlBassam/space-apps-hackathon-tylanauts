@@ -5,7 +5,7 @@
  * In plain English, it draws four things:
  *   1. Backend: is the server up, how fast it answered, and how much it stores.
  *   2. What the dashboard is showing: for every number the dashboard uses, whether it came
- *      from the backend ("Live") or is still made up ("Sample"). This uses the same data.js
+ *      from the backend ("Backend") or is built into the page ("Built in"). All of it is simulated. This uses the same data.js
  *      the dashboard uses, so the answer is exactly what the dashboard sees.
  *   3. A form to send a test request for one crew member.
  *   4. The call log: every backend call any Sirius page made in this browser (api-log.js
@@ -107,28 +107,28 @@
     const live = data.live;
     const who = esc(data.astronaut.id);
     $("source-note").innerHTML = live.source === "live"
-      ? `The dashboard is reading <b>live data</b> from the backend for <b>${who}</b>. Numbers marked Sample aren't stored by the backend yet, so the dashboard still makes them up.`
-      : `The dashboard is showing <b>sample data only</b> for <b>${who}</b>, because ${esc(live.reason || "the backend couldn't be used")}.`;
+      ? `All data is simulated. The dashboard is reading from the backend for <b>${who}</b>. Numbers marked Built in aren't stored by the backend yet, so the page makes them up itself.`
+      : `All data is simulated. The dashboard is showing <b>built-in readings only</b> for <b>${who}</b>, because ${esc(live.reason || "the backend couldn't be used")}.`;
 
     // The newest reading of each metric, as the dashboard has it.
     const latest = {};
     for (const r of data.readings) if (!latest[r.metric] || r.time >= latest[r.metric].time) latest[r.metric] = r;
     const metrics = Object.keys(latest).sort((a, b) => (data.isSample(a) - data.isSample(b)) || a.localeCompare(b));
     $("metrics").innerHTML =
-      `<thead><tr><th>Reading</th><th>Shown as</th><th>Latest value</th><th>From device</th><th>Time</th></tr></thead><tbody>` +
+      `<thead><tr><th>Reading</th><th>Comes from</th><th>Latest value</th><th>From device</th><th>Time</th></tr></thead><tbody>` +
       metrics.map((m) => {
         const r = latest[m];
         const sample = data.isSample(m);
         return `<tr><td>${esc(NAMES[m] || m)}<span class="mono dim"> ${esc(m)}</span></td>` +
-          `<td>${sample ? `<span class="sample-tag">Sample</span>` : `<span class="live-tag">${ic("wifi")}Live</span>`}</td>` +
+          `<td>${sample ? `<span class="builtin-tag">Built in</span>` : `<span class="live-tag">${ic("wifi")}Backend</span>`}</td>` +
           `<td class="mono">${esc(r.value)} ${esc(r.unit || "")}</td>` +
           `<td class="mono dim">${esc(r.device_id)}</td>` +
           `<td class="mono dim">${esc(dateTimeOf(r.time))}</td></tr>`;
       }).join("") + `</tbody>`;
     $("pages-note").innerHTML =
-      "Live means the backend has a reading for it on the latest day. The Today, Alerts, Calendar and Log pages use this mix. " +
+      "Backend means the backend has a reading for it on the latest day. The Today, Alerts, Calendar and Log pages use this mix. " +
       "Breath depth, deep sleep, exercise and skin temperature aren't sent by the simulated devices yet. " +
-      "The Crew overview page and the device list (battery, last sync) are still all sample data.";
+      "The Crew overview page and the device list (battery, last sync) are all built into the page.";
     drawBackendHas();
   }
 
