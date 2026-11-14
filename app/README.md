@@ -33,7 +33,7 @@ changes into one merge where you can.
 
 | File | What it does |
 | --- | --- |
-| `index.html` | The page layout: left rail, header, and five pages switched by the rail: Today (scores, body map, alerts card, vitals, this week, trend), Alerts, Calendar, Health log and Devices. |
+| `index.html` | The page layout: left rail, header, and six pages switched by the rail: Today (scores, body map, alerts card, vitals, this week, trend), Alerts, Calendar, Train, Health log and Devices. |
 | `sirius.css` | **The Sirius visual identity**, shared by every page: the four colours, the two fonts, the logo and the health dial. Change a brand colour here and it changes everywhere. |
 | `sirius.js` | Draws the brand pieces: the logo (`SIRIUS.mark`), the health dial used as the score meter (`SIRIUS.dial`), the moving logo for loading (`SIRIUS.loading`) and the intro video. |
 | `brand/` | Logo files (`sirius-mark.svg`, `favicon.svg`) and the designer's motion logo video (`sirius-motion.mp4`). |
@@ -47,6 +47,9 @@ changes into one merge where you can.
 | `crew.html` | **Crew overview** mock: one crew score, a grid of every astronaut against every health category, and "crew patterns" that link people who share the same drop. Linked from the left rail ("Crew"). |
 | `crew.js` | Makes 14 days of simulated scores for a crew of six, finds the patterns, and draws the page. Self-contained: it doesn't use `data.js`. |
 | `crew.css` | Styling for the crew page. It loads `sirius.css` for the brand but not `styles.css`, so restyling the main dashboard can't break it. |
+| `cognitive-core.js` | **Train page rules**, no drawing code: the four tests' details, the daily streak (with a shield), points and levels, each person's own "normal" and Steady / Watch / Alert, the badges, and made-up history per astronaut. Can be loaded by `node` for testing. |
+| `cognitive.js` | Draws the **Train** page (`#train`) and runs the four games (reaction time, sequence memory, number memory, number order). Also puts the streak chip in the top bar. |
+| `cognitive.css` | Styling for the Train page and the full-screen test area. Sirius colours only. |
 | `models/body.glb` | The 3D anatomy model (from BodyParts3D, CC BY 4.0). See `models/README.md`. |
 
 ## The Sirius visual identity
@@ -147,6 +150,36 @@ what is coming up, the alerts, and each day's readings. It is not new data, just
 - **Moving it into the main dashboard later:** copy the three parts of `body-map.html`
   (`#bm-list`, `#bm-stage`, `#bm-detail`) and its import map into `index.html`, and load
   `body-map.js` as a module.
+
+## Train page (cognitive tests)
+
+- **The idea:** NASA checks astronaut thinking on long missions (the ISS "Cognition" battery, see
+  `docs/HEALTH_MONITORING_SYSTEMS.md`). Train is a quick, rewarding version of that: short tests
+  in the style of Human Benchmark, written from scratch for Sirius, plus a daily streak, points,
+  levels and badges so people keep doing them. Page is `#train`, with a "Train" link in the rail.
+- **Four tests:** Reaction time (5 rounds, the middle time counts; a tap under 100 ms is a guess and
+  restarts the round, as in NASA's Psychomotor Vigilance Test), Sequence memory, Number memory,
+  Number order (three strikes). Each is one domain: alertness, spatial, working and visual memory.
+- **Your own normal, not a league table.** Each test compares the middle of your last 3 results with
+  the middle of the 10 before them. 15% worse = **Watch**, 30% worse = **Alert**, with an icon and a word
+  as everywhere else. Needs 6 results first ("Learning your normal"). **These cut-offs are placeholders**
+  (`WATCH_AT`, `ALERT_AT` in `cognitive-core.js`) until the health-logic owner sets real ones.
+- **Gamification, kept calm:** opening the app is the day's check-in (nothing to press). A **shield**
+  is earned at every 7th day in a row and forgives one missed day, because a streak shouldn't punish
+  someone for a hard day in space. Points: 10 per check-in, 30 per test (+20 personal best), +40 when
+  three different tests are done in one day. Level L starts at 100 x L x (L-1) points. Nine badges.
+  Points and badges are worked out from the saved check-ins and results every time, never stored
+  twice, so they can't drift. No confetti or bouncing: ember is kept for things that slipped.
+- **Where it's saved:** this browser only (`localStorage`, key `sirius.cog.v1.<crew id>`, one per
+  astronaut). A fresh browser starts with made-up history tagged "Sample data" so the demo has a
+  streak and trends (Cmdr. Haddad's reaction time and sequence memory have slipped, matching his
+  "running on too little rest" story; Okafor's number memory has dipped). **Clear sample history**
+  removes it. Address bar: `?cog=reset` restores the made-up history for the selected astronaut
+  (use it before a demo).
+- **Not connected yet:** results don't feed the Mind score or the alerts. `window.SIRIUS_COG.summary()`
+  is there for that when the team decides how (see `docs/PLAN.md`, decisions on scores).
+- **Checking it works:** `node` can load `cognitive-core.js` for the rules. The games can be played
+  in the browser; `?sample&crew=crew-02#train` is a quick way in.
 
 ## Crew overview
 

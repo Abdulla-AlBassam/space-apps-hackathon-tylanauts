@@ -13,6 +13,7 @@
 <link rel="stylesheet" href="styles.css">
 <link rel="stylesheet" href="body-map.css">
 <link rel="stylesheet" href="crew-switch.css">
+<link rel="stylesheet" href="cognitive.css">
 </head>
 <!-- data-intro: sirius.js plays the motion logo video once when the dashboard opens -->
 <body data-intro>
@@ -166,6 +167,10 @@
       <div class="dev-grid" id="dev-grid"></div>
     </section>
 
+    <!-- ================= TRAIN ================= -->
+    <!-- Cognitive tests, daily streak, points and badges. Drawn by cognitive.js. -->
+    <section class="view" id="view-train" aria-label="Train" hidden></section>
+
     <p class="footer-note">Simulated data for a demo, not a medical device. Sirius is built by Team Tylanauts for NASA Space Apps 2026.<br>
     3D anatomy: <a href="https://dbarchive.biosciencedbc.jp/en/bodyparts3d/lic.html">BodyParts3D</a>, &copy; The Database Center for Life Science, <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>. Icons: <a href="https://lucide.dev">Lucide</a> (ISC).</p>
   </main>
@@ -192,6 +197,8 @@
 <script src="app.js"></script>
 <script src="voice.js"></script>
 <script src="crew-switch.js"></script>
+<script src="cognitive-core.js"></script>
+<script src="cognitive.js"></script>
 <script type="importmap">
 { "imports": {
   "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",

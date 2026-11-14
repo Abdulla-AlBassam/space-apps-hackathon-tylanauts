@@ -5,6 +5,7 @@
  *   #alerts  – every alert in full: what changed and what to do
  *   #calendar – one month at a time: each day's alerts, health checks and readings together
  *   #log     – health log: what's due, what's coming up, latest results, "Log a result"
+ *   #train   – cognitive tests, daily check-in streak, points and badges (drawn by cognitive.js)
  * The Sirius voice (voice.js) reads out today's summary and answers spoken questions.
  *   #devices – my devices, how data flows, "Connect a device" walkthrough (a mock)
  * Every icon comes from icons.js (Lucide). No real astronaut data: readings come from our
@@ -55,6 +56,7 @@ window.HEALTH_READY.then(function () {
     { id: "today", label: "Today", icon: "house" },
     { id: "alerts", label: "Alerts", icon: "bell" },
     { id: "calendar", label: "Calendar", icon: "calendar" },
+    { id: "train", label: "Train", icon: "brain" }, // its page is drawn by cognitive.js
     { id: "log", label: "Log", icon: "clipboard-list" },
     { id: "devices", label: "Devices", icon: "watch" },
   ];

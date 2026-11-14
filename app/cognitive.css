@@ -1,0 +1,175 @@
+/*
+ * Styling for the Train page and its tests (cognitive.js).
+ * Only the Sirius colours from sirius.css are used: Ink, Bone, Slate and Ember. Ember is kept
+ * for things that need attention (a test that has slipped, a wrong tap, a streak about to end).
+ * Motion is calm: things fade, nothing bounces, spins or glows. The reaction-time test has no
+ * transitions at all, so the screen changes the instant the timer starts.
+ */
+
+.cog-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* ---------- Streak chip in the top bar ---------- */
+.cog-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 12px; border-radius: 999px;
+  background: var(--card); color: var(--bone);
+  font: 400 14px var(--font-mono); text-decoration: none; white-space: nowrap;
+}
+.cog-chip .ico { width: 15px; height: 15px; }
+.cog-chip:hover { background: var(--card-hover); }
+.cog-chip:focus-visible { outline: 2px solid var(--bone); outline-offset: 2px; }
+.cog-chip.is-risk .ico { color: var(--ember); }
+
+/* ---------- Three stats across the top: streak, level, today's mission ---------- */
+.cog-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 48px; }
+.cog-stat { min-width: 0; }
+.cog-stat .label { margin: 0 0 10px; }
+.cog-big { margin: 0; display: flex; align-items: baseline; gap: 10px; }
+.cog-big .ico { width: 26px; height: 26px; align-self: center; color: var(--bone); }
+.cog-big b { font: 400 44px/1 var(--font-mono); }
+.cog-big span { color: var(--text-dim); font-size: 15px; }
+.cog-sub { margin: 12px 0 0; color: var(--text-dim); font-size: 13.5px; line-height: 1.5; }
+.cog-sub .ico { width: 14px; height: 14px; vertical-align: -2px; margin-right: 4px; color: var(--bone); }
+
+/* the last seven days: a tick for every day you checked in */
+.cog-week { display: flex; gap: 10px; margin-top: 16px; }
+.cog-day { display: grid; justify-items: center; gap: 6px; }
+.cog-day i { width: 22px; height: 6px; border-radius: 3px; background: var(--rule); }
+.cog-day.on i { background: var(--bone); }
+.cog-day.today i { outline: 1px solid var(--muted); outline-offset: 2px; }
+.cog-day small { font: 400 10px var(--font-mono); letter-spacing: 0.08em; color: var(--muted); }
+
+/* a thin progress bar, same style as the mission bar at the top of the page */
+.cog-bar { height: 4px; margin-top: 18px; border-radius: 4px; background: var(--rule); overflow: hidden; }
+.cog-bar span { display: block; height: 100%; background: var(--bone); border-radius: 4px; }
+.cog-segs { display: flex; gap: 6px; margin-top: 18px; }
+.cog-segs i { flex: 1; height: 4px; border-radius: 4px; background: var(--rule); }
+.cog-segs i.on { background: var(--bone); }
+
+/* ---------- The test tiles ---------- */
+.cog-tests { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }
+.cog-test { display: flex; flex-direction: column; gap: 14px; }
+.cog-test header { display: flex; align-items: flex-start; gap: 12px; }
+.cog-test header > div { flex: 1; min-width: 0; }
+.cog-test h3 { margin: 0 0 2px; font: 500 17px/1.3 var(--font-sans); }
+.cog-test .label { margin: 0; font-size: 11px; }
+.cog-ico { display: inline-grid; place-items: center; flex: none; width: 34px; height: 34px; border-radius: 10px; border: 1px solid var(--rule); color: var(--bone); }
+.cog-ico .ico { width: 17px; height: 17px; }
+.cog-blurb { margin: 0; color: var(--text-dim); font-size: 13.5px; line-height: 1.5; }
+.cog-score { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; min-height: 34px; }
+.cog-score b { font: 400 22px/1.1 var(--font-mono); white-space: nowrap; }
+.cog-score .dim { font-size: 14px; }
+.cog-line { margin: 0; color: var(--text-dim); font-size: 13px; line-height: 1.5; min-height: 2.9em; }
+.cog-spark { flex: 0 1 96px; min-width: 0; width: 96px; height: auto; display: block; overflow: visible; }
+.cog-spark-line { fill: none; stroke: var(--bone); stroke-width: 1.5; stroke-linejoin: round; stroke-linecap: round; }
+.cog-spark-base { stroke: var(--slate); stroke-width: 1; stroke-dasharray: 3 3; }
+.cog-spark circle { fill: var(--bone); }
+.cog-spark circle.is-ember { fill: var(--ember); }
+.cog-test footer { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-top: auto; }
+.cog-done { display: inline-flex; align-items: center; gap: 5px; color: var(--muted); font-size: 12.5px; white-space: nowrap; }
+.cog-done .ico { width: 14px; height: 14px; color: var(--bone); }
+.cog-best { margin-left: auto; color: var(--muted); font: 400 12px var(--font-mono); letter-spacing: 0.04em; white-space: nowrap; }
+
+/* ---------- Badges ---------- */
+.cog-badges { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 18px 32px; }
+.cog-badge { display: flex; align-items: center; gap: 14px; min-width: 0; }
+.cog-badge-ico { display: inline-grid; place-items: center; flex: none; width: 42px; height: 42px; border-radius: 50%; border: 1px solid var(--rule); color: var(--slate); }
+.cog-badge-ico .ico { width: 19px; height: 19px; }
+.cog-badge.on .cog-badge-ico { border-color: var(--bone); color: var(--bone); }
+.cog-badge b { display: block; font-size: 14px; }
+.cog-badge small { display: block; margin-top: 2px; color: var(--muted); font-size: 12.5px; line-height: 1.4; }
+.cog-badge.off b { color: var(--text-dim); }
+.cog-count { color: var(--muted); font: 400 12px var(--font-mono); letter-spacing: 0.08em; }
+
+.cog-note { display: flex; gap: 8px; align-items: flex-start; margin: 0; color: var(--text-faint); font-size: 12.5px; line-height: 1.5; max-width: 70ch; }
+.cog-note .ico { width: 15px; height: 15px; flex: none; margin-top: 2px; }
+
+/* ---------- Full-screen test area ---------- */
+body.cog-lock { overflow: hidden; }
+.cog-stage { position: fixed; inset: 0; z-index: 50; display: flex; flex-direction: column; background: var(--ink); animation: cog-fade 0.2s ease-in-out; }
+@keyframes cog-fade { from { opacity: 0; } }
+.cog-stage-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 16px max(20px, env(safe-area-inset-left, 0px)); border-bottom: 1px solid var(--hair); }
+.cog-stage-title { display: inline-flex; align-items: center; gap: 10px; font: 500 15px var(--font-sans); }
+.cog-stage-title .ico { width: 18px; height: 18px; color: var(--muted); }
+.cog-stage-body { flex: 1; min-height: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 22px; padding: 24px 16px; overflow: auto; outline: none; }
+.cog-status { margin: 0; min-height: 1.6em; text-align: center; font: 400 15px var(--font-sans); color: var(--text-dim); }
+
+.cog-intro { display: grid; justify-items: center; gap: 14px; max-width: 460px; text-align: center; }
+.cog-intro .cog-ico { width: 56px; height: 56px; border-radius: 16px; }
+.cog-intro .cog-ico .ico { width: 26px; height: 26px; }
+.cog-intro h3 { margin: 4px 0 0; font: 500 26px var(--font-sans); }
+.cog-intro p { margin: 0; color: var(--text-dim); font-size: 15px; line-height: 1.55; }
+.cog-intro .btn-primary { margin-top: 8px; padding: 11px 28px; }
+
+/* reaction time: one big button. No transitions, so the change is instant. */
+.cog-react {
+  display: grid; place-content: center; gap: 10px; justify-items: center; text-align: center;
+  width: min(760px, 100%); height: min(480px, 62vh);
+  border: 1px solid var(--rule); border-radius: 20px; background: var(--card); color: var(--text);
+  font-family: var(--font-sans); cursor: pointer; touch-action: manipulation; transition: none;
+}
+.cog-react-msg { font: 500 30px/1.2 var(--font-sans); }
+.cog-react-sub { font: 400 12px var(--font-mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+.cog-react[data-state="wait"] .cog-react-msg { color: var(--muted); }
+.cog-react[data-state="go"] { background: var(--bone); color: var(--ink); border-color: var(--bone); }
+.cog-react[data-state="go"] .cog-react-sub { color: var(--ink); }
+.cog-react[data-state="early"] { border-color: var(--ember); }
+.cog-react[data-state="early"] .cog-react-msg { color: var(--ember); }
+.cog-react[data-state="between"] .cog-react-msg { font: 400 56px/1 var(--font-mono); }
+.cog-react:focus-visible { outline: 2px solid var(--bone); outline-offset: 3px; }
+
+/* sequence memory: a 3 by 3 grid of squares */
+.cog-seq { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; width: min(360px, 84vw); }
+.cog-tile { aspect-ratio: 1; border-radius: 14px; border: 1px solid var(--rule); background: var(--card); cursor: pointer; transition: background-color 0.12s ease-in-out; }
+.cog-tile.lit { background: var(--bone); border-color: var(--bone); }
+.cog-tile.wrong { border: 2px solid var(--ember); }
+.cog-tile:focus-visible { outline: 2px solid var(--bone); outline-offset: 2px; }
+
+/* number memory */
+.cog-digits { min-height: 84px; display: grid; place-content: center; justify-items: center; gap: 8px; max-width: 92vw; text-align: center; font: 400 56px/1.1 var(--font-mono); letter-spacing: 0.1em; word-break: break-all; }
+.cog-digits small { font: 400 14px var(--font-mono); letter-spacing: 0.04em; color: var(--text-dim); }
+.cog-digits .is-miss { color: var(--ember); }
+.cog-timebar { width: min(420px, 80vw); height: 4px; border-radius: 4px; background: var(--rule); overflow: hidden; }
+.cog-timebar span { display: block; height: 100%; width: 100%; background: var(--bone); }
+.cog-form { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; }
+.cog-form[hidden] { display: none; }
+.cog-form input { width: min(360px, 80vw); padding: 12px 16px; border-radius: 12px; border: 1px solid var(--slate); background: var(--card); color: var(--text); font: 400 28px var(--font-mono); letter-spacing: 0.1em; text-align: center; }
+.cog-form input:focus-visible { outline: 2px solid var(--bone); outline-offset: 2px; }
+
+/* number order: squares that show a number, then turn blank */
+.cog-order { display: grid; grid-template-columns: repeat(var(--cols, 6), 1fr); gap: 8px; width: min(540px, 92vw); }
+.cog-cell { aspect-ratio: 1; border-radius: 10px; border: 1px solid var(--bone); background: transparent; color: var(--text); font: 400 22px var(--font-mono); cursor: pointer; padding: 0; }
+.cog-cell.masked { background: var(--bone); color: transparent; }
+.cog-cell.gone { visibility: hidden; pointer-events: none; }
+.cog-cell:focus-visible { outline: 2px solid var(--bone); outline-offset: 2px; }
+.cog-strikes { margin: 0; display: inline-flex; align-items: center; gap: 8px; font: 400 12px var(--font-mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+.cog-strikes i { width: 14px; height: 14px; border-radius: 50%; border: 1px solid var(--slate); }
+.cog-strikes i.on { background: var(--ember); border-color: var(--ember); }
+
+/* result screen */
+.cog-result { display: grid; justify-items: center; gap: 16px; max-width: 520px; text-align: center; }
+.cog-result .label { margin: 0; }
+.cog-result-score { margin: 0; font: 400 64px/1 var(--font-mono); }
+.cog-result-line { margin: 0; display: inline-flex; align-items: center; gap: 8px; color: var(--text-dim); font-size: 15px; line-height: 1.5; }
+.cog-result-line .ico { width: 16px; height: 16px; flex: none; }
+.cog-gains { list-style: none; margin: 4px 0 0; padding: 0; display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 20px; }
+.cog-gains li { display: inline-flex; align-items: center; gap: 6px; font: 400 13px var(--font-mono); letter-spacing: 0.04em; }
+.cog-gains .ico { width: 15px; height: 15px; }
+.cog-times { margin: 0; color: var(--muted); font: 400 12.5px var(--font-mono); letter-spacing: 0.04em; }
+.cog-actions { display: flex; gap: 12px; margin-top: 10px; }
+.cog-actions .btn-primary { padding: 10px 24px; }
+
+@media (max-width: 860px) {
+  .cog-stats { grid-template-columns: minmax(0, 1fr); gap: 32px; }
+}
+@media (max-width: 640px) {
+  .cog-big b { font-size: 38px; }
+  .cog-react-msg { font-size: 24px; }
+  .cog-digits { font-size: 40px; }
+  .cog-result-score { font-size: 52px; }
+  .cog-cell { font-size: 17px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cog-stage { animation: none; }
+  .cog-tile { transition: none; }
+}
