@@ -21,7 +21,12 @@ What this means in practice:
   and alerts.
 - **Frontend:** a "Connect a device" walkthrough (a mock-up: every step just
   clicks Next) and a "My devices" page listing each astronaut's devices.
-- **Demo:** simulated devices send data to the hub, so we need no real hardware.
+- **Demo:** simulated devices send data to real webhook addresses on a small
+  server, so we need no real hardware but the data really flows through the hub.
+
+Full proposal (data flow, which combinations of devices are well established and
+which are speculative, the connect screens, the devices page):
+[DEVICE_HUB.md](DEVICE_HUB.md).
 
 **Software comes first.** The dashboard and its features are the product. A real
 watch or wearable is secondary: we only work on it after the MVP below is done.
@@ -49,6 +54,10 @@ Nice-to-haves only **after** the MVP works: a daily mood/symptom check-in,
 trends over the whole mission, radiation-dose tracking, exercise tracking for
 bone and muscle loss, a view for the flight surgeon on Earth.
 
+**Feature idea (not decided yet):** a personal AI "doctor" assistant for each
+astronaut that explains their data, suggests actions, and escalates serious
+cases to the flight surgeon on Earth. See [AI_DOCTOR.md](AI_DOCTOR.md).
+
 **Last priority:** connecting a real watch or wearable. Only start this once
 everything above works.
 
@@ -57,11 +66,11 @@ everything above works.
 | Role | Person | Owns |
 | --- | --- | --- |
 | Lead / integrator | Abdulla | The plan, reviewing and merging pull requests, making the pieces connect |
-| Frontend 1 | _TBD_ | Dashboard screen and charts |
-| Frontend 2 | _TBD_ | Alerts screen, check-in form, overall look |
+| Frontend 1 | Abdulla | Dashboard screen and charts |
+| Frontend 2 | FinnAliR | Alerts screen, check-in form, overall look |
 | Backend / data | _TBD_ | Simulated data and how the app reads it |
 | Health logic | _TBD_ | What we measure, how scores and alerts are worked out, NASA sources |
-| Business / pitch | _TBD_ | Slides, demo video, the story, the submission write-up |
+| Business / pitch | TaqiTellsTales | Slides, demo video, the story, the submission write-up |
 
 Put your name in the table when you've agreed on your role.
 
@@ -76,7 +85,7 @@ Put your name in the table when you've agreed on your role.
 | --- | --- |
 | Tech stack | _TBD_ |
 | Common data format | _TBD_ (link to the file once written) |
-| Devices we simulate | _TBD_ |
+| Devices we simulate | Watch, chest strap, headband |
 | MVP scores, alerts and device priority | _TBD_ |
 
 ## 5. Timeline
@@ -98,3 +107,18 @@ Every few hours, 5 minutes, everyone answers three questions:
 1. What did I finish?
 2. What am I doing next?
 3. Am I stuck on anything?
+
+## 7. Health check log
+
+A core feature: astronauts log health checks and tests by category, see their
+history, and get reminders when a test is due. Some readings come from devices
+automatically; the rest are typed in by hand. Full details, decisions and
+sources are in [HEALTH_LOG.md](HEALTH_LOG.md).
+
+First version:
+
+- [ ] A catalogue of tests for five categories: Heart, Sleep, Mind & mood, Radiation, Bone & muscle.
+- [ ] Hand-entered results saved and shown in one history with device readings.
+- [ ] A **Today** screen with what is due and overdue, and a **log entry** form.
+- [ ] A **history & trends** chart per test.
+- [ ] Reminders for hand-entered tests, plus a "device not synced in 24 hours" alert.

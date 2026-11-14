@@ -25,15 +25,17 @@ hardware is secondary. See the plan.
 
 | If you want to... | Read |
 | --- | --- |
+| See the plan, tasks and who's doing what at a glance | The **Mission Board** website (see `dashboard/README.md`) |
 | Know what we're building and who does what | [docs/PLAN.md](docs/PLAN.md) |
-| Pick a task | [docs/TASKS.md](docs/TASKS.md) and the repo's **Issues** tab |
+| Pick a task | The Mission Board, or the repo's **Issues** tab |
 | Learn how we use Git without breaking things | [CONTRIBUTING.md](CONTRIBUTING.md) |
+| Use Claude on this repo | [CLAUDE.md](CLAUDE.md) (Claude reads it automatically) |
 
 ## Team
 
 | Person | Role |
 | --- | --- |
-| Abdulla | Lead / integrator |
+| Abdulla | Lead / integrator, Frontend |
 | nayem-m | Developer |
 | _TBD_ | Developer |
 | _TBD_ | Developer |
