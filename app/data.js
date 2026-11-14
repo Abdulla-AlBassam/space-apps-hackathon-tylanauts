@@ -514,21 +514,27 @@
       const records = await response.json();
       const rows = [];
       for (const rec of records) {
-        const metric = DASHBOARD_NAMES[rec.metric];
-        if (!metric || typeof rec.values.value !== "number") continue; // not used by the pages yet
+        // Most metrics have one number ("value"). Blood pressure has two, so it becomes
+        // two dashboard readings: the top number and the bottom number.
+        const parts = rec.metric === "blood-pressure"
+          ? [["bp_systolic", rec.values.systolic], ["bp_diastolic", rec.values.diastolic]]
+          : [[DASHBOARD_NAMES[rec.metric], rec.values.value]];
         const body = rec.data_point.body;
         const unit = Object.values(body).find((v) => v && typeof v === "object" && "unit" in v)?.unit;
         const deviceId = DEVICE_ALIASES[rec.device_id] || rec.device_id || "typed";
-        rows.push({
-          astronaut_id: rec.subject_id,
-          device_id: deviceId,
-          device_type: (DEVICES.find((d) => d.id === deviceId) || {}).type || "typed",
-          metric,
-          value: rec.values.value,
-          unit: UNITS[unit] || unit,
-          // Periods like sleep count for the day they end on.
-          time: rec.effective_end || rec.effective_start,
-        });
+        for (const [metric, value] of parts) {
+          if (!metric || typeof value !== "number") continue; // not used by the pages yet
+          rows.push({
+            astronaut_id: rec.subject_id,
+            device_id: deviceId,
+            device_type: (DEVICES.find((d) => d.id === deviceId) || {}).type || "typed",
+            metric,
+            value,
+            unit: UNITS[unit] || unit,
+            // Periods like sleep count for the day they end on.
+            time: rec.effective_end || rec.effective_start,
+          });
+        }
       }
       return rows;
     } finally {

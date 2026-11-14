@@ -140,3 +140,10 @@ body {
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition: none !important; }
 }
+
+/* Links to the backend's own pages */
+.tools { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px; }
+.tool { display: flex; flex-direction: column; gap: 4px; padding: 12px 14px; border: 1px solid var(--slate); border-radius: 10px; color: var(--bone); text-decoration: none; }
+.tool b { font-weight: 500; font-size: 14px; }
+.tool span { color: var(--muted); font-size: 12.5px; line-height: 1.35; }
+.tool:hover { border-color: var(--muted); }
