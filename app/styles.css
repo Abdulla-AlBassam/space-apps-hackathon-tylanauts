@@ -755,3 +755,8 @@ td .chip { font-size: 12px; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
+
+/* A "Sample data" tag in a vital tile drops under the status when the tile is narrow */
+.vital-flag { display: flex; flex-wrap: wrap; align-items: center; row-gap: 6px; }
+.vital-flag .sample-tag { margin-left: 0; }
+.vital-flag .pill + .sample-tag { margin-left: 8px; }

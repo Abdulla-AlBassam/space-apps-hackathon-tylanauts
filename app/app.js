@@ -7,10 +7,12 @@
  *   #log     – health log: what's due, what's coming up, latest results, "Log a result"
  * The AI doctor is a round button in the corner of every page that opens a chat box.
  *   #devices – my devices, how data flows, "Connect a device" walkthrough (a mock)
- * Every icon comes from icons.js (Lucide). All data is simulated.
+ * Every icon comes from icons.js (Lucide). No real astronaut data: readings come from our
+ * device simulator through the backend, and anything still made up wears a "Sample data" tag.
+ * data.js loads the readings first; drawing starts once window.HEALTH_READY is done.
  */
-(function () {
-  window.APP_HANDLES_HELP = true; // tells body-map.js that this file shows the "?" pop-ups
+window.APP_HANDLES_HELP = true; // tells body-map.js that this file shows the "?" pop-ups
+window.HEALTH_READY.then(function () {
 
   const H = window.HEALTH_DATA;
   const { astronaut, devices, days, baseline, alerts, band, categories, tests, history, doctor } = H;
@@ -31,7 +33,10 @@
     const d = device(id);
     return d ? `<span class="chip">${ic(d.icon)}${d.label}</span>` : "";
   };
-  const head = (id, iconName, text) => { const el = $(id); if (el) el.innerHTML = ic(iconName) + text; };
+  // "Sample data" tag: shown beside anything that still uses made-up numbers.
+  const SAMPLE_TIP = "Made-up numbers for the demo. Real readings will replace them once the backend stores this.";
+  const sampleTag = () => `<span class="sample-tag" title="${SAMPLE_TIP}">Sample data</span>`;
+  const head = (id, iconName, text, sample) => { const el = $(id); if (el) el.innerHTML = ic(iconName) + text + (sample ? sampleTag() : ""); };
   const fmtDate = (iso) =>
     new Date(iso + "T00:00:00Z").toLocaleDateString("en-GB", { day: "numeric", month: "short", timeZone: "UTC" });
   const helpBtn = (key) => `<button type="button" class="help" data-help="${key}" aria-label="What is this?">?</button>`;
@@ -340,7 +345,7 @@
     chat.innerHTML = `
       <header class="doc-head">
         <span class="doc-avatar">${ic("bot")}</span>
-        <div><h2>AI doctor ${helpBtn("doctor")}</h2><p>${pill(doctor.tier.level, `Tier ${doctor.tier.n} · ${doctor.tier.word}`)}</p></div>
+        <div><h2>AI doctor ${helpBtn("doctor")}${sampleTag()}</h2><p>${pill(doctor.tier.level, `Tier ${doctor.tier.n} · ${doctor.tier.word}`)}</p></div>
         <button type="button" class="icon-btn" id="doc-close" aria-label="Close the AI doctor">${ic("x")}</button>
       </header>
       <div class="doc-msgs" id="doc-msgs">${chatLog.map((m) => `<div class="bubble${m.me ? " me" : ""}">${m.me ? esc(m.text) : m.text}</div>`).join("")}</div>
@@ -400,7 +405,7 @@
         </div>`));
     const empty = `<p class="empty">${ic("circle-check")}Nothing due. You're all caught up.</p>`;
     $("due-full").innerHTML = rows.join("") || empty;
-    head("log-due-heading", "calendar-clock", `To do <span class="count">${items.length + unsynced.length}</span>`);
+    head("log-due-heading", "calendar-clock", `To do <span class="count">${items.length + unsynced.length}</span>`, true);
 
     // Coming up: the next few checks that aren't due yet
     const next = typedTests().filter((t) => t.dueInDays > 0).sort((a, b) => a.dueInDays - b.dueInDays).slice(0, 5);
@@ -513,7 +518,7 @@
 
   /* "This week" on Today: two days back, today, four days ahead */
   function renderWeek() {
-    head("due-heading", "calendar-days", "This week");
+    head("due-heading", "calendar-days", "This week", true);
     $("due-all").innerHTML = "Calendar" + ic("chevron-right");
     let html = "";
     for (let n = -2; n <= 4; n++) {
@@ -557,7 +562,7 @@
   });
 
   /* The Calendar page */
-  head("cal-title", "calendar", "Calendar");
+  head("cal-title", "calendar", "Calendar", true);
   const FILTERS = [
     { id: "all", label: "All" },
     { id: "alert", label: "Alerts", icon: "bell" },
@@ -635,8 +640,8 @@
   head("log-title", "clipboard-list", "Health log");
   $("log-new").innerHTML = ic("plus") + "Log a result";
   $("log-new").addEventListener("click", () => openLogModal());
-  head("next-heading", "calendar", "Coming up");
-  head("hist-heading", "history", "Latest results");
+  head("next-heading", "calendar", "Coming up", true);
+  head("hist-heading", "history", "Latest results", true);
 
   function renderHistory() {
     $("history").innerHTML = `<thead><tr><th>Test</th><th>Result</th><th>When</th><th>From</th></tr></thead><tbody>${history
@@ -699,7 +704,7 @@
   }
 
   /* ---------- Devices page ---------- */
-  head("dev-title", "watch", "My devices");
+  head("dev-title", "watch", "My devices", true);
   $("dev-connect").innerHTML = ic("plus") + "Connect a device";
   $("dev-connect").addEventListener("click", () => openWizard());
 
@@ -847,7 +852,7 @@
       return `<div class="vital ${out ? "out" : ""}">
         <div class="vital-name"><span class="vital-ico">${ic(v.icon)}</span>${v.name} ${helpBtn(v.help)}</div>
         <div class="vital-value">${shown}<small>${v.unit}</small></div>
-        <div class="vital-flag">${out ? pill("watch", "Outside normal") : pill("good")}</div>
+        <div class="vital-flag">${out ? pill("watch", "Outside normal") : pill("good")}${H.isSample(v.metric) ? sampleTag() : ""}</div>
         <div class="${out ? "is-watch" : "is-good"}" title="Last 14 days, from your ${src.label.toLowerCase()}">${sparkline(days.slice(-14).map((d) => d[v.metric]), b ? b.low : null, b ? b.high : null)}</div>
       </div>`;
     }).join("");
@@ -965,7 +970,7 @@
       <tbody>${rows.map(([name, key, unit]) => {
         const b = baseline[key];
         const cells = last5.map((d) => `<td class="num ${b && (d[key] < b.low || d[key] > b.high) ? "is-watch" : ""}">${d[key]}</td>`).join("");
-        return `<tr><td>${name} <span class="dim">${unit}</span></td><td>${deviceChip(today.sources[key])}</td>${cells}<td class="num">${b ? `${b.low.toFixed(1)}–${b.high.toFixed(1)}` : "–"}</td></tr>`;
+        return `<tr><td>${name} <span class="dim">${unit}</span>${H.isSample(key) ? sampleTag() : ""}</td><td>${deviceChip(today.sources[key])}</td>${cells}<td class="num">${b ? `${b.low.toFixed(1)}–${b.high.toFixed(1)}` : "–"}</td></tr>`;
       }).join("")}</tbody>`;
   }
 
@@ -1017,6 +1022,12 @@
   }, true);
   window.addEventListener("scroll", () => !pinned && hideHelp(), { passive: true });
 
+  /* ---------- No live data at all: say so once, at the top ---------- */
+  if (H.live.source === "sample") {
+    document.querySelector(".main").insertAdjacentHTML("afterbegin",
+      `<p class="sample-banner" role="status">${ic("info")}Showing sample data only: ${H.live.reason}.</p>`);
+  }
+
   /* ---------- First draw ---------- */
   renderScores();
   renderContributors();
@@ -1028,4 +1039,4 @@
   renderRaw();
   showPage();
   drawTrend(true);
-})();
+});

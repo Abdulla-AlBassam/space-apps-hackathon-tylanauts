@@ -21,7 +21,7 @@
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 
-const H = window.HEALTH_DATA;
+const H = await window.HEALTH_READY; // data.js fetches live readings first
 const today = H.days[H.days.length - 1];
 const base = H.baseline;
 const $ = (id) => document.getElementById(id);
@@ -66,8 +66,8 @@ const AREAS = [
     facing: [0, 0, 1],
     summary: "Resting heart rate is up and heart rate variability is down. Recovery has fallen 3 days in a row.",
     readings: [
-      { name: "Resting heart rate", value: round(today.resting_hr), unit: "bpm", normal: range("resting_hr"), out: outside("resting_hr"), source: deviceLabel(today.sources.resting_hr) },
-      { name: "Heart rate variability", value: today.hrv_rmssd, unit: "ms", normal: range("hrv_rmssd"), out: outside("hrv_rmssd"), source: deviceLabel(today.sources.hrv_rmssd) },
+      { name: "Resting heart rate", value: round(today.resting_hr), unit: "bpm", normal: range("resting_hr"), out: outside("resting_hr"), source: deviceLabel(today.sources.resting_hr), metric: "resting_hr" },
+      { name: "Heart rate variability", value: today.hrv_rmssd, unit: "ms", normal: range("hrv_rmssd"), out: outside("hrv_rmssd"), source: deviceLabel(today.sources.hrv_rmssd), metric: "hrv_rmssd" },
       { name: "Blood pressure", value: "118/76", unit: "mmHg", normal: "below 130/80", out: false, source: "Hand-entered" },
     ],
     actions: recoveryAlert ? recoveryAlert.actions : ["No action needed."],
@@ -85,8 +85,8 @@ const AREAS = [
     facing: [0, 0.7, 0.7],
     summary: "Short sleep for several nights and a lower mood score today. Worth keeping an eye on.",
     readings: [
-      { name: "Sleep last night", value: today.sleep_hours, unit: "h", normal: range("sleep_hours", 1), out: outside("sleep_hours"), source: deviceLabel(today.sources.sleep_hours) },
-      { name: "Mood check", value: 3, unit: "/ 5", normal: "4–5", out: true, source: "Hand-entered, today" },
+      { name: "Sleep last night", value: today.sleep_hours, unit: "h", normal: range("sleep_hours", 1), out: outside("sleep_hours"), source: deviceLabel(today.sources.sleep_hours), metric: "sleep_hours" },
+      { name: "Mood check", value: today.mood, unit: "/ 5", normal: "4–5", out: today.mood < 4, source: "Hand-entered, today", metric: "mood" },
       { name: "Cognitive test", value: "Normal", unit: "", normal: "monthly", out: false, source: "Hand-entered, 12 days ago" },
     ],
     actions: ["Aim for 8 hours in your sleep station tonight", "Log how you feel in today's check-in", "Raise it at your next private talk with the flight surgeon"],
@@ -123,9 +123,9 @@ const AREAS = [
     facing: [0, 0, 1],
     summary: `Mission total is ${today.doseTotal} mSv, ${Math.round((today.doseTotal / CAREER_LIMIT_MSV) * 100)}% of the career limit.${doseSpike ? " One spike was recorded earlier." : ""}`,
     readings: [
-      { name: "Today", value: today.radiation_dose, unit: "mSv", normal: "below 1", out: today.radiation_dose > 1, source: deviceLabel(today.sources.radiation_dose) },
-      { name: "Mission total", value: today.doseTotal, unit: "mSv", normal: `career limit ${CAREER_LIMIT_MSV}`, out: false, source: deviceLabel(today.sources.radiation_dose) },
-      ...(doseSpike ? [{ name: "Spike", value: doseSpike.radiation_dose, unit: "mSv", normal: "below 1", out: true, source: `Radiation badge, ${doseSpike.date}` }] : []),
+      { name: "Today", value: today.radiation_dose, unit: "mSv", normal: "below 1", out: today.radiation_dose > 1, source: deviceLabel(today.sources.radiation_dose), metric: "radiation_dose" },
+      { name: "Mission total", value: today.doseTotal, unit: "mSv", normal: `career limit ${CAREER_LIMIT_MSV}`, out: false, source: deviceLabel(today.sources.radiation_dose), metric: "radiation_dose" },
+      ...(doseSpike ? [{ name: "Spike", value: doseSpike.radiation_dose, unit: "mSv", normal: "below 1", out: true, source: `Radiation badge, ${doseSpike.date}`, metric: "radiation_dose" }] : []),
     ],
     actions: ["No action needed now. Your flight surgeon can see these numbers."],
     link: null,
@@ -152,6 +152,10 @@ leaderSvg.setAttribute("class", "bm-leaders");
 leaderSvg.setAttribute("aria-hidden", "true");
 stageEl.append(leaderSvg, cols.left, cols.right);
 
+// A reading is sample data if it has no live metric behind it (typed-in results and
+// reminders aren't stored by the backend yet) or its metric has no live data today.
+const isSample = (r) => !r.metric || H.isSample(r.metric);
+
 function tagSummary(a) {
   const out = a.readings.filter((r) => r.out).length;
   return out ? `${out} of ${a.readings.length} readings outside normal` : `${a.readings.length} readings, all normal`;
@@ -163,7 +167,7 @@ function tagHtml(a, open) {
       (r) => `<div class="bm-reading${r.out ? " out" + (a.status === "act" ? " act" : "") : ""}">
         <span class="name">${r.name}</span>
         <span class="val">${r.value}${r.unit ? `<small>${r.unit}</small>` : ""}</span>
-        <span class="meta">Normal: ${r.normal}  •  ${r.source}</span>
+        <span class="meta">Normal: ${r.normal}  •  ${r.source}${isSample(r) ? ` <span class="sample-tag">Sample data</span>` : ""}</span>
       </div>`
     )
     .join("");
