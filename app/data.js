@@ -28,7 +28,7 @@
   // The wearables this astronaut has connected to the hub. Each one sends its readings
   // to its own webhook address (the backend is planned; here the addresses are examples).
   const DEVICES = [
-    { id: "watch-01", type: "watch", label: "Wrist watch", model: "Tylanauts Band", icon: "watch",
+    { id: "watch-01", type: "watch", label: "Wrist watch", model: "Siryius Band", icon: "watch",
       measures: ["Heart rate", "Blood oxygen", "Skin temp", "Exercise"], lastSyncHours: 0.2, battery: 64 },
     { id: "strap-01", type: "chest_strap", label: "Chest strap", model: "HRV chest strap", icon: "heart-pulse",
       measures: ["HRV", "Breathing rate", "Exercise heart rate"], lastSyncHours: 0.5, battery: 81 },
