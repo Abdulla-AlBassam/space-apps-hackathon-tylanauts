@@ -75,7 +75,7 @@ cause, so the fix is different from helping one person. Mock: `app/crew.html`.
 | Lead / integrator | Abdulla | The plan, reviewing and merging pull requests, making the pieces connect |
 | Frontend 1 | Abdulla | Dashboard screen and charts |
 | Frontend 2 | FinnAliR | Alerts screen, check-in form, overall look |
-| Backend / data | _TBD_ | Simulated data and how the app reads it |
+| Backend / data | nayem-m | Simulated data and how the app reads it |
 | Health logic | _TBD_ | What we measure, how scores and alerts are worked out, NASA sources |
 | Business / pitch | TaqiTellsTales | Slides, demo video, the story, the submission write-up |
 
