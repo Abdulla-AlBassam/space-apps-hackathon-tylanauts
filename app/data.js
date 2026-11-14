@@ -182,56 +182,52 @@
   }
 
   // Alerts. Following Apple's idea: raise "Act now" only when signals agree.
-  function buildAlerts(days, baseline) {
+  // Alerts. The health ones come from the escalation rules (escalation.js, Mariam's tiers):
+  // each alert carries a tier from 0 (Nominal) to 4 (Emergency) and who gets told.
+  // Device and radiation notes are added after them.
+  const SELF_CARE = {
+    resting_hr: "Swap today's high-intensity session for light exercise",
+    sleep_hours: "Aim for 8 hours in your sleep station tonight",
+    sleep_trend: "Keep the same bedtime for the next few nights",
+    recovery: "Take it easier today and log how rested you feel",
+  };
+  const DEVICE_OF = { resting_hr: ["watch-01"], sleep_hours: ["band-01"], sleep_trend: ["band-01"], recovery: ["watch-01", "strap-01", "band-01"], resp_rate: ["strap-01"], spo2: ["watch-01"] };
+  const tierInfo = (n) => window.ESCALATION.TIERS[n];
+
+  function buildAlerts(days, baseline, assessment) {
     const alerts = [];
-    const last = days.slice(-4);
     const today = days[days.length - 1];
-
-    const droppingDays = last.slice(1).filter((d, i) => d.recovery < last[i].recovery).length;
-    const outOfRange = ["resting_hr", "hrv_rmssd", "sleep_hours", "resp_rate"].filter((m) => {
-      const b = baseline[m];
-      return today[m] < b.low || today[m] > b.high;
+    const make = (tier, f) => ({
+      level: tierInfo(tier).level, tier, tierName: tierInfo(tier).name, notify: tierInfo(tier).notify,
+      title: f.title, detail: f.detail, rules: f.rules, actions: f.actions,
+      signals: f.signals, sources: [...new Set(f.signals.flatMap((m) => DEVICE_OF[m] || []))],
+      combined: f.combined || false, cat: f.cat, date: today.date,
     });
+    const actionsFor = (tier, list) => {
+      const own = list.map((f) => SELF_CARE[f.metric]).filter(Boolean);
+      if (tier >= 3) return [tierInfo(tier).doctor, ...own];
+      if (tier === 2) return [...own.slice(0, 2), "Recheck in 30-60 minutes; the AI doctor will ask a few questions", "Goes into your flight surgeon's daily summary"];
+      return own.length ? own : ["Keep an eye on it; I'll check again tomorrow morning"];
+    };
 
-    if (droppingDays === 3) {
-      alerts.push({
-        level: outOfRange.length >= 2 ? "act" : "watch",
-        title: "Recovery has dropped 3 days in a row",
-        detail: `${last[0].recovery}% → ${today.recovery}%. ${outOfRange.length} of your vitals are outside your normal range today.`,
-        actions: [
-          "Swap today's high-intensity session for light exercise",
-          "Aim for 8 hours in your sleep station tonight",
-          "Log how you feel in today's check-in",
-        ],
-        signals: outOfRange,
-        sources: ["watch-01", "strap-01", "band-01"],
-      });
+    const { flags, stacked, tier1 } = assessment;
+    // Stacking (two or more Tier 1 signs at once) becomes one combined Tier 2 alert.
+    if (stacked) {
+      alerts.push(make(2, {
+        title: `${tier1.length} warning signs at the same time`,
+        detail: tier1.map((f) => f.detail).join(" ") + " One alone is Tier 1; together they make Tier 2.",
+        rules: [...tier1.map((f) => ({ text: f.rule, status: f.status })), { text: "Two or more Tier 1 signs at once", status: "Design" }],
+        actions: actionsFor(2, tier1), signals: tier1.map((f) => f.metric), combined: true, cat: "heart",
+      }));
     }
-
-    if (today.hrv_rmssd < baseline.hrv_rmssd.low) {
-      alerts.push({
-        level: "watch",
-        title: "HRV below your normal range",
-        detail: `${today.hrv_rmssd} ms vs your usual ${Math.round(baseline.hrv_rmssd.mean)} ms. Often linked to poor sleep, stress or illness.`,
-        actions: ["Try a 10-minute breathing session", "Check again tomorrow morning"],
-        signals: ["hrv_rmssd"],
-        sources: ["strap-01"],
-      });
+    // Every other flag is its own alert (Tier 1 ones only when they didn't stack).
+    for (const f of flags.filter((x) => x.tier >= 2 || !stacked).sort((a, b) => b.tier - a.tier)) {
+      alerts.push(make(f.tier, {
+        title: f.rule, detail: f.detail, rules: [{ text: f.rule, status: f.status }],
+        actions: actionsFor(f.tier, [f]), signals: [f.metric], cat: f.cat,
+      }));
     }
-
-    // A warning only possible by combining two devices: short sleep (headband)
-    // together with a raised resting heart rate (watch).
-    if (today.sleep_hours < baseline.sleep_hours.low && today.resting_hr > baseline.resting_hr.high) {
-      alerts.push({
-        level: "watch",
-        title: "Short sleep and a raised heart rate together",
-        detail: `${today.sleep_hours} h of sleep and ${today.resting_hr} bpm resting heart rate. Neither device would flag this alone.`,
-        actions: ["Check in on recovery: light duties if you can", "Log how rested you feel"],
-        signals: ["sleep_hours"],
-        sources: ["band-01", "watch-01"],
-        combined: true,
-      });
-    }
+    alerts.sort((a, b) => b.tier - a.tier);
 
     for (const dev of DEVICES.filter((x) => x.lastSyncHours >= 24)) {
       alerts.push({
@@ -241,7 +237,7 @@
         actions: ["Charge it and step on it once today", "Check it on the Devices page"],
         signals: [],
         sources: [dev.id],
-        device: true,
+        device: true, cat: "device", date: today.date,
       });
     }
 
@@ -254,6 +250,7 @@
         actions: ["No action needed now. Shared with your flight surgeon."],
         signals: ["radiation_dose"],
         sources: ["dosi-01"],
+        cat: "radiation", date: doseSpike.date,
       });
     }
     return alerts;
@@ -294,14 +291,11 @@
   function build(readings, live) {
     const days = groupByDay(readings);
     const baseline = addScores(days);
-    const alerts = buildAlerts(days, baseline);
-    // For the calendar: the day each alert belongs to, and its health category.
-    const spikeDay = days.find((d) => d.radiation_dose > 1);
-    for (const a of alerts) {
-      const isSpike = a.level === "info" && a.signals.includes("radiation_dose");
-      a.date = isSpike && spikeDay ? spikeDay.date : days[days.length - 1].date;
-      a.cat = a.device ? "device" : isSpike ? "radiation" : a.combined ? "sleep" : "heart";
-    }
+    // The latest typed-in blood pressure (made up for now: the health log isn't stored yet).
+    const latestBp = { systolic: 118, diastolic: 76, sample: true };
+    const assessment = window.ESCALATION.assess(days, baseline, { bp: latestBp });
+    // Each alert knows its day and health category, for the calendar.
+    const alerts = buildAlerts(days, baseline, assessment);
 
     // Recent log entries: device readings and typed-in results in one history.
     const todayRow = days[days.length - 1];
@@ -316,8 +310,9 @@
 
     // The AI doctor (idea only, see docs/AI_DOCTOR.md). Scripted messages for the demo.
     const DOCTOR = {
-      tier: { n: 2, word: "Watch", level: "watch" },
-      message: `Your recovery has dropped for 3 days. Your watch shows a resting heart rate of ${todayRow.resting_hr} bpm (usually about ${Math.round(baseline.resting_hr.mean)}), and your headband shows only ${todayRow.sleep_hours} h of sleep. Together that usually means you need rest, not illness, but let's keep an eye on it.`,
+      // The same tier as the alerts, from the escalation rules.
+      tier: { n: assessment.tier, word: tierInfo(assessment.tier).name, level: tierInfo(assessment.tier).level },
+      message: `Your recovery has dropped for 3 days. Your watch shows a resting heart rate of ${todayRow.resting_hr} bpm (usually about ${Math.round(baseline.resting_hr.mean)}), and your headband shows only ${todayRow.sleep_hours} h of sleep. Together that usually means you need rest, not illness, but let's keep an eye on it. That puts you at Tier ${assessment.tier} (${tierInfo(assessment.tier).name}), so ${tierInfo(assessment.tier).notify.charAt(0).toLowerCase() + tierInfo(assessment.tier).notify.slice(1)} will see it.`,
       suggestions: ["Take today's exercise easy", "Log how rested you feel", "I'll check again tomorrow morning"],
       basedOn: ["watch-01", "band-01", "strap-01"],
     };
@@ -325,7 +320,7 @@
     return {
       astronaut: ASTRONAUT, devices: DEVICES, readings, days, baseline, alerts, band,
       categories: CATEGORIES, tests: TESTS, history, doctor: DOCTOR, careerLimit: CAREER_LIMIT_MSV,
-      live,
+      escalation: assessment, live,
       // true when a reading is still made up (no live data for it on the latest day)
       isSample: (metric) => !live.metrics.includes(metric),
     };

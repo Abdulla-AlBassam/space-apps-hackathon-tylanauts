@@ -264,9 +264,11 @@ window.HEALTH_READY.then(function () {
       .map(
         (a, i) => `<article class="alert ${a.level}${a.done ? " done" : ""}">
         <div class="alert-what">
-          <div class="alert-top">${pill(a.level)}${a.combined ? `<span class="badge">${ic("sparkles")}Combined devices</span>` : ""}${a.device ? `<span class="badge">${ic("wifi-off")}Device</span>` : ""}</div>
+          <div class="alert-top">${pill(a.level, a.tier != null ? `Tier ${a.tier} · ${a.tierName}` : undefined)}${a.combined ? `<span class="badge">${ic("sparkles")}Combined devices</span>` : ""}${a.device ? `<span class="badge">${ic("wifi-off")}Device</span>` : ""}</div>
           <h3>${a.title}</h3>
           <p>${a.detail}</p>
+          ${a.notify ? `<p class="alert-notify">${ic("send")}Who is told: ${a.notify}</p>` : ""}
+          ${a.rules ? `<ul class="alert-rules">${a.rules.map((r) => `<li>${r.text} <span class="rule-src">${r.status}</span></li>`).join("")}</ul>` : ""}
           <div class="chips">${(a.sources || []).map(deviceChip).join("")}</div>
         </div>
         <div class="alert-do">
@@ -307,6 +309,18 @@ window.HEALTH_READY.then(function () {
     const open = alerts.filter((a) => !a.done && a.level !== "info");
     const top = open[0];
     const usual = (m) => Math.round(baseline[m].mean);
+    // Symptoms jump straight to a tier (Mariam's symptom overrides, escalation.js).
+    const symptom = window.ESCALATION.symptomTier(q);
+    if (symptom && symptom.tier === 4) {
+      setDoctorTier(4);
+      summarySent = true;
+      toast("Emergency: crew, flight surgeon and mission control alerted");
+      return `<b>This is an emergency (Tier 4).</b> You mentioned "${symptom.symptom}". I've alerted your crewmates, your flight surgeon and mission control. Stop what you're doing, open the medical emergency checklist, and stay where your crew can reach you. A crewmate trained as Crew Medical Officer is on the way.`;
+    }
+    if (symptom && symptom.tier === 2) {
+      setDoctorTier(Math.max(2, doctor.tier.n));
+      return `Thanks for telling me about the ${symptom.symptom}. A new symptom puts you at Tier 2 (Caution): I'll ask again in 30 to 60 minutes, and it goes into your flight surgeon's daily summary. Is it getting worse, or do you also have chest pain, trouble breathing or changes in your vision? If so, tell me straight away.`;
+    }
     if (has("surgeon", "summary", "send"))
       return sendSummary();
     if (has("what should", "what do i", "to do", "today", "advice", "help"))
@@ -328,6 +342,10 @@ window.HEALTH_READY.then(function () {
     if (has("how am i", "doing", "status", "overview", "ok", "okay"))
       return `Recovery ${today.recovery}%, Mind ${today.mindScore}%, radiation at ${today.doseLimitPct}% of your limit. ${open.length ? `${open.length} thing${open.length === 1 ? "" : "s"} need your attention; the main one: ${top.title.toLowerCase()}.` : "Everything is in your normal range."}`;
     return "In this demo I can talk about how you're doing, your recovery, sleep, heart, mood, radiation, and what to do today.";
+  }
+  function setDoctorTier(n) {
+    const t = window.ESCALATION.TIERS[n];
+    doctor.tier = { n, word: t.name, level: t.level };
   }
   function sendSummary() {
     summarySent = true;
@@ -981,8 +999,8 @@ window.HEALTH_READY.then(function () {
     mind: ["Mind", "How you're doing mentally, from 0 to 100. Mostly your daily mood check-in, plus how well you slept. Isolation and confinement are real risks on long missions. (Placeholder formula for the demo.)"],
     bodymap: ["Body map", "A 3D body with a label for each health area. The line shows where on the body it is. Orange marks an area that needs attention. Click a label to open its details. Drag to turn the body."],
     contributors: ["Overview", "The pieces that make up the score selected above, and which device or check-in each one comes from. This is the hub at work: one score built from several devices. Click Recovery, Radiation or Mind to switch."],
-    alerts: ["Alerts", "How many things need your attention and how serious they are. Open the card to see what changed and what to do about it. Some warnings only appear when two devices are combined, which is the point of the hub. Alert is shown only when several signals agree."],
-    doctor: ["AI doctor (idea)", "A preview of an idea we're exploring: an assistant that explains your data in plain words, suggests simple actions, and sends a summary to a real flight surgeon when something is serious. The answers are scripted for the demo. Serious issues go to a real doctor."],
+    alerts: ["Alerts", "How many things need your attention and how serious they are. Open the card to see what changed and what to do about it. Each alert has a tier from 0 (Nominal) to 4 (Emergency) and says who is told. Two or more Tier 1 signs at once make Tier 2, which is how combining devices catches things one device would miss. Each rule shows where its number comes from: Published (a guideline or NASA document), Adapted (a published number fitted to our tiers) or Design (our own choice, for a flight surgeon to review)."],
+    doctor: ["AI doctor (idea)", "A preview of an idea we're exploring: an assistant that explains your data in plain words, suggests simple actions, and sends a summary to a real flight surgeon when something is serious. Its tier comes from the same escalation rules as the alerts. Mention a symptom like a headache and it moves you to Tier 2; chest pain or trouble breathing jumps straight to Tier 4. The answers are scripted for the demo. Serious issues go to a real doctor."],
     week: ["This week", "Seven days at a glance: two days back, today and four days ahead. An orange dot means something needs attention that day, a light dot means a health check is planned. Click a day to see its list. Calendar opens the whole month."],
     calendar: ["Calendar", "Each day gathers three things: alerts, health checks (due, overdue or planned) and that day's readings. Past days show the recovery score, in orange if it was below Steady. Use the buttons at the top to show only one kind or one health area. Click a day to see its details."],
     due: ["Due today", "Health checks you type in yourself, like blood pressure or a mood check, plus any device that hasn't synced for 24 hours. Click Log to add a result."],

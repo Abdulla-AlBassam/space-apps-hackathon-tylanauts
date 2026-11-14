@@ -31,6 +31,7 @@ in a line at the top. Handy address-bar options:
 | `brand/` | Logo files (`sirius-mark.svg`, `favicon.svg`) and the designer's motion logo video (`sirius-motion.mp4`). |
 | `styles.css` | The main dashboard's layout and components. Colours and fonts come from `sirius.css`. |
 | `data.js` | Reads the astronaut's readings from the backend, fills any gaps with made-up readings (3 wearables and a radiation badge), then works out the scores and alerts. Pages wait for `window.HEALTH_READY` before drawing. |
+| `escalation.js` | Mariam's escalation rules (`docs/ESCALATION_RULES.md`): gives each day a tier from 0 (Nominal) to 4 (Emergency). The alerts and the AI doctor both use it. |
 | `app.js` | Draws everything from `data.js`, plus the `?` help pop-ups. |
 | `body-map.html` | **Body map** page: a 3D body you can turn, with glowing points where a health area needs attention. The same body map is the centrepiece of the Today page; this is its full-screen version ("Full screen" link on the map). |
 | `body-map.js` | Draws the 3D anatomy model with three.js and the list of body areas. Reads the same simulated data from `data.js`, so both pages tell the same story. |
