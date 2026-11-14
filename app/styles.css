@@ -824,3 +824,16 @@ td .chip { font-size: 12px; }
 .vital-flag { display: flex; flex-wrap: wrap; align-items: center; row-gap: 6px; }
 .vital-flag .sample-tag { margin-left: 0; }
 .vital-flag .pill + .sample-tag { margin-left: 8px; }
+
+/* ---------- Today: Vitals and This week sit flush ----------
+ * The two sections share a row. Their headings get the same height so the tops line up,
+ * and the vitals stretch to the height of the week panel: each vital's small chart sits at
+ * the bottom of its tile, so the last row of charts ends level with the last item on the right.
+ */
+.layout-even { align-items: stretch; }
+.layout-even > .panel { display: flex; flex-direction: column; }
+.layout-even .panel-head { min-height: 28px; }
+.layout-even .vitals { flex: 1; grid-auto-rows: 1fr; }
+.layout-even .vital { display: flex; flex-direction: column; }
+.layout-even .vital > :last-child { margin-top: auto; }
+.layout-even .due-list > :last-child { padding-bottom: 0; }
