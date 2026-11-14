@@ -22,6 +22,7 @@
   --text-faint: rgba(242, 238, 230, 0.5);
   --card: rgba(242, 238, 230, 0.05);   /* the soft fill behind the few boxed things */
   --card-hover: rgba(242, 238, 230, 0.08);
+  --head: #1B1B1F;   /* page header block: solid (not see-through), because page content scrolls underneath it */
   --hair: rgba(242, 238, 230, 0.09);   /* thin divider lines between rows */
   --line: var(--rule);
   --line-strong: var(--slate);

@@ -89,8 +89,11 @@ what is coming up, the alerts, and each day's readings. It is not new data, just
   comes from; clicking Recovery, Radiation or Mind swaps it straight away. The **Alerts** card
   shows how many alerts are open and how serious they are, and opens the Alerts page
   (`#alerts`). That page has three separate sections, each with its own look: **Alert** (large
-  cards with an orange edge, act today), **Watch** (smaller cards side by side) and **For info** (a
+  cards with a warm orange tint and an Alert tag, act today), **Watch** (smaller cards side by side) and **For info** (a
   quiet list with nothing to do). The three counts at the top jump to their section.
+- **Page headers** are a solid block (`--head` in `sirius.css`) that stays at the top while you
+  scroll: the title block on Alerts, Calendar, Health log and Devices, the name bar on Today, and
+  the top bar on the Crew page. On a phone the block scrolls away so it doesn't cover the screen.
 - **Body map labels** are an icon, a name and a status joined to the body by a thin line.
   Clicking one opens its details underneath. There are no view buttons: the body turns by itself.
 - **Sirius voice** (`voice.js`, replaces the old AI doctor chat box) is the round Sirius logo in
