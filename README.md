@@ -8,13 +8,18 @@ Our team's project for the **NASA Space Apps Challenge 2026** (Manama local even
 
 Event page: https://www.spaceappschallenge.org/2026/local-events/manama/?tab=details
 
-## Our idea (early stage)
+## Our idea
 
-A "Whoop for astronauts": **software first.** A dashboard that takes health
-readings (for the hackathon, realistic **simulated** data), turns them into a few
-simple daily scores, and tells the astronaut in plain language what is changing and
-what to do about it. A physical watch or wearable is **secondary**: something we
-add only once the software works. See the plan.
+**One hub for every wearable.** Astronauts may wear several devices at once: a
+watch, a chest strap, a headband. Each one only sees part of the body. Our app
+receives readings from all of them (through a web address each device type sends
+its data to, called a webhook), turns them into one common format, and combines
+them. Combining lets us cross-check readings and spot patterns no single device
+can, then give the astronaut a few simple scores and clear advice on what to do.
+
+**Software first.** For the hackathon every device is **simulated**, and the
+"connect a device" screens are a mock-up where each step just clicks Next. Real
+hardware is secondary. See the plan.
 
 ## Start here
 
