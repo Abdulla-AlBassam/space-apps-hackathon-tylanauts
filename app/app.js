@@ -114,6 +114,7 @@ window.HEALTH_READY.then(function () {
       ringPct: today.doseLimitPct,
       unit: "mSv total",
       dialUnit: "mSv",
+      dialMax: H.careerLimit, // the dial runs from 0 to the 600 mSv career limit
       level: "good",
       word: `${today.doseLimitPct}% of limit`,
       line: `${Math.round(today.doseTotal)} mSv so far, ${today.radiation_dose} mSv today. Career limit ${H.careerLimit} mSv.`,
@@ -130,9 +131,10 @@ window.HEALTH_READY.then(function () {
     },
   ];
 
-  // The meter on each score is the health dial from the Sirius identity: the logo's 24 ticks.
-  // Bone ticks are the score so far, slate ticks are what is left, ember means attention.
-  const dial = (s) => SIRIUS.dial(s.ringPct, s.level, s.value, 116, s.dialUnit);
+  // The meter on each score is the Sirius health dial, drawn as a 0 to 100 speedometer with
+  // the score's icon under the number. Bone ticks are the score so far, slate ticks are what
+  // is left, ember means attention.
+  const dial = (s) => SIRIUS.dial(s.ringPct, s.level, s.value, 116, s.dialUnit, s.icon, s.dialMax);
 
   let selectedScore = "recovery"; // which score the Overview card (beside the body map) is showing
   function renderScores() {
@@ -143,7 +145,7 @@ window.HEALTH_READY.then(function () {
            aria-label="${s.title} ${s.value} ${s.unit}. Show its overview">
         ${dial(s)}
         <div class="score-text">
-          <div class="score-title"><span class="title-ico">${ic(s.icon)}</span>${s.title} ${helpBtn(s.key)}</div>
+          <div class="score-title">${s.title} ${helpBtn(s.key)}</div>
           ${pill(s.level, s.word)}
           <p class="score-line">${s.line}</p>
         </div>

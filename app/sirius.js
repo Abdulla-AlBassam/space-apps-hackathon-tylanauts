@@ -6,7 +6,7 @@
  *                                  with one ember tick
  *   SIRIUS.mark(size, {motion})    the motion logo: the dial fills with ember, holds,
  *                                  then drains back (used for loading and "done" moments)
- *   SIRIUS.dial(percent, level, n) the health dial: the same 24 ticks used as a score meter
+ *   SIRIUS.dial(percent, level, n) the health dial: a 0 to 100 speedometer of ticks
  *   SIRIUS.loading(text)           the motion logo with a line of text under it
  *
  * It also plays the motion logo video once per visit as an intro, on pages whose
@@ -71,30 +71,44 @@
   const loading = (text) =>
     `<div class="sirius-loading">${mark(64, { motion: true, label: "" })}${text ? `<span class="label">${text}</span>` : ""}</div>`;
 
-  /* ---------- The health dial ----------
-   * percent: how far round the dial is filled (0 to 100).
+  /* ---------- The health dial (speedometer) ----------
+   * A speedometer: 25 ticks in an arc that reads left to right from 0 to 100, the
+   * number in the middle and the score's icon under the number.
+   * percent: how far along the arc is filled (0 to 100).
    * level:   "good" = filled ticks are bone
    *          "watch" = the last filled tick is ember ("where you are now")
    *          "act"  = every filled tick is ember
    * text:    what to write in the middle (normally the score).
-   * unit:    optional small unit under the number, for a dial that is not a 0 to 100 score.
-   * The 12, 3, 6 and 9 o'clock ticks stay long, like the star's points.
+   * size:    width and height in pixels.
+   * unit:    optional small unit after the number, for a dial that is not a 0 to 100 score.
+   * iconName: optional icon (from icons.js) drawn under the number.
+   * maxLabel: what the right-hand end of the arc says (100 unless the dial measures something else).
+   * The 0, 25, 50, 75 and 100 ticks are long, like the logo's star points.
    */
-  function dial(percent, level, text, size, unit) {
-    const filled = Math.max(0, Math.min(24, Math.round((percent / 100) * 24)));
+  function dial(percent, level, text, size, unit, iconName, maxLabel) {
+    const N = 25, SWEEP = 240, CY = 56; // ticks, degrees of arc, centre of the arc
+    const pct = Math.max(0, Math.min(100, Number(percent) || 0));
+    const filled = pct <= 0 ? 0 : Math.min(N, Math.floor((pct * (N - 1)) / 100) + 1);
     let lines = "";
-    for (let i = 0; i < 24; i++) {
+    for (let i = 0; i < N; i++) {
       const long = i % 6 === 0;
       let colour = "var(--slate)";
       if (i < filled) colour = level === "act" || (level === "watch" && i === filled - 1) ? "var(--ember)" : "var(--bone)";
-      lines += `<line x1="50" y1="3" x2="50" y2="${long ? 17 : 12}" stroke-width="${long ? 5 : 4}" style="--c:${colour};--i:${i}" transform="rotate(${i * 15} 50 50)"/>`;
+      const angle = -SWEEP / 2 + (i * SWEEP) / (N - 1);
+      lines += `<line x1="50" y1="${CY - 47}" x2="50" y2="${CY - (long ? 33 : 38)}" stroke-width="${long ? 4.5 : 3.5}" style="--c:${colour};--i:${i}" transform="rotate(${angle} 50 ${CY})"/>`;
     }
+    // 0 and the top of the scale under the two ends of the arc
+    const ends = `<text class="dial-unit" x="13" y="91" font-size="7.5">0</text><text class="dial-unit" x="87" y="91" font-size="7.5">${maxLabel == null ? 100 : maxLabel}</text>`;
     const str = String(text == null ? "" : text);
-    const fs = str.length > 3 ? 19 : str.length > 2 ? 24 : 28;
-    // An optional small unit (like "mSv") sits under the number, in the mono data font
-    const sub = unit ? `<text class="dial-unit" x="50" y="${50 + fs * 0.33 + 11}" font-size="8.5">${unit}</text>` : "";
-    const y = 50 + fs * 0.33 - (unit ? 4 : 0);
-    return `<svg class="dial" width="${size || 112}" height="${size || 112}" viewBox="0 0 100 100" aria-hidden="true">${lines}<text x="50" y="${y}" font-size="${fs}">${str}</text>${sub}</svg>`;
+    const fs = str.length > 3 ? 18 : str.length > 2 ? 22 : 26;
+    const unitPart = unit ? `<tspan class="dial-unit" font-size="7.5" dx="1.5">${unit}</tspan>` : "";
+    const num = `<text x="50" y="${CY + fs * 0.33 - 4}" font-size="${fs}">${str}${unitPart}</text>`;
+    // The icon sits under the number, in the gap between the two ends of the arc
+    let ico = "";
+    if (iconName && window.icon) {
+      ico = window.icon(iconName).replace('<svg class="ico ', '<svg x="42" y="66" width="16" height="16" class="dial-ico ');
+    }
+    return `<svg class="dial" width="${size || 112}" height="${size || 112}" viewBox="0 0 100 100" aria-hidden="true">${lines}${ends}${num}${ico}</svg>`;
   }
 
   /* ---------- Intro video ----------
