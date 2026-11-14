@@ -26,6 +26,99 @@ numbers to make the demo more believable.
 
 ---
 
+## All datasets and links
+
+Every link below was checked on 14 Nov 2026 and responded. The **download links start a file
+download straight away**, with no login. Files ending in `TRANSFORMED.csv` are the tidiest
+versions to use in code. The large `.xlsx` files are genetic data, which we probably won't need.
+
+### A. Real astronaut data (Inspiration4 crew, NASA OSDR)
+
+Most useful for us: **OSD-569** (blood count), **OSD-575** (metabolic, immune and heart panels), **OSD-656** (urine inflammation).
+OSD-572, 573, 630 and 687 have no ready-made spreadsheet. They are raw genetic/microbe files, so only the study page is listed.
+
+**OSD-569**: Whole Blood Measurements from the SpaceX Inspiration4 Mission (RNA-seq, epitranscriptome, WGS, clonal hematopoiesis, CBC)  
+Study page: https://osdr.nasa.gov/bio/repo/data/studies/OSD-569 · All files (11): https://osdr.nasa.gov/osdr/data/osd/files/569
+
+- [GLDS-561_long-readRNAseq_Direct_RNA_seq_Gene_Expression_Processed.xlsx](https://osdr.nasa.gov/geode-py/ws/studies/OSD-569/download?source=datamanager&file=GLDS-561_long-readRNAseq_Direct_RNA_seq_Gene_Expression_Processed.xlsx) (123.3 MB)
+- [LSDS-7_Complete_Blood_Count_CBC.upload_SUBMITTED.csv](https://osdr.nasa.gov/geode-py/ws/studies/OSD-569/download?source=datamanager&file=LSDS-7_Complete_Blood_Count_CBC.upload_SUBMITTED.csv) (26 KB)
+- [GLDS-561_directm6Aseq_Direct_RNA_seq_m6A_Processed_Data.xlsx](https://osdr.nasa.gov/geode-py/ws/studies/OSD-569/download?source=datamanager&file=GLDS-561_directm6Aseq_Direct_RNA_seq_m6A_Processed_Data.xlsx) (93.1 MB)
+- [LSDS-7_Complete_Blood_Count_CBC_TRANSFORMED.csv](https://osdr.nasa.gov/geode-py/ws/studies/OSD-569/download?source=datamanager&file=LSDS-7_Complete_Blood_Count_CBC_TRANSFORMED.csv) (9 KB)
+
+**OSD-570**: SpaceX Inspiration4 PBMC Profiling: snRNA-seq, snATAC-seq, and T-cell and B-cell repertoire profiling  
+Study page: https://osdr.nasa.gov/bio/repo/data/studies/OSD-570 · All files (12): https://osdr.nasa.gov/osdr/data/osd/files/570
+
+- [GLDS-562_snATAC-Seq_PBMC_Chromatin_Accessibility_snATAC-seq_Processed_Data.xlsx](https://osdr.nasa.gov/geode-py/ws/studies/OSD-570/download?source=datamanager&file=GLDS-562_snATAC-Seq_PBMC_Chromatin_Accessibility_snATAC-seq_Processed_Data.xlsx) (9.5 MB)
+- [GLDS-562_snRNA-Seq_PBMC_Gene_Expression_snRNA-seq_Processed_Data.xlsx](https://osdr.nasa.gov/geode-py/ws/studies/OSD-570/download?source=datamanager&file=GLDS-562_snRNA-Seq_PBMC_Gene_Expression_snRNA-seq_Processed_Data.xlsx) (3.4 MB)
+
+**OSD-571**: SpaceX Inspiration4 Plasma Profiling: Proteomics, EVPs, Metabolomics, cfDNA Sequencing and cfRNA Sequencing  
+Study page: https://osdr.nasa.gov/bio/repo/data/studies/OSD-571 · All files (14): https://osdr.nasa.gov/osdr/data/osd/files/571
+
+- [GLDS-563_proteomics_Plasma_Proteomics_Processed_Data.xlsx](https://osdr.nasa.gov/geode-py/ws/studies/OSD-571/download?source=datamanager&file=GLDS-563_proteomics_Plasma_Proteomics_Processed_Data.xlsx) (322 KB)
+- [GLDS-563_metabolomics_Plasma_Metabolomics_Processed_Data.xlsx](https://osdr.nasa.gov/geode-py/ws/studies/OSD-571/download?source=datamanager&file=GLDS-563_metabolomics_Plasma_Metabolomics_Processed_Data.xlsx) (297 KB)
+- [GLDS-563_proteomics_EVP_Proteomics_Processed_Data.xlsx](https://osdr.nasa.gov/geode-py/ws/studies/OSD-571/download?source=datamanager&file=GLDS-563_proteomics_EVP_Proteomics_Processed_Data.xlsx) (106 KB)
+
+**OSD-572**: SpaceX Inspiration4 Oral, Nasal, and Skin Metagenomic and Metatranscriptomic Microbial Swabs  
+Study page: https://osdr.nasa.gov/bio/repo/data/studies/OSD-572 · All files (5404): https://osdr.nasa.gov/osdr/data/osd/files/572
+
+
+**OSD-573**: SpaceX Inspiration4 Dragon Capsule Metagenomic and Metatranscriptomic Microbial Swabs  
+Study page: https://osdr.nasa.gov/bio/repo/data/studies/OSD-573 · All files (659): https://osdr.nasa.gov/osdr/data/osd/files/573
+
+
+**OSD-574**: SpaceX Inspiration4 Deltoid Skin and Microbiome Data: Spatial Transcriptomics (NanoString GeoMx), Metageomics, and Metatranscriptomics  
+Study page: https://osdr.nasa.gov/bio/repo/data/studies/OSD-574 · All files (164): https://osdr.nasa.gov/osdr/data/osd/files/574
+
+- [GLDS-566_SpatialTranscriptomics_Skin_Biopsy_Spatially_Resolved_Transcriptomics_Processed_Data.xlsx](https://osdr.nasa.gov/geode-py/ws/studies/OSD-574/download?source=datamanager&file=GLDS-566_SpatialTranscriptomics_Skin_Biopsy_Spatially_Resolved_Transcriptomics_Processed_Data.xlsx) (1.0 MB)
+
+**OSD-575**: SpaceX Inspiration4 Blood Serum Metabolic Panel and Immune/Cardiac Cytokine Arrays (Comprehensive Metabolic Panel and Multiplex)  
+Study page: https://osdr.nasa.gov/bio/repo/data/studies/OSD-575 · All files (9): https://osdr.nasa.gov/osdr/data/osd/files/575
+
+- [LSDS-8_Comprehensive_Metabolic_Panel_CMP.upload_SUBMITTED.csv](https://osdr.nasa.gov/geode-py/ws/studies/OSD-575/download?source=datamanager&file=LSDS-8_Comprehensive_Metabolic_Panel_CMP.upload_SUBMITTED.csv) (25 KB)
+- [LSDS-8_Multiplex_serum.immune.EvePanel_SUBMITTED.csv](https://osdr.nasa.gov/geode-py/ws/studies/OSD-575/download?source=datamanager&file=LSDS-8_Multiplex_serum.immune.EvePanel_SUBMITTED.csv) (107 KB)
+- [LSDS-8_Multiplex_serum.cardiovascular.EvePanel_SUBMITTED.csv](https://osdr.nasa.gov/geode-py/ws/studies/OSD-575/download?source=datamanager&file=LSDS-8_Multiplex_serum.cardiovascular.EvePanel_SUBMITTED.csv) (15 KB)
+- [LSDS-8_Multiplex_serum.immune.AlamarPanel_SUBMITTED.xlsx](https://osdr.nasa.gov/geode-py/ws/studies/OSD-575/download?source=datamanager&file=LSDS-8_Multiplex_serum.immune.AlamarPanel_SUBMITTED.xlsx) (323 KB)
+- [LSDS-8_Multiplex_serum_immune_EvePanel_TRANSFORMED.csv](https://osdr.nasa.gov/geode-py/ws/studies/OSD-575/download?source=datamanager&file=LSDS-8_Multiplex_serum_immune_EvePanel_TRANSFORMED.csv) (41 KB)
+- [LSDS-8_Multiplex_serum_cardiovascular_EvePanel_TRANSFORMED.csv](https://osdr.nasa.gov/geode-py/ws/studies/OSD-575/download?source=datamanager&file=LSDS-8_Multiplex_serum_cardiovascular_EvePanel_TRANSFORMED.csv) (6 KB)
+- [LSDS-8_Multiplex_serum.immune.AlamarPanel_TRANSFORMED.csv](https://osdr.nasa.gov/geode-py/ws/studies/OSD-575/download?source=datamanager&file=LSDS-8_Multiplex_serum.immune.AlamarPanel_TRANSFORMED.csv) (142 KB)
+- [LSDS-8_Comprehensive_Metabolic_Panel_CMP_TRANSFORMED.csv](https://osdr.nasa.gov/geode-py/ws/studies/OSD-575/download?source=datamanager&file=LSDS-8_Comprehensive_Metabolic_Panel_CMP_TRANSFORMED.csv) (9 KB)
+
+**OSD-630**: SpaceX Inspiration4 Stool Metagenome Profiling  
+Study page: https://osdr.nasa.gov/bio/repo/data/studies/OSD-630 · All files (150): https://osdr.nasa.gov/osdr/data/osd/files/630
+
+
+**OSD-656**: SpaceX Inspiration4 Urine Inflammation Panel (Multiplex, NULISAseq)  
+Study page: https://osdr.nasa.gov/bio/repo/data/studies/OSD-656 · All files (4): https://osdr.nasa.gov/osdr/data/osd/files/656
+
+- [LSDS-64_Multiplex_urine.immune.AlamarPanel_SUBMITTED.xlsx](https://osdr.nasa.gov/geode-py/ws/studies/OSD-656/download?source=datamanager&file=LSDS-64_Multiplex_urine.immune.AlamarPanel_SUBMITTED.xlsx) (267 KB)
+- [LSDS-64_Multiplex_200plex v1-Target Information.csv](https://osdr.nasa.gov/geode-py/ws/studies/OSD-656/download?source=datamanager&file=LSDS-64_Multiplex_200plex%20v1-Target%20Information.csv) (13 KB)
+- [LSDS-64_Multiplex_urine.immune.AlamarPanel_TRANSFORMED.csv](https://osdr.nasa.gov/geode-py/ws/studies/OSD-656/download?source=datamanager&file=LSDS-64_Multiplex_urine.immune.AlamarPanel_TRANSFORMED.csv) (115 KB)
+
+**OSD-687**: SpaceX Inspiration4 T-Cell Histone Modification Profiling (H3K4me1, H3K4me3, H3K27ac)  
+Study page: https://osdr.nasa.gov/bio/repo/data/studies/OSD-687 · All files (87): https://osdr.nasa.gov/osdr/data/osd/files/687
+
+
+### B. ISS radiation and cabin environment
+
+| What | Link |
+|---|---|
+| RadLab, ISS radiation detectors (browse) | https://visualization.osdr.nasa.gov/radlab/ |
+| RadLab API instructions | https://visualization.osdr.nasa.gov/radlab/gui/data-access/ |
+| RadLab download: DosTel1 dose rate, 2009 to 2024 (large, about 3.4 million lines) | https://visualization.osdr.nasa.gov/radlab/api/?query=instrument=DosTel1&columns+=absorbed_dose_rate&format=csv |
+| Environmental Data App: ISS temperature, humidity, CO₂ | https://visualization.osdr.nasa.gov/eda/ |
+
+### C. Reference material (for thresholds, not raw data)
+
+| What | Link |
+|---|---|
+| NASA Human Research Program: list of 17 health risks | https://www.nasa.gov/hrp/risks/ |
+| Evidence report: fitness and muscle loss in spaceflight | https://ntrs.nasa.gov/citations/20220019338 |
+| NASA news page announcing the Inspiration4 datasets | https://www.nasa.gov/osdr-latest-news-i4-mission-datasets/ |
+| SOMA portal (Weill Cornell), Inspiration4 and Twins Study data browser | https://soma.weill.cornell.edu |
+| NASA Life Sciences Data Archive (request only, not usable for us) | https://nlsp.nasa.gov/explore/lsdahome |
+
+---
+
 ## 1. NASA Open Science Data Repository (OSDR) – Inspiration4 crew data ✅ Tested
 
 **Website:** https://osdr.nasa.gov/bio/repo/data/studies/OSD-569
