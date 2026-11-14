@@ -21,6 +21,14 @@ in a line at the top. Handy address-bar options:
 - `?sample`: skip the backend and use made-up data (for working offline).
 - `?api=http://localhost:8001/api/v1`: read from a backend running on your own computer.
 
+## Deploys (Vercel)
+
+Every merge to `main` updates the live site. Vercel's free plan stops building after 100 deployments in a day (its
+error: "api-deployments-free-per-day"), and every pushed branch normally builds a preview. To save that
+allowance, `vercel.json` turns off preview builds for branches named `claude/...` (the
+branches Claude threads push). Teammates' own branches still get previews. Batch small
+changes into one merge where you can.
+
 ## The files
 
 | File | What it does |
