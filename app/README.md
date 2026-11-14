@@ -87,7 +87,9 @@ what is coming up, the alerts, and each day's readings. It is not new data, just
   The **Overview** card shows what the selected score is made of and which device each part
   comes from; clicking Recovery, Radiation or Mind swaps it straight away. The **Alerts** card
   shows how many alerts are open and how serious they are, and opens the Alerts page
-  (`#alerts`), which lists each alert with what changed and what to do.
+  (`#alerts`). That page has three separate sections, each with its own look: **Alert** (large
+  cards with an orange edge, act today), **Watch** (smaller cards side by side) and **For info** (a
+  quiet list with nothing to do). The three counts at the top jump to their section.
 - **Body map labels** are an icon, a name and a status joined to the body by a thin line.
   Clicking one opens its details underneath. There are no view buttons: the body turns by itself.
 - **AI doctor** is the round button in the bottom right corner of every dashboard page. It

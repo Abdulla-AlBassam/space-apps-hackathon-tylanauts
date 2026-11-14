@@ -258,26 +258,65 @@ window.HEALTH_READY.then(function () {
     rc.className = "rail-count is-" + level;
     rc.hidden = !needs;
 
-    // The Alerts page
-    $("alert-counts").innerHTML = countsHtml(c);
-    $("alert-list").innerHTML = alerts
-      .map(
-        (a, i) => `<article class="alert ${a.level}${a.done ? " done" : ""}">
-        <div class="alert-what">
-          <div class="alert-top">${pill(a.level)}${a.combined ? `<span class="badge">${ic("sparkles")}Combined devices</span>` : ""}${a.device ? `<span class="badge">${ic("wifi-off")}Device</span>` : ""}</div>
-          <h3>${a.title}</h3>
-          <p>${a.detail}</p>
-          <div class="chips">${(a.sources || []).map(deviceChip).join("")}</div>
-        </div>
-        <div class="alert-do">
-          <h4>${ic("clipboard-list")}What to do</h4>
-          <ul>${a.actions.map((x) => `<li>${x}</li>`).join("")}</ul>
-          ${a.level === "info" ? "" : `<button type="button" class="btn-ghost" data-alert="${i}">${ic(a.done ? "refresh-cw" : "check")}${a.done ? "Undo" : "Mark as done"}</button>`}
-        </div>
-      </article>`
-      )
-      .join("");
+    // The Alerts page: three separate sections, one per level, each with its own look.
+    // Alert = large cards (act today), Watch = smaller cards side by side, For info = a quiet list.
+    $("alert-counts").innerHTML = SECTIONS.map((sec) => {
+      const n = sec.level === "info" ? c.info : c[sec.level];
+      return `<a class="alert-tab is-${sec.level}${n ? "" : " is-empty"}" href="#alerts" data-jump="${sec.level}"><b>${n}</b><span>${ic(STATUS_ICON[sec.level])}${WORDS[sec.level]}</span></a>`;
+    }).join("");
+    $("alert-list").innerHTML = SECTIONS.map((sec) => {
+      const list = alerts.map((a, i) => ({ a, i })).filter((x) => x.a.level === sec.level);
+      if (!list.length && sec.level !== "act") return ""; // the Alert section always shows, so "nothing urgent" is said out loud
+      const open = list.filter((x) => !x.a.done).length;
+      return `<section class="alert-sec sec-${sec.level}" id="alerts-${sec.level}" aria-label="${sec.name}">
+        <header class="alert-sec-head">
+          <span class="alert-sec-ico">${ic(STATUS_ICON[sec.level])}</span>
+          <div><h3>${sec.name}</h3><p>${sec.sub}</p></div>
+          <span class="alert-sec-count label">${sec.level === "info" ? list.length : `${open} open`}</span>
+        </header>
+        ${list.length
+          ? `<div class="alert-sec-body">${list.map((x) => alertCard(x.a, x.i)).join("")}</div>`
+          : `<p class="empty alert-none">${ic("circle-check")}Nothing needs action today.</p>`}
+      </section>`;
+    }).join("");
   }
+  const SECTIONS = [
+    { level: "act", name: "Alert", sub: "Act on these today." },
+    { level: "watch", name: "Watch", sub: "Not urgent. Keep an eye on these and follow the steps when you can." },
+    { level: "info", name: "For info", sub: "Nothing to do. These are here so you know." },
+  ];
+  const alertBadges = (a) =>
+    (a.combined ? `<span class="badge">${ic("sparkles")}Combined devices</span>` : "") + (a.device ? `<span class="badge">${ic("wifi-off")}Device</span>` : "");
+  function alertCard(a, i) {
+    // For info: one quiet row, no steps and no button
+    if (a.level === "info")
+      return `<article class="alert info">
+        <div class="alert-what"><h4>${a.title}</h4><p>${a.detail}</p></div>
+        <div class="chips">${(a.sources || []).map(deviceChip).join("")}</div>
+        <p class="alert-note">${a.actions.join(" ")}</p>
+      </article>`;
+    return `<article class="alert ${a.level}${a.done ? " done" : ""}">
+      <div class="alert-what">
+        ${alertBadges(a) ? `<div class="alert-top">${alertBadges(a)}</div>` : ""}
+        <h4>${a.title}</h4>
+        <p>${a.detail}</p>
+        <div class="chips">${(a.sources || []).map(deviceChip).join("")}</div>
+      </div>
+      <div class="alert-do">
+        <h5>${ic("clipboard-list")}What to do</h5>
+        <ul>${a.actions.map((x) => `<li>${x}</li>`).join("")}</ul>
+        <button type="button" class="${a.level === "act" && !a.done ? "btn-primary" : "btn-ghost"}" data-alert="${i}">${ic(a.done ? "refresh-cw" : "check")}${a.done ? "Undo" : "Mark as done"}</button>
+      </div>
+    </article>`;
+  }
+  // The three counts at the top of the page jump to their section
+  $("alert-counts").addEventListener("click", (e) => {
+    const t = e.target.closest("[data-jump]");
+    if (!t) return;
+    e.preventDefault();
+    const sec = $("alerts-" + t.dataset.jump);
+    if (sec) sec.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
+  });
   $("alerts-card").addEventListener("click", (e) => {
     if (!e.target.closest(".help, a")) location.hash = "#alerts"; // the whole card opens the Alerts page
   });

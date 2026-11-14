@@ -340,10 +340,9 @@ body {
 .alerts-sum { display: flex; align-items: center; gap: 16px; margin-bottom: 16px; }
 .alerts-num { font: 400 56px/0.9 var(--font-mono); }
 .alerts-line { margin: 0; font-size: 15px; line-height: 1.35; color: var(--text-dim); }
-.alerts-levels, .alert-counts { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; }
-.view-head > .alert-counts { flex: none; min-width: 0; }
+.alerts-levels { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; }
 /* The count uses the same font and size as its word, so icon, number and word line up */
-.alerts-levels b, .alert-counts b { font: inherit; }
+.alerts-levels b { font: inherit; }
 .alerts-top {
   display: flex;
   align-items: flex-start;
@@ -357,38 +356,103 @@ body {
 .alerts-top .ember-dot { margin-top: 6px; }
 .ember-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--ember); flex: none; display: inline-block; }
 
-/* ---------- Alerts: the full page. One row per alert: what happened | what to do ---------- */
-.alert-list { display: flex; flex-direction: column; }
-.alert {
-  display: grid;
-  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
-  gap: 8px 40px;
-  padding: 30px 0;
-  border-top: 1px solid var(--hair);
-  transition: opacity 0.3s;
+/* ---------- Alerts: the full page ----------
+ * Three separate sections, each with its own look so they read as different kinds of thing:
+ *   Alert    = large cards with an ember edge and a filled button (act today)
+ *   Watch    = smaller cards, two side by side
+ *   For info = a quiet list with no cards and no buttons
+ */
+/* The three counts at the top. Clicking one jumps to its section. */
+.view-head > .alert-counts { flex: none; min-width: 0; display: flex; gap: 8px; }
+.alert-tab {
+  display: flex; flex-direction: column; gap: 6px;
+  min-width: 112px; padding: 12px 16px 12px;
+  border-radius: var(--radius); background: var(--card);
+  color: var(--muted); text-decoration: none; transition: background 0.2s;
 }
+.alert-tab:hover { background: var(--card-hover); }
+.alert-tab b { font: 400 30px/1 var(--font-mono); color: var(--bone); }
+.alert-tab span { display: flex; align-items: center; gap: 6px; font: 400 11.5px var(--font-mono); letter-spacing: 0.12em; text-transform: uppercase; }
+.alert-tab .ico { width: 14px; height: 14px; }
+.alert-tab.is-act b, .alert-tab.is-act span, .alert-tab.is-watch span { color: var(--ember); }
+.alert-tab.is-empty b, .alert-tab.is-empty span { color: var(--text-faint); }
+
+.alert-list { display: flex; flex-direction: column; gap: 64px; margin-top: 12px; }
+.alert-sec { scroll-margin-top: 24px; }
+.alert-sec-head { display: flex; align-items: center; gap: 16px; margin-bottom: 20px; }
+.alert-sec-head h3 { margin: 0; font-weight: 500; font-size: 26px; line-height: 1.2; }
+.alert-sec-head p { margin: 2px 0 0; font-size: 14.5px; color: var(--text-dim); }
+.alert-sec-head > div { flex: 1; min-width: 0; }
+.alert-sec-count { color: var(--muted); white-space: nowrap; }
+.alert-sec-ico {
+  flex: none; width: 46px; height: 46px; border-radius: 50%;
+  display: grid; place-items: center;
+  border: 1px solid var(--line-strong); color: var(--muted);
+}
+.alert-sec-ico .ico { width: 22px; height: 22px; }
+.sec-act .alert-sec-ico { background: var(--ember); border-color: var(--ember); color: var(--ink); }
+.sec-watch .alert-sec-ico { border-color: var(--ember); color: var(--ember); }
+.sec-info .alert-sec-head h3 { color: var(--text-dim); }
+.alert-none { margin: 0; }
+
+.alert-sec-body { display: grid; gap: 16px; }
+.alert { transition: opacity 0.3s; }
 .alert.done { opacity: 0.45; }
-.alert-top { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
-.alert h3 { margin: 10px 0 4px; font-weight: 500; font-size: 21px; line-height: 1.3; }
+.alert-top { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 10px; }
+.alert h4 { margin: 0 0 4px; font-weight: 500; line-height: 1.3; }
 .alert p { margin: 0; font-size: 14.5px; color: var(--text-dim); max-width: 56ch; }
 .alert .chips { margin-top: 12px; }
-.alert h4 {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin: 2px 0 10px;
-  font: 400 12px var(--font-mono);
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+.alert h5 {
+  display: flex; align-items: center; gap: 8px;
+  margin: 0 0 10px;
+  font: 400 12px var(--font-mono); letter-spacing: 0.12em; text-transform: uppercase;
   color: var(--muted);
 }
 .alert ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 8px; }
 .alert li { display: flex; gap: 10px; font-size: 14.5px; }
 .alert li::before { content: "→"; color: var(--slate); }
-.alert .btn-ghost { margin-top: 16px; }
+.alert button { margin-top: 16px; }
+
+/* Alert: one large card per alert, what happened on the left and what to do on the right */
+.alert.act {
+  display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 20px 48px;
+  padding: 30px 32px; border-radius: var(--radius);
+  background: var(--card); box-shadow: inset 3px 0 0 var(--ember);
+}
+.alert.act h4 { font-size: 26px; }
+.alert.act .alert-what p { font-size: 16px; }
+
+/* Watch: smaller cards, two side by side, with the steps underneath */
+.sec-watch .alert-sec-body { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.alert.watch {
+  display: flex; flex-direction: column; gap: 18px;
+  padding: 22px 24px; border-radius: var(--radius); background: var(--card);
+}
+.alert.watch h4 { font-size: 19px; }
+.alert.watch .alert-do { margin-top: auto; padding-top: 16px; border-top: 1px solid var(--hair); }
+
+/* For info: a quiet list, no cards */
+.sec-info .alert-sec-body { gap: 0; }
+.alert.info {
+  display: grid; grid-template-columns: minmax(0, 1.2fr) auto minmax(0, 1fr); align-items: center; gap: 8px 32px;
+  padding: 14px 0; border-top: 1px solid var(--hair);
+}
+.alert.info:first-child { border-top: 0; padding-top: 0; }
+.alert.info h4 { font-size: 16px; color: var(--text-dim); }
+.alert.info p { font-size: 14px; color: var(--muted); }
+.alert.info .chips { margin-top: 0; }
+.alert.info .alert-note { text-align: right; }
+
 @media (max-width: 860px) {
-  .alert { grid-template-columns: minmax(0, 1fr); }
-  .alert-do { margin-top: 8px; }
+  .alert.act { grid-template-columns: minmax(0, 1fr); padding: 22px 20px; }
+  .alert.act h4 { font-size: 22px; }
+  .sec-watch .alert-sec-body { grid-template-columns: minmax(0, 1fr); }
+  .alert.info { grid-template-columns: minmax(0, 1fr); }
+  .alert.info .alert-note { text-align: left; }
+  .alert-list { gap: 48px; }
+  .view-head > .alert-counts { width: 100%; }
+  .alert-tab { flex: 1; min-width: 0; padding: 10px 12px; }
+  .alert-sec-count { display: none; }
 }
 
 /* ---------- Raw readings (flight surgeon view) and the results table ---------- */
