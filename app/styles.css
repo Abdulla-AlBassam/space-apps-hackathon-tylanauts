@@ -504,6 +504,20 @@ td.num { font-family: var(--font-data); font-variant-numeric: tabular-nums; }
 
 .footer-note { color: var(--text-faint); font-size: 12px; text-align: center; margin: 4px 0 0; }
 
+/* ---------- Name and logo: placeholders until the team's design language and logo are ready ---------- */
+.brand {
+  display: inline-flex; align-items: center; gap: 10px;
+  color: var(--text); text-decoration: none;
+  font: 700 18px var(--font-display);
+}
+.logo-box {
+  display: inline-grid; place-items: center; width: 36px; height: 36px;
+  border: 1px dashed var(--line-strong); border-radius: 8px;
+  color: var(--text-faint); font: 600 9px var(--font-body); text-transform: uppercase; letter-spacing: .06em;
+}
+.brand:focus-visible { outline: 2px solid var(--blue-yonder); outline-offset: 4px; border-radius: 6px; }
+@media (max-width: 640px) { .brand { width: 100%; } }
+
 /* ---------- Icons inside pills, buttons, headings ---------- */
 .panel-head h2 { display: inline-flex; align-items: center; gap: 8px; }
 .panel-head h2 .ico { color: var(--blue-yonder); width: 17px; height: 17px; }

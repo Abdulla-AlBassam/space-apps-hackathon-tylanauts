@@ -48,7 +48,7 @@
     { id: "devices", label: "Devices", icon: "watch" },
   ];
   $("rail").innerHTML =
-    `<span class="rail-mark" title="Tylanauts">${ic("orbit")}</span>` +
+    `<span class="rail-mark" title="Siryius">${ic("orbit")}</span>` +
     PAGES.map((p) => `<a href="#${p.id}" data-page="${p.id}">${ic(p.icon)}<span>${p.label}</span></a>`).join("") +
     `<a href="crew.html">${ic("users")}<span>Crew</span></a>` +
     `<a href="body-map.html">${ic("person-standing")}<span>Full body</span></a>`;
@@ -64,6 +64,7 @@
   window.addEventListener("hashchange", () => { showPage(); window.scrollTo(0, 0); });
 
   /* ---------- Header ---------- */
+  $("brand").innerHTML = '<span class="logo-box" title="Logo placeholder">Logo</span><span>Siryius</span>'; // placeholder until the real logo and design language arrive
   $("astro-name").textContent = astronaut.name;
   $("astro-mission").innerHTML = ic("rocket") + astronaut.mission;
   $("mission-label").innerHTML = `${ic("calendar")}Day <b>${astronaut.missionDay}</b> of ${astronaut.missionLength}`;
