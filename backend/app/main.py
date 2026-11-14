@@ -4,18 +4,22 @@ Vercel serves the module-level `app` below.
 """
 
 import os
+from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.routing import APIRoute
 
 from app.adapters.base import load_adapters
-from app.api.routes import catalog, data_points, ingest
+from app.api.routes import catalog, data_points, ingest, sim
 from app.config import Settings
 from app.pipeline.ingest import IngestionService
 from app.storage import create_repository
 
-API_VERSION = "0.2.0"
+API_VERSION = "0.4.0"
+VIEWER_HTML = Path(__file__).parent / "viewer" / "index.html"
+LIVE_HTML = Path(__file__).parent / "viewer" / "live.html"
 
 
 def _operation_id(route: APIRoute) -> str:
@@ -50,7 +54,19 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     def health():
         return {"status": "ok", "storage": repository.kind, "version": API_VERSION}
 
-    for module in (catalog, ingest, data_points):
+    @app.get("/viewer", include_in_schema=False)
+    def viewer():
+        return HTMLResponse(VIEWER_HTML.read_text())
+
+    @app.get("/live", include_in_schema=False)
+    def live():
+        return HTMLResponse(LIVE_HTML.read_text())
+
+    @app.get("/", include_in_schema=False)
+    def root():
+        return RedirectResponse("/viewer")
+
+    for module in (catalog, ingest, data_points, sim):
         app.include_router(module.router, prefix="/api/v1")
     return app
 

@@ -7,8 +7,9 @@ from datetime import datetime, timezone
 import psycopg
 from psycopg.rows import dict_row
 from psycopg.types.json import Jsonb
+from psycopg_pool import ConnectionPool
 
-from app.domain.models import DataPointRecord, IngestionReport
+from app.domain.models import CoverageRow, DataPointRecord, IngestionReport, Stats
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS ingestions (
@@ -33,6 +34,10 @@ CREATE TABLE IF NOT EXISTS data_points (
 );
 CREATE INDEX IF NOT EXISTS idx_points_subject_metric_time
     ON data_points (subject_id, metric, effective_start);
+CREATE TABLE IF NOT EXISTS sim_state (
+    key   TEXT PRIMARY KEY,
+    state JSONB NOT NULL
+);
 """
 
 
@@ -41,14 +46,24 @@ class PostgresRepository:
 
     def __init__(self, url: str):
         self.url = url
+        # Reuses connections while the server stays warm instead of opening one per query.
+        # prepare_threshold=None: poolers like Neon's (PgBouncer, transaction mode) can't keep
+        # server-side prepared statements between requests.
+        self.pool = ConnectionPool(
+            url,
+            min_size=0,
+            max_size=4,
+            max_idle=60,
+            check=ConnectionPool.check_connection,
+            kwargs={"row_factory": dict_row, "prepare_threshold": None},
+            open=True,
+        )
         with self._connect() as db:
             db.execute(SCHEMA)
 
     @contextmanager
     def _connect(self) -> Iterator[psycopg.Connection]:
-        # prepare_threshold=None: poolers like Neon's (PgBouncer, transaction mode) can't keep
-        # server-side prepared statements between requests.
-        with psycopg.connect(self.url, row_factory=dict_row, prepare_threshold=None) as db:
+        with self.pool.connection() as db:
             yield db
 
     def existing_uuids(self, uuids: list[str]) -> set[str]:
@@ -104,6 +119,7 @@ class PostgresRepository:
         start: datetime | None = None,
         end: datetime | None = None,
         limit: int = 500,
+        newest_first: bool = False,
     ) -> list[DataPointRecord]:
         sql, params = "SELECT * FROM data_points WHERE subject_id = %s", [subject_id]
         if metric:
@@ -115,7 +131,7 @@ class PostgresRepository:
         if end:
             sql += " AND effective_start < %s"
             params.append(end)
-        sql += " ORDER BY effective_start, uuid LIMIT %s"
+        sql += f" ORDER BY effective_start {'DESC' if newest_first else 'ASC'}, uuid LIMIT %s"
         params.append(limit)
         with self._connect() as db:
             rows = db.execute(sql, params).fetchall()
@@ -130,3 +146,66 @@ class PostgresRepository:
         with self._connect() as db:
             rows = db.execute("SELECT DISTINCT subject_id FROM data_points ORDER BY subject_id").fetchall()
         return [row["subject_id"] for row in rows]
+
+    def list_ingestions(self, limit: int = 50, subject_id: str | None = None) -> list[IngestionReport]:
+        sql, params = "SELECT report FROM ingestions", []
+        if subject_id:
+            sql += " WHERE subject_id = %s"
+            params.append(subject_id)
+        sql += " ORDER BY received_at DESC LIMIT %s"
+        params.append(limit)
+        with self._connect() as db:
+            rows = db.execute(sql, params).fetchall()
+        return [IngestionReport.model_validate(row["report"]) for row in rows]
+
+    def stats(self) -> Stats:
+        with self._connect() as db:
+            points = db.execute("SELECT COUNT(*) AS n FROM data_points").fetchone()["n"]
+            ingestions = db.execute("SELECT COUNT(*) AS n FROM ingestions").fetchone()["n"]
+            rows = db.execute(
+                "SELECT subject_id, metric, COUNT(*) AS count, MIN(effective_start) AS first, "
+                "MAX(COALESCE(effective_end, effective_start)) AS last "
+                "FROM data_points GROUP BY subject_id, metric ORDER BY subject_id, metric"
+            ).fetchall()
+        coverage = [
+            CoverageRow(**{**r, "first": r["first"].astimezone(timezone.utc), "last": r["last"].astimezone(timezone.utc)})
+            for r in rows
+        ]
+        return Stats(data_points=points, ingestions=ingestions, coverage=coverage)
+
+    def load_sim_state(self, key: str) -> dict | None:
+        with self._connect() as db:
+            row = db.execute("SELECT state FROM sim_state WHERE key = %s", (key,)).fetchone()
+        return row["state"] if row else None
+
+    def save_sim_state(self, key: str, state: dict) -> None:
+        with self._connect() as db:
+            db.execute(
+                "INSERT INTO sim_state (key, state) VALUES (%s, %s) ON CONFLICT (key) DO UPDATE SET state = excluded.state",
+                (key, Jsonb(state)),
+            )
+
+    def prune_simulated(self, device_prefix: str, cutoff: datetime) -> int:
+        like = device_prefix.replace("%", "") + "%"
+        with self._connect() as db, db.transaction():
+            deleted = db.execute(
+                "DELETE FROM data_points WHERE device_id LIKE %s AND COALESCE(effective_end, effective_start) < %s", (like, cutoff)
+            ).rowcount
+            db.execute(
+                "DELETE FROM ingestions i WHERE i.report->>'device_id' LIKE %s AND i.received_at < %s "
+                "AND NOT EXISTS (SELECT 1 FROM data_points p WHERE p.ingestion_id = i.id)",
+                (like, cutoff),
+            )
+        return deleted
+
+    def count_simulated(self, device_prefix: str) -> int:
+        with self._connect() as db:
+            row = db.execute(
+                "SELECT COUNT(*) AS n FROM data_points WHERE device_id LIKE %s", (device_prefix.replace("%", "") + "%",)
+            ).fetchone()
+        return row["n"]
+
+    def storage_bytes(self) -> int | None:
+        with self._connect() as db:
+            row = db.execute("SELECT pg_database_size(current_database()) AS n").fetchone()
+        return row["n"]

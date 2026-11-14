@@ -1,0 +1,390 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Siryius Data Viewer</title>
+<style>
+  :root {
+    color-scheme: light;
+    --page: #f9f9f7; --surface: #fcfcfb; --raised: #ffffff;
+    --ink: #0b0b0b; --ink-2: #52514e; --muted: #898781;
+    --grid: #e1e0d9; --axis: #c3c2b7; --ring: rgba(11,11,11,0.10);
+    --accent: #2a78d6; --accent-wash: rgba(42,120,214,0.10);
+    --series-1: #2a78d6; --series-2: #eb6834;
+    --good: #0ca30c; --critical: #d03b3b; --warning: #fab219; --good-text: #006300; --bad-text: #b02f2f;
+    --font: system-ui, -apple-system, "Segoe UI", sans-serif;
+    --mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --page: #0d0d0d; --surface: #1a1a19; --raised: #222220;
+    --ink: #f0efec; --ink-2: #c3c2b7; --muted: #898781;
+    --grid: #2c2c2a; --axis: #383835; --ring: rgba(255,255,255,0.10);
+    --accent: #3987e5; --accent-wash: rgba(57,135,229,0.14);
+    --series-1: #3987e5; --series-2: #d95926; --good-text: #0ca30c; --bad-text: #ff8a80;
+  } }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --page: #0d0d0d; --surface: #1a1a19; --raised: #222220;
+    --ink: #f0efec; --ink-2: #c3c2b7; --muted: #898781;
+    --grid: #2c2c2a; --axis: #383835; --ring: rgba(255,255,255,0.10);
+    --accent: #3987e5; --accent-wash: rgba(57,135,229,0.14);
+    --series-1: #3987e5; --series-2: #d95926; --good-text: #0ca30c; --bad-text: #ff8a80;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--page); color: var(--ink); font: 14px/1.5 var(--font); }
+  .wrap { max-width: 1240px; margin: 0 auto; padding: 20px max(16px, env(safe-area-inset-right)) 48px max(16px, env(safe-area-inset-left)); display: grid; gap: 16px; }
+  header { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; }
+  h1 { font-size: 20px; margin: 0; font-weight: 650; }
+  h2 { font-size: 15px; margin: 0; font-weight: 650; }
+  .sub { color: var(--ink-2); font-size: 13px; }
+  .spacer { flex: 1; }
+  .pill { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 999px; background: var(--surface); border: 1px solid var(--ring); font-size: 12.5px; color: var(--ink-2); }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
+  .dot.ok { background: var(--good); } .dot.bad { background: var(--critical); }
+  button, select { font: inherit; color: var(--ink); background: var(--raised); border: 1px solid var(--ring); border-radius: 6px; padding: 5px 10px; cursor: pointer; }
+  button:hover, select:hover { border-color: var(--accent); }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  label.toggle { display: inline-flex; gap: 6px; align-items: center; color: var(--ink-2); font-size: 13px; cursor: pointer; }
+  .card { background: var(--surface); border: 1px solid var(--ring); border-radius: 10px; padding: 16px; display: grid; gap: 12px; min-width: 0; }
+  .card-head { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; }
+  .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; }
+  .tile { background: var(--surface); border: 1px solid var(--ring); border-radius: 10px; padding: 14px 16px; display: grid; gap: 2px; }
+  .tile .label { color: var(--ink-2); font-size: 13px; }
+  .tile .value { font-size: 28px; font-weight: 650; }
+  .tile .note { color: var(--muted); font-size: 12px; }
+  .scroll { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; font-size: 13px; }
+  th, td { text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--grid); vertical-align: top; white-space: nowrap; }
+  th { color: var(--muted); font-weight: 600; font-size: 11.5px; text-transform: uppercase; letter-spacing: .04em; }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+  td.wrap-text { white-space: normal; min-width: 260px; }
+  tr:last-child td { border-bottom: 0; }
+  .mono { font-family: var(--mono); font-size: 12.5px; }
+  .muted { color: var(--muted); }
+  .cell-btn { width: 100%; text-align: right; background: none; border: 1px solid transparent; padding: 4px 8px; display: grid; gap: 0; }
+  .cell-btn .n { font-variant-numeric: tabular-nums; font-weight: 600; }
+  .cell-btn .t { color: var(--muted); font-size: 11.5px; }
+  .cell-btn[aria-pressed="true"] { background: var(--accent-wash); border-color: var(--accent); }
+  .chart { position: relative; }
+  .chart svg { display: block; width: 100%; height: auto; overflow: visible; }
+  .chart .axis-text { fill: var(--muted); font: 11px var(--font); font-variant-numeric: tabular-nums; }
+  .chart .end-label { fill: var(--ink); font: 600 12px var(--font); }
+  .tooltip { position: absolute; pointer-events: none; background: var(--raised); border: 1px solid var(--ring); border-radius: 8px; padding: 8px 10px; font-size: 12.5px; box-shadow: 0 4px 16px rgba(0,0,0,.12); min-width: 140px; }
+  .tooltip .row { display: flex; align-items: center; gap: 6px; }
+  .key { width: 12px; height: 2px; border-radius: 1px; display: inline-block; }
+  .legend { display: flex; gap: 14px; color: var(--ink-2); font-size: 12.5px; }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .badge { display: inline-block; padding: 1px 7px; border-radius: 999px; font-size: 12px; background: var(--grid); color: var(--ink-2); }
+  .ok-text { color: var(--good-text); font-weight: 600; } .bad-text { color: var(--bad-text); font-weight: 600; }
+  details summary { cursor: pointer; color: var(--ink-2); }
+  .issues { margin: 6px 0 0; padding-left: 18px; color: var(--ink-2); white-space: normal; }
+  .empty { color: var(--ink-2); background: var(--page); border-radius: 8px; padding: 14px; }
+  .banner { background: var(--raised); border: 1px solid var(--critical); border-radius: 8px; padding: 10px 14px; }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Siryius data viewer</h1>
+      <div class="sub">What is stored in the live database, read straight from this API.</div>
+    </div>
+    <div class="spacer"></div>
+    <span class="pill" id="status"><span class="dot"></span><span>Connecting…</span></span>
+    <span class="pill" id="updated">Not loaded yet</span>
+    <label class="toggle"><input type="checkbox" id="auto" checked> Refresh every 10 s</label>
+    <button id="refresh" type="button">Refresh now</button>
+  </header>
+
+  <div class="banner" id="error" hidden></div>
+
+  <section class="tiles" aria-label="Totals">
+    <div class="tile"><span class="label">Readings stored</span><span class="value" id="t-points">–</span><span class="note">all subjects, all metrics</span></div>
+    <div class="tile"><span class="label">Subjects</span><span class="value" id="t-subjects">–</span><span class="note" id="t-subjects-note">people with data</span></div>
+    <div class="tile"><span class="label">Uploads</span><span class="value" id="t-uploads">–</span><span class="note" id="t-uploads-note">every message received</span></div>
+    <div class="tile"><span class="label">Rejected readings</span><span class="value" id="t-rejected">–</span><span class="note">in the latest 100 uploads</span></div>
+  </section>
+
+  <section class="card" aria-labelledby="cov-h">
+    <div class="card-head"><h2 id="cov-h">What is stored</h2><span class="sub">Readings per subject and metric, with the latest one. Click a cell to chart it.</span></div>
+    <div class="scroll" id="coverage"></div>
+  </section>
+
+  <section class="card" aria-labelledby="chart-h">
+    <div class="card-head">
+      <h2 id="chart-h">Over time</h2>
+      <select id="subject" aria-label="Subject"></select>
+      <select id="metric" aria-label="Metric"></select>
+      <span class="sub" id="chart-note"></span>
+      <div class="spacer"></div>
+      <div class="legend" id="legend"></div>
+    </div>
+    <div class="chart" id="chart"></div>
+    <details><summary>Show these values as a table</summary><div class="scroll" id="chart-table"></div></details>
+  </section>
+
+  <section class="card" aria-labelledby="recent-h">
+    <div class="card-head"><h2 id="recent-h">Latest readings</h2><span class="sub" id="recent-sub"></span></div>
+    <div class="scroll" id="recent"></div>
+  </section>
+
+  <section class="card" aria-labelledby="uploads-h">
+    <div class="card-head"><h2 id="uploads-h">Recent uploads</h2><span class="sub">Newest first. Open a row's issues to see why readings were rejected.</span></div>
+    <div class="scroll" id="uploads"></div>
+  </section>
+</div>
+
+<script>
+const API = "/api/v1";
+const $ = (id) => document.getElementById(id);
+const state = { subject: null, metric: null, metrics: [], timer: null };
+
+// Builds elements without innerHTML: every string from the database goes in as text.
+function h(tag, attrs = {}, ...children) {
+  const el = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (v == null || v === false) continue;
+    if (k === "class") el.className = v;
+    else if (k.startsWith("on")) el.addEventListener(k.slice(2), v);
+    else el.setAttribute(k, v === true ? "" : v);
+  }
+  for (const c of children.flat()) if (c != null && c !== false) el.append(c instanceof Node ? c : String(c));
+  return el;
+}
+function svg(tag, attrs = {}, ...children) {
+  const el = document.createElementNS("http://www.w3.org/2000/svg", tag);
+  for (const [k, v] of Object.entries(attrs)) if (v != null) el.setAttribute(k, v);
+  for (const c of children.flat()) if (c != null) el.append(c instanceof Node ? c : String(c));
+  return el;
+}
+async function get(path) {
+  const res = await fetch(API + path);
+  if (!res.ok) throw new Error(`${path} returned ${res.status}`);
+  return res.json();
+}
+
+const fmtNum = (v) => (Math.abs(v) >= 100 ? v.toFixed(0) : Math.abs(v) >= 10 ? v.toFixed(1) : v.toFixed(2)).replace(/\.0+$/, "").replace(/(\.\d*?)0+$/, "$1");
+const fmtCount = (n) => n.toLocaleString("en-GB");
+const fmtTime = (iso) => new Date(iso).toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "UTC" }) + " UTC";
+function ago(iso) {
+  const s = (Date.now() - new Date(iso).getTime()) / 1000;
+  if (s < 0) return "in the future";
+  if (s < 90) return "just now";
+  if (s < 5400) return `${Math.round(s / 60)} min ago`;
+  if (s < 129600) return `${Math.round(s / 3600)} h ago`;
+  return `${Math.round(s / 86400)} days ago`;
+}
+const metricInfo = (id) => state.metrics.find((m) => m.id === id);
+const readingTime = (r) => r.effective_end ?? r.effective_start;
+function valueText(r) {
+  const unit = metricInfo(r.metric)?.canonical_unit ?? "";
+  const v = r.values;
+  if ("systolic" in v) return `${fmtNum(v.systolic)}/${fmtNum(v.diastolic)} ${unit}`;
+  return `${fmtNum(v.value)} ${unit}`;
+}
+
+/* ---------- loading ---------- */
+
+async function loadAll() {
+  try {
+    const [health, stats, ingestions] = await Promise.all([fetch("/health").then((r) => r.json()), get("/stats"), get("/ingestions?limit=100")]);
+    if (!state.metrics.length) state.metrics = await get("/metrics");
+    $("error").hidden = true;
+    renderStatus(health);
+    renderTiles(stats, ingestions);
+    pickDefaults(stats);
+    renderCoverage(stats);
+    renderSelectors(stats);
+    renderUploads(ingestions);
+    await Promise.all([renderChart(), renderRecent()]);
+    $("updated").textContent = "Updated " + new Date().toLocaleTimeString("en-GB");
+  } catch (err) {
+    $("error").hidden = false;
+    $("error").replaceChildren(h("strong", {}, "Couldn't reach the API. "), `${err.message}. It retries on the next refresh.`);
+    $("status").replaceChildren(h("span", { class: "dot bad" }), h("span", {}, "Unreachable"));
+  }
+}
+
+function renderStatus(health) {
+  const ok = health.status === "ok";
+  $("status").replaceChildren(h("span", { class: `dot ${ok ? "ok" : "bad"}` }), h("span", {}, ok ? `Live · ${health.storage} · v${health.version}` : "Problem"));
+}
+
+function renderTiles(stats, ingestions) {
+  const subjects = new Set(stats.coverage.map((c) => c.subject_id));
+  $("t-points").textContent = fmtCount(stats.data_points);
+  $("t-subjects").textContent = fmtCount(subjects.size);
+  $("t-uploads").textContent = fmtCount(stats.ingestions);
+  $("t-uploads-note").textContent = ingestions.length ? `latest ${ago(ingestions[0].received_at)}` : "none yet";
+  $("t-rejected").textContent = fmtCount(ingestions.reduce((sum, i) => sum + i.rejected.length, 0));
+}
+
+function pickDefaults(stats) {
+  const has = (s, m) => stats.coverage.some((c) => c.subject_id === s && (!m || c.metric === m));
+  if (!state.subject || !has(state.subject)) state.subject = stats.coverage[0]?.subject_id ?? null;
+  if (state.subject && (!state.metric || !has(state.subject, state.metric))) {
+    state.metric = stats.coverage.find((c) => c.subject_id === state.subject)?.metric ?? null;
+  }
+}
+
+function renderCoverage(stats) {
+  if (!stats.coverage.length) {
+    $("coverage").replaceChildren(h("div", { class: "empty" }, "No readings yet. Send some with POST /api/v1/ingest/{adapter} (see the backend README)."));
+    return;
+  }
+  const subjects = [...new Set(stats.coverage.map((c) => c.subject_id))];
+  const present = new Set(stats.coverage.map((c) => c.metric));
+  const metrics = state.metrics.map((m) => m.id).filter((id) => present.has(id));
+  const byKey = new Map(stats.coverage.map((c) => [`${c.subject_id}|${c.metric}`, c]));
+  const head = h("tr", {}, h("th", {}, "Subject"), metrics.map((m) => h("th", { class: "num" }, metricInfo(m)?.label.replace(/ \(.*\)/, "") ?? m)));
+  const rows = subjects.map((s) =>
+    h("tr", {}, h("td", { class: "mono" }, s), metrics.map((m) => {
+      const c = byKey.get(`${s}|${m}`);
+      if (!c) return h("td", { class: "num muted" }, "–");
+      const selected = s === state.subject && m === state.metric;
+      return h("td", { class: "num" }, h("button", {
+        class: "cell-btn", type: "button", "aria-pressed": String(selected),
+        "aria-label": `${s}, ${m}: ${c.count} readings, latest ${ago(c.last)}`,
+        onclick: () => { state.subject = s; state.metric = m; renderCoverage(stats); renderSelectors(stats); renderChart(); renderRecent(); },
+      }, h("span", { class: "n" }, fmtCount(c.count)), h("span", { class: "t" }, ago(c.last))));
+    })),
+  );
+  $("coverage").replaceChildren(h("table", {}, h("thead", {}, head), h("tbody", {}, rows)));
+}
+
+function renderSelectors(stats) {
+  const subjects = [...new Set(stats.coverage.map((c) => c.subject_id))];
+  const metrics = stats.coverage.filter((c) => c.subject_id === state.subject).map((c) => c.metric);
+  $("subject").replaceChildren(...subjects.map((s) => h("option", { value: s, selected: s === state.subject }, s)));
+  $("metric").replaceChildren(...metrics.map((m) => h("option", { value: m, selected: m === state.metric }, metricInfo(m)?.label ?? m)));
+  $("subject").onchange = () => { state.subject = $("subject").value; state.metric = null; loadAll(); };
+  $("metric").onchange = () => { state.metric = $("metric").value; renderCoverage(stats); renderChart(); };
+}
+
+/* ---------- chart ---------- */
+
+function niceTicks(lo, hi, count = 5) {
+  if (lo === hi) { lo -= 1; hi += 1; }
+  const raw = (hi - lo) / count;
+  const mag = 10 ** Math.floor(Math.log10(raw));
+  const f = raw / mag;
+  const step = (f >= 7.5 ? 10 : f >= 3.5 ? 5 : f >= 1.5 ? 2 : 1) * mag;
+  const ticks = [];
+  for (let v = Math.floor(lo / step) * step; v <= Math.ceil(hi / step) * step + step / 2; v += step) ticks.push(+v.toFixed(10));
+  return ticks;
+}
+
+async function renderChart() {
+  const box = $("chart");
+  if (!state.subject || !state.metric) { box.replaceChildren(h("div", { class: "empty" }, "Nothing to chart yet.")); $("legend").replaceChildren(); $("chart-table").replaceChildren(); $("chart-note").textContent = ""; return; }
+  const info = metricInfo(state.metric);
+  const records = (await get(`/subjects/${encodeURIComponent(state.subject)}/data-points?metric=${state.metric}&order=desc&limit=5000`)).reverse();
+  const series = info.components.map((c, i) => ({ name: c.name === "value" ? info.label : c.name, key: c.name, color: `var(--series-${i + 1})` }));
+  const points = records.map((r) => ({ t: new Date(readingTime(r)).getTime(), r }));
+  $("chart-note").textContent = `${fmtCount(points.length)} readings · ${info.canonical_unit}${points.length === 5000 ? " · latest 5,000 shown" : ""}`;
+  $("legend").replaceChildren(...(series.length > 1 ? series.map((s) => h("span", {}, h("i", { class: "key", style: `background:${s.color}` }), s.name)) : []));
+  renderChartTable(records, info);
+
+  const width = Math.max(box.clientWidth, 320), height = 260, m = { l: 48, r: 56, t: 14, b: 28 };
+  const iw = width - m.l - m.r, ih = height - m.t - m.b;
+  const values = points.flatMap((p) => series.map((s) => p.r.values[s.key]));
+  const yt = niceTicks(Math.min(...values), Math.max(...values));
+  const [y0, y1] = [yt[0], yt[yt.length - 1]];
+  const [t0, t1] = points.length > 1 ? [points[0].t, points[points.length - 1].t] : [points[0].t - 3600e3, points[0].t + 3600e3];
+  const x = (t) => m.l + ((t - t0) / (t1 - t0)) * iw;
+  const y = (v) => m.t + ih - ((v - y0) / (y1 - y0)) * ih;
+  const spanDays = (t1 - t0) / 86400e3;
+  const xLabel = (t) => new Date(t).toLocaleString("en-GB", spanDays < 2 ? { hour: "2-digit", minute: "2-digit", timeZone: "UTC" } : { day: "numeric", month: "short", timeZone: "UTC" });
+
+  const g = svg("svg", { viewBox: `0 0 ${width} ${height}`, role: "img", "aria-label": `${info.label} for ${state.subject}, ${points.length} readings` });
+  for (const v of yt) {
+    g.append(svg("line", { x1: m.l, x2: m.l + iw, y1: y(v), y2: y(v), stroke: v === y0 ? "var(--axis)" : "var(--grid)", "stroke-width": 1 }));
+    g.append(svg("text", { x: m.l - 8, y: y(v) + 4, "text-anchor": "end", class: "axis-text" }, fmtNum(v)));
+  }
+  const xticks = Math.min(6, Math.max(2, Math.floor(iw / 110)));
+  for (let i = 0; i <= xticks; i++) {
+    const t = t0 + ((t1 - t0) * i) / xticks;
+    g.append(svg("text", { x: x(t), y: height - 8, "text-anchor": i === 0 ? "start" : i === xticks ? "end" : "middle", class: "axis-text" }, xLabel(t)));
+  }
+  for (const s of series) {
+    const d = points.map((p, i) => `${i ? "L" : "M"}${x(p.t).toFixed(1)},${y(p.r.values[s.key]).toFixed(1)}`).join("");
+    g.append(svg("path", { d, fill: "none", stroke: s.color, "stroke-width": 2, "stroke-linejoin": "round", "stroke-linecap": "round" }));
+    if (points.length <= 60) for (const p of points) g.append(svg("circle", { cx: x(p.t), cy: y(p.r.values[s.key]), r: 3.5, fill: s.color, stroke: "var(--surface)", "stroke-width": 2 }));
+    const last = points[points.length - 1];
+    g.append(svg("circle", { cx: x(last.t), cy: y(last.r.values[s.key]), r: 4.5, fill: s.color, stroke: "var(--surface)", "stroke-width": 2 }));
+    g.append(svg("text", { x: x(last.t) + 9, y: y(last.r.values[s.key]) + 4, class: "end-label" }, fmtNum(last.r.values[s.key])));
+  }
+  const cross = svg("line", { y1: m.t, y2: m.t + ih, stroke: "var(--axis)", "stroke-width": 1, visibility: "hidden" });
+  const hit = svg("rect", { x: m.l, y: m.t, width: iw, height: ih, fill: "transparent" });
+  g.append(cross, hit);
+  const tip = h("div", { class: "tooltip", hidden: true });
+  hit.addEventListener("pointermove", (e) => {
+    const rect = g.getBoundingClientRect();
+    const px = ((e.clientX - rect.left) / rect.width) * width;
+    const t = t0 + ((px - m.l) / iw) * (t1 - t0);
+    let best = points[0];
+    for (const p of points) if (Math.abs(p.t - t) < Math.abs(best.t - t)) best = p;
+    cross.setAttribute("x1", x(best.t)); cross.setAttribute("x2", x(best.t)); cross.setAttribute("visibility", "visible");
+    tip.replaceChildren(
+      h("div", { class: "muted" }, fmtTime(readingTime(best.r))),
+      series.map((s) => h("div", { class: "row" }, h("i", { class: "key", style: `background:${s.color}` }), h("strong", {}, fmtNum(best.r.values[s.key])), ` ${info.canonical_unit}`, series.length > 1 ? h("span", { class: "muted" }, s.name) : null)),
+      h("div", { class: "muted" }, `${best.r.device_id ?? "no device"} · ${best.r.adapter_id}`),
+    );
+    tip.hidden = false;
+    const left = (x(best.t) / width) * rect.width;
+    tip.style.left = `${Math.min(left + 12, rect.width - 190)}px`;
+    tip.style.top = "8px";
+  });
+  hit.addEventListener("pointerleave", () => { tip.hidden = true; cross.setAttribute("visibility", "hidden"); });
+  box.replaceChildren(g, tip);
+}
+
+function renderChartTable(records, info) {
+  const rows = records.slice(-200).reverse().map((r) => h("tr", {}, h("td", {}, fmtTime(readingTime(r))), h("td", { class: "num" }, valueText(r)), h("td", { class: "mono" }, r.device_id ?? "–"), h("td", { class: "mono" }, r.adapter_id)));
+  $("chart-table").replaceChildren(h("table", {}, h("thead", {}, h("tr", {}, h("th", {}, "Time"), h("th", { class: "num" }, info.label), h("th", {}, "Device"), h("th", {}, "Adapter"))), h("tbody", {}, rows)));
+}
+
+/* ---------- tables ---------- */
+
+async function renderRecent() {
+  if (!state.subject) { $("recent").replaceChildren(h("div", { class: "empty" }, "No readings yet.")); $("recent-sub").textContent = ""; return; }
+  const records = await get(`/subjects/${encodeURIComponent(state.subject)}/data-points?order=desc&limit=25`);
+  $("recent-sub").textContent = `The 25 newest for ${state.subject}, any metric.`;
+  const rows = records.map((r) => h("tr", {},
+    h("td", {}, fmtTime(readingTime(r))), h("td", {}, metricInfo(r.metric)?.label ?? r.metric), h("td", { class: "num" }, valueText(r)),
+    h("td", { class: "mono" }, r.device_id ?? "–"), h("td", { class: "mono" }, r.adapter_id), h("td", {}, h("span", { class: "badge" }, r.data_point.header.modality ?? "–"))));
+  $("recent").replaceChildren(h("table", {}, h("thead", {}, h("tr", {}, ["Measured", "Metric", "Value", "Device", "Adapter", "How"].map((c, i) => h("th", { class: i === 2 ? "num" : null }, c)))), h("tbody", {}, rows)));
+}
+
+function renderUploads(ingestions) {
+  if (!ingestions.length) { $("uploads").replaceChildren(h("div", { class: "empty" }, "No uploads yet.")); return; }
+  const rows = ingestions.slice(0, 30).map((i) => {
+    const issues = [...i.rejected.map((r) => `Rejected ${r.ref}: ${r.reason}`), ...i.warnings.map((w) => `Warning: ${w}`)];
+    return h("tr", {},
+      h("td", { title: fmtTime(i.received_at) }, ago(i.received_at)), h("td", { class: "mono" }, i.adapter_id), h("td", { class: "mono" }, i.subject_id), h("td", { class: "mono" }, i.device_id ?? "–"),
+      h("td", { class: "num" }, i.received), h("td", { class: "num" }, h("span", { class: i.accepted ? "ok-text" : null }, i.accepted)), h("td", { class: "num" }, i.duplicates),
+      h("td", { class: "num" }, h("span", { class: i.rejected.length ? "bad-text" : null }, i.rejected.length)),
+      h("td", { class: "wrap-text" }, issues.length ? h("details", {}, h("summary", {}, `${issues.length} issue${issues.length > 1 ? "s" : ""}`), h("ul", { class: "issues" }, issues.map((t) => h("li", {}, t)))) : h("span", { class: "muted" }, "none")));
+  });
+  const head = h("tr", {}, ["When", "Adapter", "Subject", "Device", "Received", "Accepted", "Duplicates", "Rejected", "Issues"].map((c, i) => h("th", { class: i >= 4 && i <= 7 ? "num" : null }, c)));
+  $("uploads").replaceChildren(h("table", {}, h("thead", {}, head), h("tbody", {}, rows)));
+}
+
+/* ---------- refresh ---------- */
+
+function schedule() {
+  clearInterval(state.timer);
+  if ($("auto").checked) state.timer = setInterval(() => { if (!document.hidden) loadAll(); }, 10000);
+}
+$("auto").addEventListener("change", schedule);
+$("refresh").addEventListener("click", loadAll);
+let resizeTimer;
+window.addEventListener("resize", () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(renderChart, 200); });
+loadAll();
+schedule();
+</script>
+</body>
+</html>

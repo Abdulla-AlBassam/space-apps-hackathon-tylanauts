@@ -4,9 +4,13 @@ The live backend for the Siryius dashboard. It takes health readings from device
 astronauts type in, converts them into one standard format (IEEE 1752.1 / Open mHealth), checks
 them, and stores them in a hosted Postgres database.
 
+**All the team's links on one page: [LINKS.md](LINKS.md).**
+
 | | |
 | --- | --- |
 | **Base URL** | `https://tylanauts-api.vercel.app` |
+| **See what's stored** | https://tylanauts-api.vercel.app/viewer (totals, who has which data, charts, recent uploads and their rejections; refreshes every 10 s) |
+| **Live simulated devices** | https://tylanauts-api.vercel.app/live (18 wearables sending live data, with levers to worsen each crew member; see [Live device simulator](#live-device-simulator)) |
 | **Try every endpoint in the browser** | https://tylanauts-api.vercel.app/docs |
 | **API schema (OpenAPI 3)** | https://tylanauts-api.vercel.app/openapi.json (same as [`openapi.json`](openapi.json) here) |
 | **Is it up?** | https://tylanauts-api.vercel.app/health returns `{"status": "ok", "storage": "postgres", ...}` |
@@ -20,19 +24,22 @@ them, and stores them in a hosted Postgres database.
 
 - **Reading** needs no key.
 - **Sending data** needs the `X-Api-Key` header; the key is in [Sending data](#sending-data).
-- **Browsers** may call it only from these addresses: `https://tylanauts-crew-health.vercel.app`
-  (the live dashboard), `http://localhost:8000` and `http://127.0.0.1:8000` (the dashboard's own
-  local preview, `python3 -m http.server 8000` in `app/`). Any other address, such as a Vercel
-  preview link, is blocked by the browser. Ask nayem-m to add it.
+- **Browsers** may call it only from these addresses: `https://abdulla-albassam.github.io` (the
+  dashboard on GitHub Pages), `https://tylanauts-crew-health.vercel.app` (its old Vercel address),
+  `http://localhost:8000` and `http://127.0.0.1:8000` (the dashboard's own local preview,
+  `python3 -m http.server 8000` in `app/`). Any other address is blocked by the browser. Ask
+  nayem-m to add it.
 
 ## Reading data
 
 | Method | Path | Returns |
 | --- | --- | --- |
 | GET | `/api/v1/subjects` | Ids of everyone with data, e.g. `["crew-01", "crew-02"]` |
-| GET | `/api/v1/subjects/{subject_id}/data-points` | That person's stored readings, oldest first |
+| GET | `/api/v1/subjects/{subject_id}/data-points` | That person's stored readings, oldest first (or newest first with `order=desc`) |
+| GET | `/api/v1/stats` | Totals, plus for every subject and metric: how many readings, first and latest time |
 | GET | `/api/v1/metrics` | Every metric the backend stores: id, label, unit, possible range |
 | GET | `/api/v1/adapters` | Every input format it accepts, each with a ready-to-send example |
+| GET | `/api/v1/ingestions` | Recent upload reports, newest first (`limit` up to 500, optional `subject_id`) |
 | GET | `/api/v1/ingestions/{ingestion_id}` | The report of one past upload |
 
 Filters for `/data-points`, all optional:
@@ -43,6 +50,7 @@ Filters for `/data-points`, all optional:
 | `start` | From this time, inclusive, e.g. `2026-11-01T00:00:00Z` |
 | `end` | Up to this time, exclusive |
 | `limit` | 1 to 5000, default 500 |
+| `order` | `asc` (oldest first, default) or `desc` (newest first: use with `limit` for "latest N") |
 
 A subject with no data returns `[]`, not an error.
 
@@ -165,6 +173,42 @@ is safe; it's counted under `duplicates` and not stored twice.
 | `404` | Unknown adapter or ingestion id | `{"detail": "<what's wrong>"}` |
 | `413` | Body over 4.5 MB (Vercel's limit). Split large uploads | Vercel's error, not JSON |
 | `422` | A query parameter has the wrong shape (e.g. a `subject_id` with spaces) | FastAPI's validation details |
+
+## Live device simulator
+
+https://tylanauts-api.vercel.app/live shows 6 crew members (`crew-01` to `crew-06`), each wearing
+a smart watch, a smart shirt and a radiation badge: 18 simulated devices.
+
+- **What they send:**
+  - Smart watch: heart rate and SpO2, through the `smart-watch` adapter.
+  - Smart shirt: breathing rate, HRV and blood pressure, through `smart-shirt`.
+  - Radiation badge: the rolling 24-hour dose, through `dosimeter`.
+- **How often:** one reading per device every 10 seconds, into the same live database the
+  dashboard reads. The readings land on the real crew ids, so the dashboard shows them.
+- **Only while the page is open.** The page asks the backend every 5 seconds to send whatever
+  is due (Vercel can't run a background loop). Close it, or press **Pause devices**, and they stop.
+- **Storage stays small.** Simulated readings (device ids starting with `sim-`) are deleted
+  after 60 minutes. Nothing else is ever deleted. The page shows readings kept, readings
+  cleaned up, and the database size.
+- **Levers.**
+  - Per crew member: **Stress / fatigue** (heart rate and blood pressure up, HRV down),
+    **Low oxygen** (SpO2 down, breathing and heart rate up), **Radiation** (up to 40× the
+    normal dose).
+  - Per device: **On** and **Faulty sensor** (every other reading is impossible, and the
+    backend rejects it with a reason).
+  - **Solar storm** sets radiation to maximum for everyone. **Reset levers** puts everything
+    back to normal.
+- **Shared:** levers are saved in the database, so everyone sees the same state.
+- **For the dashboard:** to show it reacting, keep reading `crew-*` data every few seconds;
+  a raised lever shows up in the latest readings within about 10 seconds.
+
+Endpoints (no key needed; anyone with the address can move the levers):
+
+| Method | Path | What it does |
+| --- | --- | --- |
+| GET | `/api/v1/sim` | Levers, each device's latest values and counts, storage |
+| PUT | `/api/v1/sim/settings` | Replace the levers (send back the `settings` object from GET, changed) |
+| POST | `/api/v1/sim/tick` | Send the readings that are due and clean up old simulated data |
 
 ## More
 

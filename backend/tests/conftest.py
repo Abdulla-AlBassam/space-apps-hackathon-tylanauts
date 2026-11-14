@@ -22,7 +22,7 @@ def _wipe_postgres(url: str) -> None:
     import psycopg
 
     with psycopg.connect(url) as db:
-        db.execute("DROP TABLE IF EXISTS data_points, ingestions")
+        db.execute("DROP TABLE IF EXISTS data_points, ingestions, sim_state")
 
 
 @pytest.fixture(params=BACKENDS)

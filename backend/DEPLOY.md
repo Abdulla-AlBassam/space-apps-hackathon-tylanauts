@@ -32,7 +32,7 @@ Environment variables on the project:
 | `POSTGRES_URL` | Neon integration | Only as a fallback if `DATABASE_URL` is missing |
 | `DATABASE_URL_UNPOOLED`, `POSTGRES_*`, `PG*`, `NEON_*` | Neon integration | No (other tools' spellings of the same connection) |
 | `INGEST_API_KEY` | Us, as a Vercel secret | Yes: required in the `X-Api-Key` header to send data |
-| `CORS_ORIGINS` | Us, as a Vercel secret | Yes: `https://tylanauts-crew-health.vercel.app`, `http://localhost:8000`, `http://127.0.0.1:8000` |
+| `CORS_ORIGINS` | Us, as a Vercel secret | Yes: `https://abdulla-albassam.github.io` (dashboard on GitHub Pages), `https://tylanauts-crew-health.vercel.app` (its old address), `http://localhost:8000`, `http://127.0.0.1:8000` |
 
 How it was created (for the record, or to rebuild it on another account), from `backend/`:
 
@@ -75,7 +75,8 @@ npx vercel deploy --prod  # every time you want the live API updated
 
 Environment variables (`DATABASE_URL` from Neon, `INGEST_API_KEY`, `CORS_ORIGINS`) live in the
 Vercel project, not in the repo. Change them with `npx vercel env add/rm` or in the dashboard, then
-redeploy. `INGEST_API_KEY` is stored as a Vercel secret it won't show again; its value is in README.md.
+redeploy. To change a value in place: `npx vercel env update CORS_ORIGINS --environment production
+--value '<new comma-separated list>' --yes`, then `npx vercel deploy --prod`. `INGEST_API_KEY` is stored as a Vercel secret it won't show again; its value is in README.md.
 If you change it on Vercel, update README.md, INTEGRATION.md and `examples/readings-client.js` too.
 
 ## Setting it up from scratch through GitHub instead (in the Vercel dashboard)
@@ -94,7 +95,7 @@ If you change it on Vercel, update README.md, INTEGRATION.md and `examples/readi
    | Name | Value |
    | --- | --- |
    | `INGEST_API_KEY` | A long random string. Make one with `python3 -c "import secrets; print(secrets.token_urlsafe(24))"`. Share it only with whoever runs the simulator |
-   | `CORS_ORIGINS` | `https://tylanauts-crew-health.vercel.app` (add more addresses separated by commas, e.g. `,http://localhost:8000` for local dashboard work) |
+   | `CORS_ORIGINS` | `https://abdulla-albassam.github.io` (add more addresses separated by commas, e.g. `,http://localhost:8000` for local dashboard work) |
 
 4. **Redeploy** (Deployments → ⋯ → Redeploy) so the variables apply.
 

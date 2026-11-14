@@ -55,6 +55,20 @@ class DataPointRecord(BaseModel):
     data_point: dict[str, Any] = Field(description="The IEEE 1752.1 / Open mHealth data point, exactly per spec.")
 
 
+class CoverageRow(BaseModel):
+    subject_id: str
+    metric: str
+    count: int
+    first: datetime = Field(description="Start of the earliest reading.")
+    last: datetime = Field(description="End (or time) of the latest reading.")
+
+
+class Stats(BaseModel):
+    data_points: int
+    ingestions: int
+    coverage: list[CoverageRow] = Field(description="One row per subject and metric that has data.")
+
+
 class IngestionReport(BaseModel):
     ingestion_id: str
     adapter_id: str

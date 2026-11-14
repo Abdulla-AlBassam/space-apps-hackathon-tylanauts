@@ -66,8 +66,9 @@ Two things to change around it:
 - `fetch` is asynchronous, so the page has to wait for the data before drawing (today
   `generateReadings()` returns instantly).
 - `API_BASE` already points at the live backend, https://tylanauts-api.vercel.app. Keep it that
-  way. It allows requests from the live dashboard and from the dashboard's local preview on
-  `localhost:8000`; tell the backend owner about any other address (e.g. dashboard preview links).
+  way. It allows requests from the dashboard on GitHub Pages (`https://abdulla-albassam.github.io`)
+  and from the dashboard's local preview on `localhost:8000`; tell the backend owner about any
+  other address.
 - Units come back in the standard's spelling (`beats/min`, `C`), not `bpm` / `°C`.
 
 ## 4. Sending data (simulator, typed-in logs, new devices)

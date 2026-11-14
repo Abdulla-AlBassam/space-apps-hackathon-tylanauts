@@ -3,7 +3,7 @@
   "info": {
     "title": "Siryius Health Data API",
     "description": "Collects health readings from many devices and inputs and stores them as IEEE 1752.1 / Open mHealth data points. Sending data needs the X-Api-Key header when the server has a key set; reading does not.",
-    "version": "0.2.0"
+    "version": "0.4.0"
   },
   "paths": {
     "/health": {
@@ -184,6 +184,73 @@
         }
       }
     },
+    "/api/v1/ingestions": {
+      "get": {
+        "tags": [
+          "ingestion"
+        ],
+        "summary": "Recent ingestion reports, newest first",
+        "operationId": "list_ingestions",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "subject_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Only uploads for this subject.",
+              "title": "Subject Id"
+            },
+            "description": "Only uploads for this subject."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/IngestionReport"
+                  },
+                  "title": "Response List Ingestions"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/ingestions/{ingestion_id}": {
       "get": {
         "tags": [
@@ -256,7 +323,7 @@
         "tags": [
           "data points"
         ],
-        "summary": "Stored data points for one subject, oldest first",
+        "summary": "Stored data points for one subject",
         "operationId": "query_data_points",
         "parameters": [
           {
@@ -335,6 +402,22 @@
               "default": 500,
               "title": "Limit"
             }
+          },
+          {
+            "name": "order",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "asc",
+                "desc"
+              ],
+              "type": "string",
+              "description": "'asc' = oldest first, 'desc' = newest first.",
+              "default": "asc",
+              "title": "Order"
+            },
+            "description": "'asc' = oldest first, 'desc' = newest first."
           }
         ],
         "responses": {
@@ -358,6 +441,111 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/stats": {
+      "get": {
+        "tags": [
+          "data points"
+        ],
+        "summary": "What is stored: totals, and readings per subject and metric",
+        "operationId": "get_stats",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Stats"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sim": {
+      "get": {
+        "tags": [
+          "live simulator"
+        ],
+        "summary": "Live simulator: levers, devices and storage",
+        "operationId": "get_sim",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SimView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sim/settings": {
+      "put": {
+        "tags": [
+          "live simulator"
+        ],
+        "summary": "Change the simulator's levers (whole settings object)",
+        "operationId": "put_sim_settings",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SimSettings"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SimView"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sim/tick": {
+      "post": {
+        "tags": [
+          "live simulator"
+        ],
+        "summary": "Send the device readings that are due, and clean up old simulated data",
+        "description": "Called every few seconds by the live page while it's open. Sends at most one reading per device per 10 seconds however often it's called, through the real device adapters. Simulated readings older than the retention window are deleted.",
+        "operationId": "sim_tick",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SimView"
                 }
               }
             }
@@ -428,6 +616,73 @@
           "max"
         ],
         "title": "ComponentInfo"
+      },
+      "CoverageRow": {
+        "properties": {
+          "subject_id": {
+            "type": "string",
+            "title": "Subject Id"
+          },
+          "metric": {
+            "type": "string",
+            "title": "Metric"
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count"
+          },
+          "first": {
+            "type": "string",
+            "format": "date-time",
+            "title": "First",
+            "description": "Start of the earliest reading."
+          },
+          "last": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Last",
+            "description": "End (or time) of the latest reading."
+          }
+        },
+        "type": "object",
+        "required": [
+          "subject_id",
+          "metric",
+          "count",
+          "first",
+          "last"
+        ],
+        "title": "CoverageRow"
+      },
+      "CrewLevers": {
+        "properties": {
+          "stress": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Stress",
+            "description": "Fatigue/stress: heart rate and blood pressure up, HRV down.",
+            "default": 0
+          },
+          "low_oxygen": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Low Oxygen",
+            "description": "Blood oxygen down, breathing and heart rate up.",
+            "default": 0
+          },
+          "radiation": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Radiation",
+            "description": "Radiation exposure: up to 40x the normal daily dose.",
+            "default": 0
+          }
+        },
+        "type": "object",
+        "title": "CrewLevers"
       },
       "DataPointRecord": {
         "properties": {
@@ -509,6 +764,115 @@
         ],
         "title": "DataPointRecord",
         "description": "A stored data point: the untouched standard data point plus our own bookkeeping around it.\n\nIEEE 1752.1 headers carry no user or device fields, so who/what/how lives here instead."
+      },
+      "DeviceLevers": {
+        "properties": {
+          "on": {
+            "type": "boolean",
+            "title": "On",
+            "default": true
+          },
+          "faulty": {
+            "type": "boolean",
+            "title": "Faulty",
+            "description": "Every other reading is an impossible value the backend rejects.",
+            "default": false
+          }
+        },
+        "type": "object",
+        "title": "DeviceLevers"
+      },
+      "DeviceStatus": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "kind": {
+            "type": "string",
+            "title": "Kind"
+          },
+          "kind_label": {
+            "type": "string",
+            "title": "Kind Label"
+          },
+          "crew_id": {
+            "type": "string",
+            "title": "Crew Id"
+          },
+          "adapter_id": {
+            "type": "string",
+            "title": "Adapter Id"
+          },
+          "measures": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Measures"
+          },
+          "on": {
+            "type": "boolean",
+            "title": "On"
+          },
+          "faulty": {
+            "type": "boolean",
+            "title": "Faulty"
+          },
+          "last_sent": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Sent"
+          },
+          "last_values": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object",
+            "title": "Last Values"
+          },
+          "sent_total": {
+            "type": "integer",
+            "title": "Sent Total",
+            "default": 0
+          },
+          "accepted_total": {
+            "type": "integer",
+            "title": "Accepted Total",
+            "default": 0
+          },
+          "rejected_total": {
+            "type": "integer",
+            "title": "Rejected Total",
+            "default": 0
+          },
+          "last_rejections": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Last Rejections"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "kind",
+          "kind_label",
+          "crew_id",
+          "adapter_id",
+          "measures",
+          "on",
+          "faulty"
+        ],
+        "title": "DeviceStatus"
       },
       "HTTPValidationError": {
         "properties": {
@@ -665,6 +1029,128 @@
           "reason"
         ],
         "title": "RecordError"
+      },
+      "SimSettings": {
+        "properties": {
+          "running": {
+            "type": "boolean",
+            "title": "Running",
+            "default": false
+          },
+          "crew": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/CrewLevers"
+            },
+            "type": "object",
+            "title": "Crew"
+          },
+          "devices": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/DeviceLevers"
+            },
+            "type": "object",
+            "title": "Devices"
+          }
+        },
+        "type": "object",
+        "title": "SimSettings"
+      },
+      "SimView": {
+        "properties": {
+          "settings": {
+            "$ref": "#/components/schemas/SimSettings"
+          },
+          "devices": {
+            "items": {
+              "$ref": "#/components/schemas/DeviceStatus"
+            },
+            "type": "array",
+            "title": "Devices"
+          },
+          "interval_seconds": {
+            "type": "integer",
+            "title": "Interval Seconds"
+          },
+          "retention_minutes": {
+            "type": "integer",
+            "title": "Retention Minutes"
+          },
+          "last_tick": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Tick"
+          },
+          "accepted_this_tick": {
+            "type": "integer",
+            "title": "Accepted This Tick"
+          },
+          "live_readings_kept": {
+            "type": "integer",
+            "title": "Live Readings Kept"
+          },
+          "pruned_total": {
+            "type": "integer",
+            "title": "Pruned Total"
+          },
+          "storage_bytes": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Storage Bytes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "settings",
+          "devices",
+          "interval_seconds",
+          "retention_minutes",
+          "last_tick",
+          "accepted_this_tick",
+          "live_readings_kept",
+          "pruned_total",
+          "storage_bytes"
+        ],
+        "title": "SimView"
+      },
+      "Stats": {
+        "properties": {
+          "data_points": {
+            "type": "integer",
+            "title": "Data Points"
+          },
+          "ingestions": {
+            "type": "integer",
+            "title": "Ingestions"
+          },
+          "coverage": {
+            "items": {
+              "$ref": "#/components/schemas/CoverageRow"
+            },
+            "type": "array",
+            "title": "Coverage",
+            "description": "One row per subject and metric that has data."
+          }
+        },
+        "type": "object",
+        "required": [
+          "data_points",
+          "ingestions",
+          "coverage"
+        ],
+        "title": "Stats"
       },
       "ValidationError": {
         "properties": {

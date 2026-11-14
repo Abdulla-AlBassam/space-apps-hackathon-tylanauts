@@ -79,3 +79,41 @@ def test_payload_size_limit(client):
     big = json.dumps({"entries": [], "pad": "x" * 6_000_000})
     response = client.post("/api/v1/ingest/manual-entry", params={"subject_id": "a"}, content=big)
     assert response.status_code == 413
+
+
+def _hr(day: int, value: float) -> dict:
+    return {"metric": "heart-rate", "value": value, "time": f"2026-11-{day:02d}T08:00:00Z"}
+
+
+def test_stats_and_ingestion_list(client):
+    client.post("/api/v1/ingest/manual-entry", params={"subject_id": "crew-01"},
+                json={"entries": [_hr(1, 60), _hr(2, 62), {"metric": "mood", "value": 4, "time": "2026-11-02T07:00:00Z"}]})
+    client.post("/api/v1/ingest/manual-entry", params={"subject_id": "crew-02"},
+                json={"entries": [_hr(3, 70), {"metric": "heart-rate", "value": 900, "time": "2026-11-03T09:00:00Z"}]})
+
+    stats = client.get("/api/v1/stats").json()
+    assert stats["data_points"] == 4 and stats["ingestions"] == 2
+    rows = {(c["subject_id"], c["metric"]): c for c in stats["coverage"]}
+    assert rows[("crew-01", "heart-rate")]["count"] == 2
+    assert rows[("crew-01", "heart-rate")]["first"].startswith("2026-11-01T08:00")
+    assert rows[("crew-01", "heart-rate")]["last"].startswith("2026-11-02T08:00")
+    assert ("crew-02", "mood") not in rows
+
+    uploads = client.get("/api/v1/ingestions").json()
+    assert [u["subject_id"] for u in uploads] == ["crew-02", "crew-01"]
+    assert len(uploads[0]["rejected"]) == 1
+    assert [u["subject_id"] for u in client.get("/api/v1/ingestions", params={"subject_id": "crew-01"}).json()] == ["crew-01"]
+
+
+def test_data_points_newest_first(client):
+    client.post("/api/v1/ingest/manual-entry", params={"subject_id": "a"}, json={"entries": [_hr(d, 60 + d) for d in (1, 2, 3)]})
+    newest = client.get("/api/v1/subjects/a/data-points", params={"order": "desc", "limit": 2}).json()
+    assert [p["values"]["value"] for p in newest] == [63.0, 62.0]
+    assert client.get("/api/v1/subjects/a/data-points", params={"order": "sideways"}).status_code == 422
+
+
+def test_viewer_page_and_root_redirect(client):
+    page = client.get("/viewer")
+    assert page.status_code == 200 and "Siryius data viewer" in page.text
+    root = client.get("/", follow_redirects=False)
+    assert root.status_code in (302, 307) and root.headers["location"] == "/viewer"

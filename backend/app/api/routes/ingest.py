@@ -66,6 +66,15 @@ async def ingest(
         raise HTTPException(400, str(e)) from None
 
 
+@router.get("/ingestions", response_model=list[IngestionReport], summary="Recent ingestion reports, newest first")
+def list_ingestions(
+    limit: int = Query(50, ge=1, le=500),
+    subject_id: str | None = Query(None, description="Only uploads for this subject."),
+    repository: Repository = Depends(get_repository),
+):
+    return repository.list_ingestions(limit, subject_id)
+
+
 @router.get("/ingestions/{ingestion_id}", response_model=IngestionReport, summary="Report for a past ingestion")
 def get_ingestion(ingestion_id: str, repository: Repository = Depends(get_repository)):
     report = repository.get_ingestion(ingestion_id)

@@ -5,7 +5,7 @@ from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
 
-from app.domain.models import DataPointRecord, IngestionReport
+from app.domain.models import CoverageRow, DataPointRecord, IngestionReport, Stats
 
 _SCHEMA = """
 CREATE TABLE IF NOT EXISTS ingestions (
@@ -30,6 +30,10 @@ CREATE TABLE IF NOT EXISTS data_points (
 );
 CREATE INDEX IF NOT EXISTS idx_points_subject_metric_time
     ON data_points (subject_id, metric, effective_start);
+CREATE TABLE IF NOT EXISTS sim_state (
+    key   TEXT PRIMARY KEY,
+    state TEXT NOT NULL
+);
 """
 
 
@@ -110,6 +114,7 @@ class SQLiteRepository:
         start: datetime | None = None,
         end: datetime | None = None,
         limit: int = 500,
+        newest_first: bool = False,
     ) -> list[DataPointRecord]:
         sql, params = "SELECT * FROM data_points WHERE subject_id = ?", [subject_id]
         if metric:
@@ -121,7 +126,7 @@ class SQLiteRepository:
         if end:
             sql += " AND effective_start < ?"
             params.append(_db_time(end))
-        sql += " ORDER BY effective_start LIMIT ?"
+        sql += f" ORDER BY effective_start {'DESC' if newest_first else 'ASC'}, uuid LIMIT ?"
         params.append(limit)
         with self._connect() as db:
             rows = db.execute(sql, params).fetchall()
@@ -145,3 +150,60 @@ class SQLiteRepository:
         with self._connect() as db:
             rows = db.execute("SELECT DISTINCT subject_id FROM data_points ORDER BY subject_id").fetchall()
         return [row["subject_id"] for row in rows]
+
+    def list_ingestions(self, limit: int = 50, subject_id: str | None = None) -> list[IngestionReport]:
+        sql, params = "SELECT report FROM ingestions", []
+        if subject_id:
+            sql += " WHERE subject_id = ?"
+            params.append(subject_id)
+        sql += " ORDER BY received_at DESC LIMIT ?"
+        params.append(limit)
+        with self._connect() as db:
+            rows = db.execute(sql, params).fetchall()
+        return [IngestionReport.model_validate_json(row["report"]) for row in rows]
+
+    def stats(self) -> Stats:
+        with self._connect() as db:
+            points = db.execute("SELECT COUNT(*) AS n FROM data_points").fetchone()["n"]
+            ingestions = db.execute("SELECT COUNT(*) AS n FROM ingestions").fetchone()["n"]
+            rows = db.execute(
+                "SELECT subject_id, metric, COUNT(*) AS count, MIN(effective_start) AS first, "
+                "MAX(COALESCE(effective_end, effective_start)) AS last "
+                "FROM data_points GROUP BY subject_id, metric ORDER BY subject_id, metric"
+            ).fetchall()
+        return Stats(data_points=points, ingestions=ingestions, coverage=[CoverageRow(**dict(r)) for r in rows])
+
+    def load_sim_state(self, key: str) -> dict | None:
+        with self._connect() as db:
+            row = db.execute("SELECT state FROM sim_state WHERE key = ?", (key,)).fetchone()
+        return json.loads(row["state"]) if row else None
+
+    def save_sim_state(self, key: str, state: dict) -> None:
+        with self._connect() as db:
+            db.execute(
+                "INSERT INTO sim_state (key, state) VALUES (?, ?) ON CONFLICT (key) DO UPDATE SET state = excluded.state",
+                (key, json.dumps(state)),
+            )
+
+    def prune_simulated(self, device_prefix: str, cutoff: datetime) -> int:
+        like = device_prefix.replace("%", "") + "%"
+        with self._connect() as db:
+            deleted = db.execute(
+                "DELETE FROM data_points WHERE device_id LIKE ? AND COALESCE(effective_end, effective_start) < ?", (like, _db_time(cutoff))
+            ).rowcount
+            db.execute(
+                "DELETE FROM ingestions WHERE json_extract(report, '$.device_id') LIKE ? AND received_at < ? "
+                "AND NOT EXISTS (SELECT 1 FROM data_points p WHERE p.ingestion_id = ingestions.id)",
+                (like, _db_time(cutoff)),
+            )
+        return deleted
+
+    def count_simulated(self, device_prefix: str) -> int:
+        with self._connect() as db:
+            row = db.execute(
+                "SELECT COUNT(*) AS n FROM data_points WHERE device_id LIKE ?", (device_prefix.replace("%", "") + "%",)
+            ).fetchone()
+        return row["n"]
+
+    def storage_bytes(self) -> int | None:
+        return Path(self.path).stat().st_size
