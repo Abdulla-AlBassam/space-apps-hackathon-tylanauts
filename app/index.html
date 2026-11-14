@@ -175,9 +175,9 @@
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title" id="modal-box"></div>
 </div>
 
-<!-- AI doctor: a round button in the corner that opens a small chat box (scripted for the demo) -->
-<button type="button" class="doc-fab" id="doc-fab" aria-label="Open the AI doctor" aria-expanded="false" aria-controls="doc-chat"></button>
-<section class="doc-chat" id="doc-chat" aria-label="AI doctor" hidden></section>
+<!-- Sirius voice: reads out today's summary when the page opens. The round logo button stops it,
+     the mic button asks it a question (voice.js) -->
+<div class="voice" id="voice" role="region" aria-label="Sirius voice"></div>
 
 <div class="help-pop" id="help-pop" role="tooltip"></div>
 <div class="toast" id="toast" role="status" hidden></div>
@@ -186,6 +186,7 @@
 <script src="icons.js"></script>
 <script src="data.js"></script>
 <script src="app.js"></script>
+<script src="voice.js"></script>
 <script type="importmap">
 { "imports": {
   "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
