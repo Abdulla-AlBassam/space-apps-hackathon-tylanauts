@@ -25,6 +25,18 @@
   $("db-docs").href = ROOT + "/docs";
   $("db-docs").innerHTML = ic("info") + "API docs";
 
+  // The backend's own pages (from the backend README). Opening them only reads; the
+  // Live devices page is where the team starts, pauses and steers the simulated devices.
+  const TOOLS = [
+    { label: "Live devices", path: "/live", note: "start or pause the 18 simulated devices and move the levers" },
+    { label: "Data viewer", path: "/viewer", note: "everything in the database, with charts and rejected readings" },
+    { label: "API docs", path: "/docs", note: "every endpoint, with Try it out" },
+    { label: "API schema", path: "/openapi.json", note: "the machine-readable contract" },
+    { label: "Health check", path: "/health", note: "should say storage: postgres" },
+  ];
+  $("tools").innerHTML = TOOLS.map((t) =>
+    `<a class="tool" href="${esc(ROOT + t.path)}" target="_blank" rel="noopener"><b>${esc(t.label)}</b><span>${esc(t.note)}</span></a>`).join("");
+
   async function get(url) {
     const stop = new AbortController();
     const timer = setTimeout(() => stop.abort(), WAIT_MS);
@@ -63,14 +75,19 @@
     const cell = (label, value, cls) => `<div class="stat"><span class="label">${label}</span><b class="${cls || ""}">${value}</b></div>`;
     const lastAll = stats && stats.coverage.length ? stats.coverage.reduce((m, c) => (c.last > m ? c.last : m), "") : null;
     $("status").innerHTML =
-      cell("Server", up ? `${ic("circle-check")}Up` : `${ic("octagon-alert")}Down`, up ? "" : "is-bad") +
+      cell("Server", up ? `${ic("circle-check")}Up` : health.status === 0 && health.error !== "gave up waiting" ? `${ic("octagon-alert")}Blocked` : `${ic("octagon-alert")}Down`, up ? "" : "is-bad") +
       cell("Answered in", health.status ? `${health.ms} ms` : health.error || "no answer") +
       cell("Storage", up ? esc(health.body.storage) : "–") +
       cell("Version", up ? esc(health.body.version) : "–") +
       cell("Readings stored", stats ? stats.data_points.toLocaleString("en-GB") : "–") +
       cell("Uploads received", stats ? stats.ingestions.toLocaleString("en-GB") : "–") +
       cell("Newest reading", lastAll ? ago(lastAll) : "–") +
-      `<p class="db-note small mono status-url">${esc(ROOT)}</p>`;
+      `<p class="db-note small mono status-url">${esc(ROOT)}</p>` +
+      (health.status === 0 && health.error !== "gave up waiting"
+        ? `<p class="db-note small status-url">The browser couldn't read the server from <span class="mono">${esc(location.origin)}</span>. ` +
+          `The backend only lets the GitHub Pages site and <span class="mono">localhost:8000</span> read it, so open Sirius from one of those ` +
+          `(or ask nayem-m to add this address). <a href="${esc(ROOT)}/health" target="_blank" rel="noopener">Open the health check directly</a> to see whether the server itself is up.</p>`
+        : "");
     $("status-refresh").disabled = false;
     drawBackendHas();
   }
@@ -110,6 +127,7 @@
       }).join("") + `</tbody>`;
     $("pages-note").innerHTML =
       "Live means the backend has a reading for it on the latest day. The Today, Alerts, Calendar and Log pages use this mix. " +
+      "Breath depth, deep sleep, exercise and skin temperature aren't sent by the simulated devices yet. " +
       "The Crew overview page and the device list (battery, last sync) are still all sample data.";
     drawBackendHas();
   }
@@ -134,8 +152,8 @@
 
   /* ---------- 3. Test requests ---------- */
   const ENDPOINTS = [
-    { id: "readings", label: "Latest readings (newest 20)", url: (s) => `${API_BASE}/subjects/${encodeURIComponent(s)}/data-points?limit=20` },
-    { id: "readings-day", label: "Readings from the last 24 hours", url: (s) => `${API_BASE}/subjects/${encodeURIComponent(s)}/data-points?start=${new Date(Date.now() - 86400000).toISOString()}&limit=500` },
+    { id: "readings", label: "Latest readings (newest 20)", url: (s) => `${API_BASE}/subjects/${encodeURIComponent(s)}/data-points?limit=20&order=desc` },
+    { id: "readings-day", label: "Readings from the last 24 hours", url: (s) => `${API_BASE}/subjects/${encodeURIComponent(s)}/data-points?start=${new Date(Date.now() - 86400000).toISOString()}&limit=500&order=desc` },
     { id: "uploads", label: "Recent uploads from devices", url: (s) => `${API_BASE}/ingestions?limit=10&subject_id=${encodeURIComponent(s)}` },
     { id: "health", label: "Server health (anyone)", url: () => `${ROOT}/health`, all: true },
     { id: "stats", label: "Storage totals (anyone)", url: () => `${API_BASE}/stats`, all: true },
@@ -158,7 +176,8 @@
     const res = await get(API_BASE + "/subjects");
     // Crew members the backend has data for; keep crew-01 to crew-06 even if it has none.
     const crew = ["crew-01", "crew-02", "crew-03", "crew-04", "crew-05", "crew-06"];
-    const list = [...new Set(crew.concat(res.ok && Array.isArray(res.body) ? res.body : []))].sort();
+    const fromServer = res.ok && Array.isArray(res.body) ? res.body.filter((s) => /^crew-/.test(s)) : [];
+    const list = [...new Set(crew.concat(fromServer))].sort();
     $("t-subject").innerHTML = list.map((s) => `<option>${esc(s)}</option>`).join("");
     showUrl();
   }
