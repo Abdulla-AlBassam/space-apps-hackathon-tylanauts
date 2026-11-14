@@ -127,21 +127,6 @@
   100% { transform: scale(1.7); opacity: 0; }
 }
 
-/* Small text buttons in the top right corner: Reset view, Auto-turn, Full screen */
-.bm-controls { position: absolute; top: 0; right: 0; z-index: 3; display: flex; gap: 4px; }
-.bm-controls button, .bm-controls a {
-  padding: 5px 10px;
-  border: 0;
-  border-radius: 999px;
-  background: transparent;
-  color: var(--text-faint);
-  font: 600 12.5px var(--font-body);
-  text-decoration: none;
-  cursor: pointer;
-}
-.bm-controls button:hover, .bm-controls a:hover { color: var(--text); }
-.bm-controls button[aria-pressed="true"] { color: var(--blue-yonder); }
-.bm-controls button:focus-visible, .bm-controls a:focus-visible { outline: 2px solid var(--blue-yonder); outline-offset: 1px; }
 .bm-hint {
   position: absolute;
   bottom: 12px;

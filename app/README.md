@@ -31,14 +31,22 @@ python3 -m http.server 8000
 
 - **Few boxes on purpose.** Sections sit straight on the background with space between them
   (`.panel` in `styles.css` has no border or fill). Only things that should stand out get a
-  soft box (`.card`): the selected score, the alerts card, the AI doctor, and the health-log
-  and device tiles. Please keep new sections unboxed unless they really need to stand out.
+  soft box (`.card`): the selected score, the score overview, the alerts card and the device
+  tiles. Please keep new sections unboxed unless they really need to stand out.
 - **Statuses are an icon and a coloured word** (`.pill`), with no outline.
-- **Alerts:** Today shows one small card with how many alerts are open and how serious they
-  are. Clicking it opens the Alerts page (`#alerts`), which lists each alert with what changed
-  and what to do. Both are drawn by `renderAlerts()` in `app.js`.
+- **Today, top of the screen:** the three scores, then the body map with two cards beside it.
+  The **Overview** card shows what the selected score is made of and which device each part
+  comes from; clicking Recovery, Radiation or Mind swaps it straight away. The **Alerts** card
+  shows how many alerts are open and how serious they are, and opens the Alerts page
+  (`#alerts`), which lists each alert with what changed and what to do.
 - **Body map labels** are an icon, a name and a status joined to the body by a thin line.
-  Clicking one opens its details underneath.
+  Clicking one opens its details underneath. There are no view buttons: the body turns by itself.
+- **AI doctor** is the round button in the bottom right corner of every dashboard page. It
+  opens a chat box. The answers are scripted: `answer()` in `app.js` looks for key words in
+  the question and fills in today's simulated numbers. It is still only an idea preview.
+- **Health log** is kept to three things: what to do, what's coming up, and the latest results.
+- **Crew overview** answers three questions per shared pattern: who lines up, what the issue
+  is, and a suggested fix. Under that is one plain table of everyone today.
 
 ## Things to know
 
@@ -71,17 +79,16 @@ python3 -m http.server 8000
 
 ## Crew overview
 
-- **The idea:** a bird's-eye view of the whole crew. The crew score is the average of each
-  person's overall score, but because an average can hide one person struggling, people are
-  also counted by their *weakest* category, and the grid always shows everyone.
+- **The idea:** show where several crew members line up, because the same thing dropping for
+  several people at once usually has a shared cause (the schedule, a stressful event) rather
+  than being one person's health.
 - **Crew patterns:** when 3 or more people drop in the same category over the same days
-  (15 or more points under their own normal), the page calls it a crew pattern, joins those
-  people with a dashed line in the grid, and lists shared events from the mission log that
-  happened around the same time. One or two people dropping is listed separately as personal.
-  The numbers are at the top of `crew.js` (`DROP`, `CREW_MIN`) and are placeholders.
+  (15 or more points under their own normal), the page shows one short row: who, the issue
+  (with the shared event that happened around the same time) and one suggested fix. Clicking
+  a row highlights those people in the table. The numbers are at the top of `crew.js`
+  (`DROP`, `CREW_MIN`) and are placeholders. Patterns that have already recovered are not shown.
 - **Astronaut / Flight surgeon switch:** the Astronaut view hides crewmates' names
   ("Crewmate B"). That's a suggestion for the team to decide, not a settled rule.
-- **The simulated story:** a solar event on day 134 (everyone, now recovered), lost family
-  calls from day 135 (mood, 3 people), a sleep schedule change on day 139 (sleep, 4 people),
-  a spacewalk on day 140 (radiation, 2 people) and the commander's heart drift that the main
+- **The simulated story:** lost family calls from day 135 (mood, 3 people), a sleep schedule
+  change on day 139 (sleep, 4 people), and the commander's heart drift that the main
   dashboard also shows.

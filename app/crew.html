@@ -13,15 +13,18 @@
 <body>
 
 <!--
-  Crew overview: every astronaut's health rolled into one crew reading, a grid of
-  each person against each health category, and "crew patterns" that spot the same
-  problem in several people at once. Everything is drawn by crew.js. All data is simulated.
+  Crew overview, kept deliberately simple. It answers three questions:
+    1. Where do several crew members line up (the same thing dropping at the same time)?
+    2. What is the issue?
+    3. What is a suggested fix?
+  Under that, one small table shows everyone today. Everything is drawn by crew.js.
+  All data is simulated.
 -->
 <canvas id="space" aria-hidden="true"></canvas>
 
 <main class="cw">
   <header class="cw-top">
-    <a class="cw-back" href="index.html">
+    <a class="cw-back" href="index.html" aria-label="Back to Siryius">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
       Siryius
     </a>
@@ -29,16 +32,7 @@
       <h1>Crew overview</h1>
       <p id="cw-mission">Mission</p>
     </div>
-    <div class="cw-progress" aria-label="Mission progress">
-      <span id="cw-day"></span>
-      <div class="cw-bar"><span id="cw-fill"></span></div>
-    </div>
     <div class="cw-top-right">
-      <div class="cw-legend" aria-label="Colour key">
-        <span class="is-good" id="lg-good"></span>
-        <span class="is-watch" id="lg-watch"></span>
-        <span class="is-act" id="lg-act"></span>
-      </div>
       <div class="switch" role="group" aria-label="Who is viewing">
         <button type="button" id="view-astro" aria-pressed="false">Astronaut</button>
         <button type="button" id="view-surgeon" aria-pressed="true">Flight surgeon</button>
@@ -47,69 +41,32 @@
     </div>
   </header>
 
-  <div class="cw-layout">
-    <div class="cw-col">
-      <!-- One reading for the whole crew, plus the crew average for each category -->
-      <section class="cw-summary" id="cw-summary" aria-label="Crew score"></section>
+  <!-- One line: the crew score and how many shared patterns there are -->
+  <section class="cw-score" id="cw-score" aria-label="Crew score"></section>
 
-      <section class="panel">
-        <div class="panel-head">
-          <h2>Everyone, every category</h2>
-          <button type="button" class="help" data-help="grid" aria-label="What is this?">?</button>
-          <span class="spacer"></span>
-          <span class="cw-hint" id="grid-hint">Click a square for a close-up</span>
-        </div>
-        <div class="cw-grid-wrap" id="grid-wrap">
-          <table class="cw-grid" id="grid"></table>
-          <svg class="cw-thread" id="thread" aria-hidden="true"></svg>
-        </div>
-      </section>
-
-      <section class="panel">
-        <div class="panel-head">
-          <h2>Last 14 days</h2>
-          <button type="button" class="help" data-help="trend" aria-label="What is this?">?</button>
-          <span class="spacer"></span>
-          <div class="tabs" role="tablist" id="trend-tabs"></div>
-        </div>
-        <svg class="cw-chart" id="chart" role="img" aria-label="Crew trend chart"></svg>
-        <div class="cw-chart-legend">
-          <span><i class="ln ln-avg"></i>Crew average</span>
-          <span><i class="ln ln-one"></i>Each astronaut</span>
-          <span><i class="ln ln-hit"></i>In the selected pattern</span>
-          <span><i class="ln ln-event"></i>Shared event</span>
-        </div>
-      </section>
+  <!-- The main part: one short row per shared pattern (who, the issue, a suggested fix) -->
+  <section aria-label="Shared patterns">
+    <div class="sec-head">
+      <h2>Where the crew lines up</h2>
+      <button type="button" class="help" data-help="patterns" aria-label="What is this?">?</button>
     </div>
+    <div class="insights" id="insights"></div>
+  </section>
 
-    <aside class="cw-col">
-      <section class="panel" id="closeup" hidden aria-live="polite"></section>
-
-      <section class="panel">
-        <div class="panel-head">
-          <h2>Crew patterns</h2>
-          <button type="button" class="help" data-help="patterns" aria-label="What is this?">?</button>
-        </div>
-        <div class="patterns" id="patterns"></div>
-      </section>
-
-      <section class="panel">
-        <div class="panel-head">
-          <h2>Just one or two people</h2>
-          <button type="button" class="help" data-help="singles" aria-label="What is this?">?</button>
-        </div>
-        <div class="singles" id="singles"></div>
-      </section>
-
-      <section class="panel">
-        <div class="panel-head">
-          <h2>Shared events</h2>
-          <button type="button" class="help" data-help="events" aria-label="What is this?">?</button>
-        </div>
-        <ol class="events" id="events"></ol>
-      </section>
-    </aside>
-  </div>
+  <!-- Everyone today, so one person struggling is never hidden by an average -->
+  <section aria-label="Everyone today">
+    <div class="sec-head">
+      <h2>Everyone today</h2>
+      <button type="button" class="help" data-help="grid" aria-label="What is this?">?</button>
+      <span class="spacer"></span>
+      <div class="cw-legend" aria-label="Colour key">
+        <span class="is-good" id="lg-good"></span>
+        <span class="is-watch" id="lg-watch"></span>
+        <span class="is-act" id="lg-act"></span>
+      </div>
+    </div>
+    <div class="cw-grid-wrap"><table class="cw-grid" id="grid"></table></div>
+  </section>
 
   <p class="footer-note">Simulated crew and data for a demo. Siryius is built by Team Tylanauts for NASA Space Apps 2026.</p>
 </main>

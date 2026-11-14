@@ -48,11 +48,6 @@
               <button type="button" class="help" data-help="bodymap" aria-label="What is this?">?</button>
             </div>
             <div class="bm-markers" id="bm-markers"></div>
-            <div class="bm-controls">
-              <button type="button" id="bm-reset">Reset view</button>
-              <button type="button" id="bm-spin" aria-pressed="true">Auto-turn</button>
-              <a href="body-map.html" id="bm-full">Full screen</a>
-            </div>
             <p class="bm-hint">Drag to turn&nbsp; • &nbsp;click a label</p>
             <p class="bm-loading" id="bm-loading">Loading the 3D body&hellip;</p>
             <p class="bm-fallback" id="bm-fallback" hidden>The 3D view couldn&rsquo;t start because this browser has WebGL turned off. The labels still work.</p>
@@ -60,27 +55,28 @@
         </section>
 
         <aside class="col">
+          <!-- Overview of the score that is selected above: what it is made of, and from which devices.
+               Clicking Recovery, Radiation or Mind swaps what is shown here. -->
+          <section class="card contrib-panel" id="contrib-panel" aria-live="polite">
+            <div class="panel-head"><h2 id="contrib-title"></h2><button type="button" class="help" data-help="contributors" aria-label="What is this?">?</button></div>
+            <div class="contrib" id="contrib"></div>
+          </section>
           <!-- One small card: how many alerts and how serious. Clicking it opens the Alerts page. -->
           <section class="card alerts-card" id="alerts-card" aria-label="Alerts"></section>
-          <section class="card doctor" id="doctor"></section>
         </aside>
       </div>
 
+
       <div class="layout layout-even">
-        <section class="panel" id="contrib-panel" aria-live="polite">
-          <div class="panel-head"><h2 id="contrib-title"></h2><button type="button" class="help" data-help="contributors" aria-label="What is this?">?</button></div>
-          <div class="contrib" id="contrib"></div>
+        <section class="panel">
+          <div class="panel-head"><h2 id="vitals-heading"></h2><button type="button" class="help" data-help="vitals" aria-label="What is this?">?</button></div>
+          <div class="vitals" id="vitals"></div>
         </section>
         <section class="panel">
           <div class="panel-head"><h2 id="due-heading"></h2><button type="button" class="help" data-help="due" aria-label="What is this?">?</button><span class="spacer"></span><a class="link-btn" href="#log" id="due-all"></a></div>
           <div class="due-list" id="due-today"></div>
         </section>
       </div>
-
-      <section class="panel">
-        <div class="panel-head"><h2 id="vitals-heading"></h2><button type="button" class="help" data-help="vitals" aria-label="What is this?">?</button></div>
-        <div class="vitals" id="vitals"></div>
-      </section>
 
       <section class="panel" id="trends">
         <div class="panel-head">
@@ -112,20 +108,20 @@
     </section>
 
     <!-- ================= HEALTH LOG ================= -->
+    <!-- Kept short on purpose: what to do, what's coming up, and the latest results. -->
     <section class="view" id="view-log" aria-label="Health log" hidden>
       <div class="view-head">
         <div><h2 class="view-title" id="log-title"></h2><p class="view-sub">Device readings fill in by themselves. Type in the rest.</p></div>
         <button type="button" class="btn-primary" id="log-new"></button>
       </div>
-      <div class="cat-grid" id="cat-grid"></div>
       <div class="layout layout-even">
         <section class="panel">
           <div class="panel-head"><h2 id="log-due-heading"></h2><button type="button" class="help" data-help="due" aria-label="What is this?">?</button></div>
           <div class="due-list" id="due-full"></div>
         </section>
         <section class="panel">
-          <div class="panel-head"><h2 id="sched-heading"></h2><button type="button" class="help" data-help="schedule" aria-label="What is this?">?</button></div>
-          <div class="table-wrap"><table id="schedule"></table></div>
+          <div class="panel-head"><h2 id="next-heading"></h2><button type="button" class="help" data-help="next" aria-label="What is this?">?</button></div>
+          <div class="due-list" id="next-list"></div>
         </section>
       </div>
       <section class="panel">
@@ -153,6 +149,10 @@
 <div class="modal-back" id="modal" hidden>
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title" id="modal-box"></div>
 </div>
+
+<!-- AI doctor: a round button in the corner that opens a small chat box (scripted for the demo) -->
+<button type="button" class="doc-fab" id="doc-fab" aria-label="Open the AI doctor" aria-expanded="false" aria-controls="doc-chat"></button>
+<section class="doc-chat" id="doc-chat" aria-label="AI doctor" hidden></section>
 
 <div class="help-pop" id="help-pop" role="tooltip"></div>
 <div class="toast" id="toast" role="status" hidden></div>
