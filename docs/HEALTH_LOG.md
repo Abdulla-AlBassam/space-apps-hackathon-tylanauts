@@ -42,6 +42,9 @@ list these activities but do not say how often they happen.
 | Radiation | Personal dose | Device (simulated dosimeter) | Daily |
 | Radiation | Dose before and after a spacewalk | Hand-entered | Each spacewalk (NASA does this) |
 
+See [MONITORING_SCHEDULE.md](MONITORING_SCHEDULE.md) for the full schedule, who does each
+test, and the NASA requirement behind it.
+
 **Later categories** (not in the first version): Blood & immune (hematocrit,
 urine test), Eyes (eye chart, grid test, eye scans: NASA schedules these on
 flight day 30, flight day 90 and about 30 days before return), Hearing.

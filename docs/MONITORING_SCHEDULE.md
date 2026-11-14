@@ -97,8 +97,9 @@ Not entered in the app, but the app shows them as reminders.
 
 ## Notes
 
-- **HEALTH_LOG.md is updated to match:** the fitness test is now about every 90 days
-  (it said monthly), and the cognitive test is marked as NASA's schedule rather than ours.
+- **HEALTH_LOG.md is updated to match:** the cognitive test is marked as NASA's schedule
+  rather than ours. (The team dropped bone and muscle tracking on 14 Nov 2026, so the
+  health log no longer has a fitness test.)
 - **Annual checks on Earth:** NASA also re-certifies every astronaut medically once a
   year ([V1 3001](https://www.nasa.gov/wp-content/uploads/2024/02/ochmo-mtb-001-sans.pdf)).
   That happens on the ground, so it isn't in this in-flight schedule.
