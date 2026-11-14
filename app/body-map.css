@@ -1,13 +1,11 @@
 /*
- * Body map page. Uses the brand colours and fonts defined in styles.css.
+ * Body map page. Uses the Sirius colours and fonts defined in sirius.css.
  * Layout: the 3D figure in the middle with a column of labels on each side. Nothing is
  * boxed in: the body and its labels sit straight on the background.
  */
 .bm-page {
   min-height: 100%;
-  background:
-    radial-gradient(ellipse at 50% 55%, rgba(0, 66, 166, 0.35), rgba(7, 23, 63, 0) 60%),
-    var(--deep-blue);
+  background: var(--ink);
   display: flex;
   flex-direction: column;
 }
@@ -25,15 +23,19 @@
   gap: 6px;
   color: var(--text-dim);
   text-decoration: none;
-  font-size: 14px;
+  font-size: 12px;
   padding: 6px 10px 6px 6px;
   border-radius: 8px;
 }
 .bm-back svg { width: 18px; height: 18px; }
-.bm-back:hover, .bm-back:focus-visible { color: var(--text); background: rgba(46, 150, 245, 0.12); outline: none; }
-.bm-legend { margin-left: auto; display: flex; gap: 18px; font-size: 13px; color: var(--text-dim); }
+.bm-back:hover, .bm-back:focus-visible { color: var(--text); background: var(--card); outline: none; }
+.bm-back .sirius-mark { margin-right: 2px; }
+.bm-top .who h1 { font-size: 24px; }
+.bm-legend { margin-left: auto; display: flex; gap: 18px; font: 400 12px var(--font-mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-dim); }
 .bm-legend span { display: inline-flex; align-items: center; gap: 7px; }
-.dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; background: currentColor; box-shadow: 0 0 10px currentColor; }
+/* Steady is a bone dot, Watch an ember ring, Alert a solid ember dot */
+.dot { width: 10px; height: 10px; box-sizing: border-box; border-radius: 50%; display: inline-block; background: currentColor; }
+.dot.is-watch { background: none; border: 2px solid currentColor; }
 
 /* ---------- Three columns ---------- */
 .bm-layout {
@@ -56,18 +58,18 @@
   padding: 10px 12px;
   border-radius: 10px;
   border: 1px solid transparent;
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--card);
   color: var(--text);
-  font: 600 14px var(--font-body);
+  font: 500 14px var(--font-body);
   text-align: left;
   cursor: pointer;
   transition: background 0.2s, border-color 0.2s;
 }
-.bm-row:hover { background: rgba(46, 150, 245, 0.1); }
-.bm-row:focus-visible { outline: 2px solid var(--blue-yonder); outline-offset: 1px; }
-.bm-row[aria-pressed="true"] { border-color: var(--blue-yonder); background: rgba(0, 66, 166, 0.45); }
+.bm-row:hover { background: var(--card-hover); }
+.bm-row:focus-visible { outline: 2px solid var(--bone); outline-offset: 1px; }
+.bm-row[aria-pressed="true"] { border-color: var(--bone); background: var(--card-hover); }
 .bm-row .dot { width: 9px; height: 9px; flex: none; }
-.bm-row small { margin-left: auto; font: 700 11px var(--font-display); letter-spacing: 0.08em; text-transform: uppercase; }
+.bm-row small { margin-left: auto; font: 400 11px var(--font-mono); letter-spacing: 0.12em; text-transform: uppercase; }
 
 /* ---------- 3D stage ---------- */
 .bm-stage {
@@ -80,11 +82,11 @@
   outline: none;
 }
 .bm-stage:active { cursor: grabbing; }
-.bm-stage:focus-visible { box-shadow: inset 0 0 0 2px var(--blue-yonder); }
+.bm-stage:focus-visible { box-shadow: inset 0 0 0 1px var(--slate); }
 .bm-stage canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
 .bm-markers { position: absolute; inset: 0; pointer-events: none; }
 
-/* A glowing point on the body */
+/* A point on the body: a dot with a slow ring. Steady points are quiet bone, the rest ember. */
 .bm-marker {
   position: absolute;
   left: 0;
@@ -95,7 +97,7 @@
   padding: 0;
   border: 0;
   background: none;
-  color: var(--blue-yonder);
+  color: var(--bone);
   cursor: pointer;
   pointer-events: auto;
   transition: opacity 0.3s;
@@ -106,8 +108,10 @@
   inset: 11px;
   border-radius: 50%;
   background: currentColor;
-  box-shadow: 0 0 10px 2px currentColor, 0 0 24px 4px currentColor;
+  box-shadow: 0 0 0 2px var(--ink);
 }
+.bm-marker.is-watch, .bm-marker.is-act { color: var(--ember); }
+.bm-marker.is-good .bm-core { inset: 13px; }
 .bm-marker .bm-ring {
   position: absolute;
   inset: 4px;
@@ -116,15 +120,15 @@
   opacity: 0.8;
   animation: bm-pulse 2.2s ease-out infinite;
 }
-.bm-marker.is-good .bm-ring { animation-duration: 3.6s; opacity: 0.45; }
+.bm-marker.is-good .bm-ring { display: none; }
 .bm-marker.is-act .bm-ring { animation-duration: 1.3s; }
 .bm-marker:focus-visible { outline: none; }
-.bm-marker:focus-visible .bm-core { outline: 2px solid var(--white); outline-offset: 3px; }
+.bm-marker:focus-visible .bm-core { outline: 2px solid var(--bone); outline-offset: 3px; }
 .bm-marker.selected .bm-core { inset: 9px; }
 .bm-marker.behind { opacity: 0.32; }
 @keyframes bm-pulse {
-  0% { transform: scale(0.6); opacity: 0.9; }
-  100% { transform: scale(1.7); opacity: 0; }
+  0% { transform: scale(0.6); opacity: 0.8; }
+  100% { transform: scale(1.5); opacity: 0; }
 }
 
 .bm-hint {
@@ -134,12 +138,13 @@
   right: 0;
   margin: 0;
   text-align: center;
-  font-size: 12.5px;
+  font: 400 11px var(--font-mono);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
   color: var(--text-faint);
   pointer-events: none;
 }
-.bm-fallback, .bm-loading { position: absolute; inset: 45% 15% auto; margin: 0; text-align: center; color: var(--text-dim); }
-.footer-note a { color: inherit; }
+.bm-fallback, .bm-loading { position: absolute; inset: 40% 15% auto; margin: 0; text-align: center; color: var(--text-dim); }
 
 /* ---------- Details panel ---------- */
 .bm-detail-panel h2 { display: flex; align-items: center; gap: 8px; }
@@ -155,8 +160,8 @@
   line-height: 1;
   cursor: pointer;
 }
-.bm-close:hover, .bm-close:focus-visible { color: var(--text); background: rgba(46, 150, 245, 0.15); outline: none; }
-.bm-title { margin: 6px 0 2px; font: 900 24px var(--font-display); display: flex; align-items: center; gap: 8px; }
+.bm-close:hover, .bm-close:focus-visible { color: var(--text); background: var(--card-hover); outline: none; }
+.bm-title { margin: 6px 0 2px; font: 500 24px var(--font-display); display: flex; align-items: center; gap: 8px; }
 .bm-sub { margin: 0 0 12px; font-size: 12.5px; color: var(--text-faint); }
 .bm-summary { margin: 0 0 16px; font-size: 14.5px; }
 .bm-readings { display: grid; gap: 8px; margin-bottom: 18px; }
@@ -167,32 +172,30 @@
   padding: 10px 12px;
   border-radius: 10px;
   border: 1px solid var(--line);
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--card);
 }
-.bm-reading.out { border-color: rgba(234, 254, 7, 0.45); }
-.bm-reading.out.act { border-color: var(--rocket-red); }
+.bm-reading.out { border-color: var(--ember); }
 .bm-reading .name { font-size: 13px; color: var(--text-dim); }
-.bm-reading .val { font: 500 17px var(--font-data); text-align: right; }
+.bm-reading .val { font: 400 17px var(--font-data); text-align: right; }
 .bm-reading .val small { font-size: 11.5px; color: var(--text-dim); margin-left: 3px; }
 .bm-reading .meta { grid-column: 1 / -1; font-size: 11.5px; color: var(--text-faint); }
-.bm-detail-panel h3 { margin: 0 0 8px; font: 700 13px var(--font-display); letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-dim); }
+.bm-detail-panel h3 { margin: 0 0 8px; font: 400 12px var(--font-mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-dim); }
 .bm-actions { margin: 0 0 16px; padding: 0; list-style: none; display: grid; gap: 7px; }
 .bm-actions li { display: flex; gap: 8px; font-size: 13.5px; }
-.bm-actions li::before { content: "→"; color: var(--blue-yonder); }
-.bm-link { color: var(--blue-yonder); font-size: 13.5px; text-decoration: none; }
+.bm-actions li::before { content: "→"; color: var(--slate); }
+.bm-link { color: var(--bone); font-size: 13.5px; text-decoration: underline; text-underline-offset: 3px; }
 .bm-link:hover { text-decoration: underline; }
 .bm-overview p { margin: 0 0 12px; font-size: 14px; color: var(--text-dim); }
 .bm-counts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 14px 0; }
 .bm-count { padding: 12px; border-radius: 10px; border: 1px solid var(--line); text-align: center; }
-.bm-count b { display: block; font: 900 26px var(--font-display); }
+.bm-count b { display: block; font: 400 26px var(--font-mono); }
 .bm-count span { font-size: 12px; color: var(--text-dim); }
 
 /* ---------- Labels around the body ---------- */
 .bm-leaders { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
-.bm-leader { fill: none; stroke: currentColor; stroke-width: 1; opacity: 0.55; }
-.bm-leader.is-good { color: var(--blue-yonder); }
-.bm-leader.is-watch { color: var(--neon-yellow); }
-.bm-leader.is-act { color: var(--rocket-red); }
+.bm-leader { fill: none; stroke: currentColor; stroke-width: 1; opacity: 0.6; }
+.bm-leader.is-good { color: var(--slate); opacity: 0.9; }
+.bm-leader.is-watch, .bm-leader.is-act { color: var(--ember); }
 .bm-leader.behind { opacity: 0.22; stroke-dasharray: 3 4; }
 .bm-leader.selected { stroke-width: 1.6; opacity: 1; }
 
@@ -214,9 +217,8 @@
 
 /* One label: an icon, the name and the status. No box. */
 .bm-tag { pointer-events: auto; border-radius: 16px; cursor: default; max-width: 100%; }
-.bm-tag.is-good { color: var(--blue-yonder); }
-.bm-tag.is-watch { color: var(--neon-yellow); }
-.bm-tag.is-act { color: var(--rocket-red); }
+.bm-tag.is-good { color: var(--bone); }
+.bm-tag.is-watch, .bm-tag.is-act { color: var(--ember); }
 .bm-tag-head {
   display: flex;
   align-items: center;
@@ -229,36 +231,37 @@
   text-align: left;
   cursor: pointer;
 }
-.bm-tag-head:focus-visible { outline: 2px solid var(--blue-yonder); outline-offset: 4px; border-radius: 8px; }
+.bm-tag-head:focus-visible { outline: 2px solid var(--bone); outline-offset: 4px; border-radius: 8px; }
 /* Left-hand labels are mirrored, so the icon is always on the side nearest the body */
 .bm-col-left .bm-tag-head { flex-direction: row-reverse; text-align: right; margin-left: auto; }
 .bm-col-left .bm-tag-text { justify-items: end; }
 .bm-tag-icon { display: grid; place-items: center; flex: none; }
 .bm-tag-icon .ico { width: 26px; height: 26px; }
 .bm-tag-text { display: grid; gap: 2px; min-width: 0; }
-.bm-tag-name { font: 700 15.5px var(--font-display); color: var(--text); }
+.bm-tag-name { font: 500 16px var(--font-display); color: var(--text); }
 .bm-tag-head:hover .bm-tag-name { text-decoration: underline; text-underline-offset: 3px; }
 .bm-pill {
   display: inline-flex;
   align-items: center;
   gap: 5px;
   width: fit-content;
-  font: 700 11px var(--font-display);
-  letter-spacing: 0.08em;
+  font: 400 11px var(--font-mono);
+  letter-spacing: 0.12em;
   text-transform: uppercase;
 }
 .bm-pill .ico { width: 13px; height: 13px; }
-.bm-pill.is-act { color: var(--white); }
-.bm-pill.is-act .ico { color: var(--rocket-red); }
+.bm-pill.is-good { color: var(--muted); }
+.bm-pill.is-act { background: var(--ember); color: var(--ink); padding: 2px 8px 2px 6px; border-radius: 999px; }
 
 /* An opened label is the one place a box appears: its details need a calm background */
 .bm-tag.open {
   width: 100%;
   box-sizing: border-box;
   padding: 10px 16px 14px;
-  background: rgba(7, 23, 63, 0.86);
-  backdrop-filter: blur(8px);
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4);
+  background: var(--ink);
+  border: 1px solid var(--rule);
+  border-radius: 12px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
 }
 .bm-tag-body {
   padding-top: 8px;
@@ -272,8 +275,8 @@
 .bm-tag-body .bm-readings { gap: 0; margin-bottom: 14px; }
 .bm-tag-body .bm-reading { padding: 8px 0; border: 0; border-top: 1px solid var(--hair); border-radius: 0; background: none; }
 .bm-tag-body .bm-reading .val { font-size: 14.5px; }
-.bm-tag-body .bm-reading.out .val { color: var(--neon-yellow); }
-.bm-tag-body h3 { display: flex; align-items: center; gap: 6px; margin: 0 0 6px; font: 700 11.5px var(--font-display); letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-dim); }
+.bm-tag-body .bm-reading.out .val { color: var(--ember); }
+.bm-tag-body h3 { display: flex; align-items: center; gap: 6px; margin: 0 0 6px; font: 400 11.5px var(--font-mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-dim); }
 .bm-tag-body h3 .ico { width: 14px; height: 14px; }
 .bm-tag-body .bm-actions { margin: 0; font-size: 13px; }
 

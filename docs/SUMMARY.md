@@ -1,4 +1,4 @@
-# Siryius: project summary (start here)
+# Sirius: project summary (start here)
 
 The one page that says what Team Tylanauts is building, what is decided, what is
 still open, and what each person builds next. Written 14 Nov 2026 from the repo,
@@ -15,7 +15,7 @@ Labels used on this page:
 ## 1. The pitch in one paragraph
 
 On long missions astronauts have to spot changes in their own health, often far from
-a doctor. **Siryius** is **one health hub for every wearable an astronaut wears**: a watch,
+a doctor. **Sirius** is **one health hub for every wearable an astronaut wears**: a watch,
 a chest strap, a headband, a radiation badge. Each device sends its readings to the hub,
 the hub turns them into one common format and **combines them**, so readings can be
 cross-checked and patterns that no single device can see get noticed. The astronaut
@@ -29,14 +29,14 @@ to **real web addresses on a small server**, so the data really flows through th
 
 | Topic | Decision | Where it's written |
 | --- | --- | --- |
-| Name | The platform is called **Siryius**. | This page |
+| Name | The platform is called **Sirius**. | This page |
 | Priority | **Software first.** Real hardware only after the MVP works. | [PLAN.md](PLAN.md) |
 | Core idea | A hub that takes data from many wearables and combines it. | [DEVICE_HUB.md](DEVICE_HUB.md) (in PR #18, not merged yet) |
 | How data arrives | Simulated devices send to **real webhooks** (web addresses) on a small server, one per device type. | DEVICE_HUB.md, Issue #37 |
 | Devices we simulate | Watch, chest strap, headband. The app also shows a radiation badge and a body-mass scale. | PLAN.md, `app/data.js` |
 | Headline scores | **Recovery, Radiation, Mind.** The formulas in the app are placeholders. | [design/DESIGN_BRIEF.md](design/DESIGN_BRIEF.md) |
 | Who it's for | The astronaut, plus a flight surgeon view (a switch in the header). | DESIGN_BRIEF.md |
-| Look | Desktop screen. Space Apps brand colours and fonts only, **no NASA logo**, icons everywhere, `?` help pop-ups, subtle space background. | DESIGN_BRIEF.md |
+| Look | Desktop screen. The **Sirius visual identity**: its own logo, four colours (Ink, Bone, Slate, Ember) and IBM Plex fonts. **No NASA logo**, icons everywhere, `?` help pop-ups. | [design/sirius-identity](design/sirius-identity/Sirius_visual_identity.pdf) |
 | Health log | 5 categories (Heart, Sleep, Mind & mood, Radiation, Bone & muscle), one astronaut's own view. | [HEALTH_LOG.md](HEALTH_LOG.md) |
 | Device vs typed in | Devices fill in heart, sleep, activity and radiation dose. Blood/urine, eyes, hearing, mood and symptoms are typed in. | HEALTH_LOG.md |
 | Warnings | Some warnings come from combining devices (e.g. bad sleep from the headband plus a high resting heart rate from the watch). | HEALTH_LOG.md |
@@ -207,7 +207,7 @@ reading from the backend once it exists.
 | Device priority list | Health logic | #39 |
 | Is the AI doctor in the MVP? Scripted or live AI? | Abdulla | #29 |
 | Is the crew overview in the final demo? Does the astronaut view hide crewmates' names? | Abdulla | (none yet) |
-| Logo and colours for Siryius (within the brand rules) | Pitch | #10 |
+| Logo and colours for Sirius (within the brand rules) | Pitch | #10 |
 
 ## 7. Who owns what
 
@@ -263,7 +263,7 @@ Suggested order: #2, then #37, then #3 (now data flows end to end), then #38, #2
 - #11 Pitch story and slide outline (MVP)
 - #12 Demo video (MVP, with lead)
 - #13 Final submission description (MVP, with lead)
-- #10 Logo and colours (the name, Siryius, is chosen)
+- #10 Logo and colours (the name, Sirius, is chosen)
 - #33 AI doctor and the delay to Earth in the pitch
 
 **Lead**

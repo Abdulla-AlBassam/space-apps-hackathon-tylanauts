@@ -1,7 +1,7 @@
 /*
  * Draws the whole dashboard from window.HEALTH_DATA (made in data.js).
  * Pages (switched with the left rail, using the address bar's #):
- *   #today   – scores, 3D body map (body-map.js), a small alerts card, what's due, vitals, trends
+ *   #today   – scores (each with a Sirius health dial), 3D body map (body-map.js), a small alerts card, what's due, vitals, trends
  *   #alerts  – every alert in full: what changed and what to do
  *   #log     – health log: what's due, what's coming up, latest results, "Log a result"
  * The AI doctor is a round button in the corner of every page that opens a chat box.
@@ -20,7 +20,8 @@
 
   /* ---------- Small helpers ---------- */
   const STATUS_ICON = { good: "circle-check", watch: "triangle-alert", act: "octagon-alert", info: "info" };
-  const WORDS = { good: "Normal", watch: "Watch", act: "Act now", info: "For info" };
+  // The three status words come from the Sirius identity's health dial: Steady, Watch, Alert.
+  const WORDS = { good: "Steady", watch: "Watch", act: "Alert", info: "For info" };
   const pill = (level, word) => `<span class="pill is-${level}">${ic(STATUS_ICON[level])}${word || WORDS[level]}</span>`;
   const device = (id) => devices.find((d) => d.id === id);
   const deviceLabel = (id) => (device(id) || {}).label || id;
@@ -50,9 +51,9 @@
     { id: "log", label: "Log", icon: "clipboard-list" },
     { id: "devices", label: "Devices", icon: "watch" },
   ];
-  // The name and logo are placeholders until the team's design language and logo arrive.
+  // The logo (star + dial mark) and the SIRIUS wordmark are drawn by sirius.js.
   $("rail").innerHTML =
-    `<a class="brand" href="#today" aria-label="Siryius home"><span class="logo-box" title="Logo placeholder">Logo</span><span>Siryius</span></a>` +
+    `<a class="brand" href="#today" aria-label="Sirius home">${SIRIUS.mark(40, { label: "" })}<span class="wordmark">Sirius</span></a>` +
     PAGES.map((p) => `<a class="rail-link" href="#${p.id}" data-page="${p.id}" title="${p.label}">${ic(p.icon)}<span>${p.label}</span>${p.id === "alerts" ? `<i class="rail-count" id="rail-count"></i>` : ""}</a>`).join("") +
     `<a class="rail-link" href="crew.html" title="Crew overview">${ic("users")}<span>Crew</span></a>`;
 
@@ -94,7 +95,7 @@
       icon: "heart-pulse",
       value: today.recovery,
       ringPct: today.recovery,
-      unit: "%",
+      unit: "out of 100",
       level: band(today.recovery),
       line: "How ready your body is for today.",
     },
@@ -105,9 +106,10 @@
       value: Math.round(today.doseTotal),
       ringPct: today.doseLimitPct,
       unit: "mSv total",
+      dialUnit: "mSv",
       level: "good",
       word: `${today.doseLimitPct}% of limit`,
-      line: `${today.radiation_dose} mSv today. Career limit ${H.careerLimit} mSv.`,
+      line: `${Math.round(today.doseTotal)} mSv so far, ${today.radiation_dose} mSv today. Career limit ${H.careerLimit} mSv.`,
     },
     {
       key: "mind",
@@ -115,25 +117,15 @@
       icon: "brain",
       value: today.mindScore,
       ringPct: today.mindScore,
-      unit: "%",
+      unit: "out of 100",
       level: band(today.mindScore),
       line: `Mood ${today.mood}/5 in today's check-in.`,
     },
   ];
 
-  function ring(s) {
-    const r = 46;
-    const full = 2 * Math.PI * r;
-    const offset = full * (1 - Math.min(100, s.ringPct) / 100);
-    const colour = { good: "#2E96F5", watch: "#EAFE07", act: "#E43700" }[s.level];
-    return `<svg class="ring" viewBox="0 0 112 112" aria-hidden="true">
-      <circle class="track" cx="56" cy="56" r="${r}"/>
-      <circle class="value" cx="56" cy="56" r="${r}" stroke="${colour}"
-        stroke-dasharray="${full}" stroke-dashoffset="${offset}" style="--full:${full}"/>
-      <text class="num" x="56" y="62">${s.value}</text>
-      <text class="unit" x="56" y="80">${s.unit}</text>
-    </svg>`;
-  }
+  // The meter on each score is the health dial from the Sirius identity: the logo's 24 ticks.
+  // Bone ticks are the score so far, slate ticks are what is left, ember means attention.
+  const dial = (s) => SIRIUS.dial(s.ringPct, s.level, s.value, 116, s.dialUnit);
 
   let selectedScore = "recovery"; // which score the Overview card (beside the body map) is showing
   function renderScores() {
@@ -142,9 +134,9 @@
       <div class="score${s.key === selectedScore ? " selected" : ""}" role="button" tabindex="0"
            data-score="${s.key}" aria-pressed="${s.key === selectedScore}"
            aria-label="${s.title} ${s.value} ${s.unit}. Show its overview">
-        ${ring(s)}
+        ${dial(s)}
         <div class="score-text">
-          <div class="score-title"><span class="title-ico is-${s.level}">${ic(s.icon)}</span>${s.title} ${helpBtn(s.key)}</div>
+          <div class="score-title"><span class="title-ico">${ic(s.icon)}</span>${s.title} ${helpBtn(s.key)}</div>
           ${pill(s.level, s.word)}
           <p class="score-line">${s.line}</p>
         </div>
@@ -205,7 +197,7 @@
       .map((r) => {
         const level = r.neutral ? "good" : band(r.v);
         return `<div class="contrib-row">
-          <span class="contrib-ico is-${level}">${ic(r.icon)}</span>
+          <span class="contrib-ico">${ic(r.icon)}</span>
           <div>${r.q}<div class="contrib-note">${srcIcon(r.src)}${r.note}</div></div>
           <div class="contrib-bar is-${level}"><span style="width:0%" data-w="${Math.min(100, r.v)}%"></span></div>
           <div class="contrib-num is-${level}">${r.pctLabel || r.v}</div>
@@ -217,6 +209,7 @@
 
   /* ---------- Body map heading ---------- */
   head("bm-heading", "person-standing", "Body map");
+  $("bm-loading").innerHTML = SIRIUS.loading("Loading the 3D body"); // the motion logo, until body-map.js is ready
 
   /* ---------- Alerts ----------
    * On Today there is one small card: how many alerts are open and how serious they are.
@@ -249,8 +242,8 @@
         <b class="alerts-num is-${level}">${needs}</b>
         <p class="alerts-line">${needs ? `need${needs === 1 ? "s" : ""} your<br>attention` : "Nothing needs<br>your attention"}</p>
       </div>
-      <div class="alerts-levels">${countsHtml(c) || pill("good", "All normal")}</div>
-      ${top ? `<p class="alerts-top"><span class="is-${top.level}">${ic(STATUS_ICON[top.level])}</span>${top.title}</p>` : ""}`;
+      <div class="alerts-levels">${countsHtml(c) || pill("good", "All steady")}</div>
+      ${top ? `<p class="alerts-top"><i class="ember-dot"></i>${top.title}</p>` : ""}`;
 
     // The count on the left rail
     const rc = $("rail-count");
@@ -563,7 +556,7 @@
     if (wiz.step === 0) {
       body = `<p>What are you connecting?</p><div class="kinds">${KINDS.map((x) => `<button type="button" class="kind${x === k ? " on" : ""}" data-kind="${x.type}">${ic(x.icon)}${x.label}</button>`).join("")}</div>`;
     } else if (wiz.step === 1) {
-      body = `<div class="wiz-art">${ic(k.icon)}<span class="pulse-ring"></span></div>
+      body = `<div class="wiz-art">${ic(k.icon)}</div>
         <p>Turn on your ${k.label.toLowerCase()} and hold its button until the light flashes blue. Keep it close to the station.</p>
         <label for="wiz-name">Give it a name</label><input id="wiz-name" value="${wiz.name || k.label}" autocomplete="off">`;
     } else if (wiz.step === 2) {
@@ -575,8 +568,8 @@
       body = wiz.tested
         ? `<div class="wiz-art ok">${ic("circle-check")}</div><p><b>Test reading received.</b> The hub understood it and turned it into our common format.</p>
            <div class="chips">${k.measures.map((m) => `<span class="chip">${ic("activity")}${m}</span>`).join("")}</div>`
-        : `<div class="wiz-art">${ic("loader", "spin")}</div><p>Waiting for a test reading from your ${k.label.toLowerCase()}…</p>`;
-      if (!wiz.tested) setTimeout(() => { if (wiz && wiz.step === 3) { wiz.tested = true; renderWizard(); } }, 1300);
+        : `<div class="wiz-art">${SIRIUS.mark(86, { motion: true, label: "" })}</div><p>Waiting for a test reading from your ${k.label.toLowerCase()}…</p>`;
+      if (!wiz.tested) setTimeout(() => { if (wiz && wiz.step === 3) { wiz.tested = true; renderWizard(); } }, 2900); // long enough to see the motion logo fill
     } else {
       body = `<div class="wiz-art ok">${ic(k.icon)}</div><p><b>${wiz.name || k.label} is connected.</b> Its readings will now show on your dashboard and in your health log.</p>`;
     }
@@ -628,9 +621,9 @@
     const x = (i) => pad + (i / (values.length - 1)) * (w - pad * 2);
     const y = (v) => h - pad - ((v - min) / (max - min || 1)) * (h - pad * 2);
     const pts = values.map((v, i) => `${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(" ");
-    const bandRect = low != null ? `<rect x="0" y="${y(high).toFixed(1)}" width="${w}" height="${(y(low) - y(high)).toFixed(1)}" fill="rgba(46,150,245,0.12)"/>` : "";
+    const bandRect = low != null ? `<rect x="0" y="${y(high).toFixed(1)}" width="${w}" height="${(y(low) - y(high)).toFixed(1)}" class="spark-band"/>` : "";
     return `<svg class="spark" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" aria-hidden="true">${bandRect}
-      <polyline points="${pts}" fill="none" stroke="#2E96F5" stroke-width="1.5" vector-effect="non-scaling-stroke"/>
+      <polyline points="${pts}" vector-effect="non-scaling-stroke"/>
       <circle cx="${x(values.length - 1)}" cy="${y(values[values.length - 1])}" r="2.5" fill="currentColor"/></svg>`;
   }
   function renderVitals() {
@@ -641,9 +634,9 @@
       const shown = v.signed && value > 0 ? "+" + value : value;
       const src = device(today.sources[v.metric]);
       return `<div class="vital ${out ? "out" : ""}">
-        <div class="vital-name"><span class="vital-ico ${out ? "is-watch" : "is-good"}">${ic(v.icon)}</span>${v.name} ${helpBtn(v.help)}</div>
+        <div class="vital-name"><span class="vital-ico">${ic(v.icon)}</span>${v.name} ${helpBtn(v.help)}</div>
         <div class="vital-value">${shown}<small>${v.unit}</small></div>
-        <div class="vital-flag">${out ? pill("watch", "Outside normal") : pill("good", "Normal")}</div>
+        <div class="vital-flag">${out ? pill("watch", "Outside normal") : pill("good")}</div>
         <div class="${out ? "is-watch" : "is-good"}" title="Last 14 days, from your ${src.label.toLowerCase()}">${sparkline(days.slice(-14).map((d) => d[v.metric]), b ? b.low : null, b ? b.high : null)}</div>
       </div>`;
     }).join("");
@@ -651,7 +644,7 @@
 
   /* ---------- 30-day trend chart ---------- */
   head("trend-heading", "chart-line", "Last 30 days");
-  $("chart-legend").innerHTML = `<span><i class="swatch"></i>Your normal range</span><span>${ic("triangle-alert", "is-watch")}Outside normal</span>`;
+  $("chart-legend").innerHTML = `<span><i class="swatch"></i>Your normal range</span><span><i class="ember-dot"></i>Outside normal</span>`;
   const TRENDS = [
     { metric: "recovery", label: "Recovery", unit: "%", icon: "heart-pulse" },
     { metric: "doseTotal", label: "Radiation", unit: "mSv", icon: "radiation", noBand: true },
@@ -709,13 +702,13 @@
     const dots = values.map((v, i) => {
       const last = i === values.length - 1;
       if (!isOut(v) && !last) return "";
-      return `<circle class="dot" cx="${x(i)}" cy="${y(v)}" r="${last ? 5.5 : 4}" fill="${isOut(v) ? "#EAFE07" : "#2E96F5"}"/>`;
+      return `<circle class="dot${isOut(v) ? " out" : ""}" cx="${x(i)}" cy="${y(v)}" r="${last ? 5.5 : 4}"/>`;
     }).join("");
     const bandSvg = range ? `<rect class="band" x="${m.left}" width="${W - m.left - m.right}" y="${y(range.high)}" height="${Math.max(0, y(range.low) - y(range.high))}"/>
       <line class="band-edge" x1="${m.left}" x2="${W - m.right}" y1="${y(range.high)}" y2="${y(range.high)}"/>
       <line class="band-edge" x1="${m.left}" x2="${W - m.right}" y1="${y(range.low)}" y2="${y(range.low)}"/>` : "";
     svg.innerHTML = `
-      <defs><linearGradient id="areaFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2E96F5" stop-opacity="0.28"/><stop offset="1" stop-color="#2E96F5" stop-opacity="0"/></linearGradient></defs>
+      <defs><linearGradient id="areaFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F2EEE6" stop-opacity="0.12"/><stop offset="1" stop-color="#F2EEE6" stop-opacity="0"/></linearGradient></defs>
       <g class="grid">${ticks.map((v) => `<line x1="${m.left}" x2="${W - m.right}" y1="${y(v)}" y2="${y(v)}"/>`).join("")}</g>
       ${bandSvg}
       <g class="axis">${ticks.map((v) => `<text x="${m.left - 8}" y="${y(v) + 4}" text-anchor="end">${v}</text>`).join("")}${xLabels}</g>
@@ -767,19 +760,19 @@
 
   /* ---------- "?" help pop-ups ---------- */
   const HELP = {
-    recovery: ["Recovery", "How ready your body is today, from 0 to 100%. It compares last night's heart rate variability, resting heart rate and sleep with your own normal, using three different devices. 67% and up is Normal, 34 to 66% is Watch, 33% and below is Act now. (Placeholder formula for the demo.)"],
-    radiation: ["Radiation", "Your total radiation dose this mission, from your radiation badge, and how much of NASA's 600 mSv career limit that is. The ring shows the share of the limit used."],
-    mind: ["Mind", "How you're doing mentally, from 0 to 100%. Mostly your daily mood check-in, plus how well you slept. Isolation and confinement are real risks on long missions. (Placeholder formula for the demo.)"],
-    bodymap: ["Body map", "A 3D body with a label for each health area. The line shows where on the body it is. Colours show today's status. Click a label to open its details. Drag to turn the body."],
+    recovery: ["Recovery", "How ready your body is today, from 0 to 100. It compares last night's heart rate variability, resting heart rate and sleep with your own normal, using three different devices. 67 and up is Steady, 34 to 66 is Watch, 33 and below is Alert. (Placeholder formula for the demo.)"],
+    radiation: ["Radiation", "Your total radiation dose this mission, from your radiation badge, and how much of NASA's 600 mSv career limit that is. The dial shows the share of the limit used."],
+    mind: ["Mind", "How you're doing mentally, from 0 to 100. Mostly your daily mood check-in, plus how well you slept. Isolation and confinement are real risks on long missions. (Placeholder formula for the demo.)"],
+    bodymap: ["Body map", "A 3D body with a label for each health area. The line shows where on the body it is. Orange marks an area that needs attention. Click a label to open its details. Drag to turn the body."],
     contributors: ["Overview", "The pieces that make up the score selected above, and which device or check-in each one comes from. This is the hub at work: one score built from several devices. Click Recovery, Radiation or Mind to switch."],
-    alerts: ["Alerts", "How many things need your attention and how serious they are. Open the card to see what changed and what to do about it. Some warnings only appear when two devices are combined, which is the point of the hub. Act now is shown only when several signals agree."],
+    alerts: ["Alerts", "How many things need your attention and how serious they are. Open the card to see what changed and what to do about it. Some warnings only appear when two devices are combined, which is the point of the hub. Alert is shown only when several signals agree."],
     doctor: ["AI doctor (idea)", "A preview of an idea we're exploring: an assistant that explains your data in plain words, suggests simple actions, and sends a summary to a real flight surgeon when something is serious. The answers are scripted for the demo. Serious issues go to a real doctor."],
     due: ["Due today", "Health checks you type in yourself, like blood pressure or a mood check, plus any device that hasn't synced for 24 hours. Click Log to add a result."],
     next: ["Coming up", "The next health checks on your schedule. How often each one happens is our own proposal; NASA's documents list the tests but not always how often."],
-    history: ["Latest results", "The newest device readings and typed-in results, with where each one came from. Results outside the healthy range are marked in yellow."],
+    history: ["Latest results", "The newest device readings and typed-in results, with where each one came from. Results outside the healthy range are marked in orange."],
     flow: ["How data flows", "Each wearable sends readings to its own web address (a webhook). The hub turns them into one common format and combines them, so it can spot patterns no single device could."],
-    vitals: ["Vitals", "Overnight readings from your devices. The shaded strip in each mini chart is your normal range. A reading outside it is marked in yellow."],
-    trend: ["30-day trend", "The line shows the last 30 days. The shaded band is your normal range, worked out from your own earlier days. Yellow dots mark days outside it."],
+    vitals: ["Vitals", "Overnight readings from your devices. The shaded strip in each mini chart is your normal range. A reading outside it is marked in orange."],
+    trend: ["30-day trend", "The line shows the last 30 days. The shaded band is your normal range, worked out from your own earlier days. Orange dots mark days outside it."],
     raw: ["Raw readings", "The numbers behind the dashboard, with the device each one came from. Shown in the flight surgeon view only."],
     rhr: ["Resting heart rate", "Your heart rate while fully at rest overnight. A rise of several beats above your normal can mean fatigue, illness or stress."],
     hrv: ["Heart rate variability (HRV)", "The tiny changes in time between heartbeats, in milliseconds. Higher than your normal usually means well recovered; lower can mean stress, poor sleep or illness."],
@@ -810,57 +803,6 @@
     else if (pinned) { pinned = null; hideHelp(); }
   }, true);
   window.addEventListener("scroll", () => !pinned && hideHelp(), { passive: true });
-
-  /* ---------- Space background ----------
-   * Stars slowly turning around a dark mass below the screen, a few drifting dark
-   * clouds, and the faint edge of a planet in the corner. Brand blues and white only.
-   */
-  const canvas = $("space");
-  const ctx = canvas.getContext("2d");
-  let W = 0, Hc = 0, stars = [], clouds = [];
-  function resize() {
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
-    W = window.innerWidth; Hc = window.innerHeight;
-    canvas.width = W * dpr; canvas.height = Hc * dpr;
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    stars = Array.from({ length: Math.round((W * Hc) / 5200) }, () => {
-      const depth = Math.random();
-      return { a: Math.random() * Math.PI * 2, r: Math.sqrt(Math.random()) * Math.hypot(W, Hc) * 1.1, size: 0.4 + depth * 1.4,
-        speed: 0.00002 + depth * 0.00005, alpha: 0.25 + depth * 0.6, twinkle: Math.random() * Math.PI * 2, blue: Math.random() < 0.3 };
-    });
-    clouds = Array.from({ length: 4 }, (_, i) => ({ x: Math.random() * W, y: Math.random() * Hc, r: Math.max(W, Hc) * (0.25 + Math.random() * 0.2),
-      dx: (Math.random() - 0.5) * 0.06, dy: (Math.random() - 0.5) * 0.04, tint: i % 2 ? "0,66,166" : "0,0,0" }));
-  }
-  function frame(t) {
-    ctx.fillStyle = "#07173F";
-    ctx.fillRect(0, 0, W, Hc);
-    for (const c of clouds) {
-      c.x += c.dx; c.y += c.dy;
-      if (c.x < -c.r) c.x = W + c.r; if (c.x > W + c.r) c.x = -c.r;
-      if (c.y < -c.r) c.y = Hc + c.r; if (c.y > Hc + c.r) c.y = -c.r;
-      const g = ctx.createRadialGradient(c.x, c.y, 0, c.x, c.y, c.r);
-      g.addColorStop(0, `rgba(${c.tint},0.35)`); g.addColorStop(1, `rgba(${c.tint},0)`);
-      ctx.fillStyle = g; ctx.fillRect(c.x - c.r, c.y - c.r, c.r * 2, c.r * 2);
-    }
-    const cx = W * 0.15, cy = Hc * 1.35;
-    for (const s of stars) {
-      s.a += s.speed * 16;
-      const x = cx + Math.cos(s.a) * s.r, y = cy + Math.sin(s.a) * s.r;
-      if (x < -4 || x > W + 4 || y < -4 || y > Hc + 4) continue;
-      const tw = 0.75 + 0.25 * Math.sin(t * 0.0012 + s.twinkle);
-      ctx.fillStyle = s.blue ? `rgba(46,150,245,${s.alpha * tw})` : `rgba(255,255,255,${s.alpha * tw})`;
-      ctx.beginPath(); ctx.arc(x, y, s.size, 0, Math.PI * 2); ctx.fill();
-    }
-    const pr = Math.max(W, Hc) * 0.55, px = W + pr * 0.35, py = Hc + pr * 0.45;
-    const pg = ctx.createRadialGradient(px - pr * 0.3, py - pr * 0.3, pr * 0.2, px, py, pr);
-    pg.addColorStop(0, "rgba(0,66,166,0.0)"); pg.addColorStop(0.85, "rgba(0,66,166,0.18)");
-    pg.addColorStop(0.985, "rgba(46,150,245,0.35)"); pg.addColorStop(1, "rgba(46,150,245,0)");
-    ctx.fillStyle = pg; ctx.beginPath(); ctx.arc(px, py, pr, 0, Math.PI * 2); ctx.fill();
-    if (!reduceMotion) requestAnimationFrame(frame);
-  }
-  window.addEventListener("resize", resize);
-  resize();
-  requestAnimationFrame(frame);
 
   /* ---------- First draw ---------- */
   renderScores();

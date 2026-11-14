@@ -1,0 +1,86 @@
+/*
+ * The Sirius visual identity, shared by every page.
+ * Source: the designer's "Sirius visual identity" guide (colours, type, logo, health dial, motion).
+ *
+ *   Four colours: Ink (the night), Bone (starlight), Slate (quiet things) and Ember.
+ *   Ember is the only colour that "raises its voice": alerts, the one accent tick, key actions.
+ *   Two fonts: IBM Plex Sans for people (headings 500, body 400) and IBM Plex Mono for data
+ *   and for small CAPS labels.
+ */
+:root {
+  --ink: #0D0D10;    /* backgrounds */
+  --bone: #F2EEE6;   /* text and marks on ink */
+  --ember: #FF5A36;  /* alerts and the single accent. Use sparingly. */
+  --slate: #5B6472;  /* inactive ticks, gridlines, quiet things */
+
+  /* Two helper tones the guide itself uses on ink: secondary text and hairlines */
+  --muted: #A9A59C;
+  --rule: #34343C;
+
+  --text: var(--bone);
+  --text-dim: var(--muted);
+  --text-faint: rgba(242, 238, 230, 0.5);
+  --card: rgba(242, 238, 230, 0.05);   /* the soft fill behind the few boxed things */
+  --card-hover: rgba(242, 238, 230, 0.08);
+  --hair: rgba(242, 238, 230, 0.09);   /* thin divider lines between rows */
+  --line: var(--rule);
+  --line-strong: var(--slate);
+
+  --font-sans: "IBM Plex Sans", "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+  /* Older names, still used around the stylesheets */
+  --font-display: var(--font-sans);
+  --font-body: var(--font-sans);
+  --font-data: var(--font-mono);
+
+  --radius: 12px;
+  color-scheme: dark;
+}
+
+b, strong { font-weight: 500; }
+
+/* Status colours. Always shown with an icon and a word, never colour alone. */
+.is-good { color: var(--bone); }
+.is-watch { color: var(--ember); }
+.is-act { color: var(--ember); }
+.is-info { color: var(--muted); }
+
+/* The small CAPS label from the guide: Plex Mono, 0.12em tracking */
+.label {
+  font: 400 12px var(--font-mono);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* ---------- Logo: the star-and-dial mark, and the SIRIUS wordmark ---------- */
+.sirius-mark { display: block; flex: none; color: var(--bone); }
+.wordmark { font: 500 1em var(--font-sans); letter-spacing: 0.2em; margin-right: -0.2em; text-transform: uppercase; }
+
+/* ---------- Health dial: the logo's 24 ticks working as a score meter ----------
+ * Bone ticks are the score so far, slate ticks are what is left, ember means attention.
+ * When it first appears each tick fades to its colour in turn, clockwise from 12 o'clock. */
+.dial { display: block; flex: none; }
+.dial line { stroke: var(--c); stroke-linecap: round; animation: tick-in 0.12s ease-in-out backwards; animation-delay: calc(var(--i) * 45ms + 150ms); }
+.dial text { fill: var(--bone); font-family: var(--font-sans); font-weight: 500; text-anchor: middle; }
+.dial text.dial-unit { fill: var(--muted); font-family: var(--font-mono); font-weight: 400; letter-spacing: 0.08em; text-transform: uppercase; }
+@keyframes tick-in { from { stroke: var(--slate); } }
+
+/* ---------- Intro: the motion logo video, played once when the dashboard opens ---------- */
+.intro {
+  position: fixed; inset: 0; z-index: 100;
+  display: grid; place-items: center;
+  background: var(--ink);
+  cursor: pointer;
+  transition: opacity 0.45s ease-in-out;
+}
+.intro.out { opacity: 0; pointer-events: none; }
+.intro video { width: min(420px, 70vmin); height: auto; display: block; }
+.intro p { position: absolute; bottom: 28px; left: 0; right: 0; margin: 0; text-align: center; }
+
+/* ---------- Loading: the same motion, drawn live, for anything that takes a moment ---------- */
+.sirius-loading { display: grid; justify-items: center; gap: 14px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .dial line { animation: none; }
+}
