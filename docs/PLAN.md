@@ -75,3 +75,18 @@ Every few hours, 5 minutes, everyone answers three questions:
 1. What did I finish?
 2. What am I doing next?
 3. Am I stuck on anything?
+
+## 7. Health check log
+
+A core feature: astronauts log health checks and tests by category, see their
+history, and get reminders when a test is due. Some readings come from devices
+automatically; the rest are typed in by hand. Full details, decisions and
+sources are in [HEALTH_LOG.md](HEALTH_LOG.md).
+
+First version:
+
+- [ ] A catalogue of tests for five categories: Heart, Sleep, Mind & mood, Radiation, Bone & muscle.
+- [ ] Hand-entered results saved and shown in one history with device readings.
+- [ ] A **Today** screen with what is due and overdue, and a **log entry** form.
+- [ ] A **history & trends** chart per test.
+- [ ] Reminders for hand-entered tests, plus a "device not synced in 24 hours" alert.
