@@ -19,7 +19,7 @@ them, and stores them in a hosted Postgres database.
 ## Who can call it
 
 - **Reading** needs no key.
-- **Sending data** needs the `X-Api-Key` header (see [Sending data](#sending-data)).
+- **Sending data** needs the `X-Api-Key` header; the key is in [Sending data](#sending-data).
 - **Browsers** may call it only from these addresses: `https://tylanauts-crew-health.vercel.app`
   (the live dashboard), `http://localhost:8000` and `http://127.0.0.1:8000` (the dashboard's own
   local preview, `python3 -m http.server 8000` in `app/`). Any other address, such as a Vercel
@@ -101,17 +101,24 @@ Each record looks like this (a real one from the live database, ids shortened):
 
 ### Using it in the current dashboard
 
-[`examples/readings-client.js`](examples/readings-client.js) has `fetchReadings(astronautId)`. It
-calls the live API and returns the flat rows `app/data.js` already uses (`resting_hr`,
-`hrv_rmssd`, ...), so the code after `generateReadings()` keeps working. The mapping, and which
+[`examples/readings-client.js`](examples/readings-client.js) has two ready-made functions, both
+tested against the live API:
+
+- `fetchReadings(astronautId)` returns the flat rows `app/data.js` already uses (`resting_hr`,
+  `hrv_rmssd`, ...), so the code after `generateReadings()` keeps working.
+- `sendEntries(astronautId, entries)` saves typed-in readings (the `manual-entry` format below)
+  and returns the backend's report.
+ The mapping, and which
 dashboard metrics the backend doesn't store yet, are in [INTEGRATION.md](INTEGRATION.md).
 
 ## Sending data
 
 `POST /api/v1/ingest/{adapter_id}?subject_id=crew-01&device_id=watch-01`
 
-- **Header `X-Api-Key`** is required, or the reply is `401`. The key is a secret: ask nayem-m for
-  it, and never write it into code or files committed to the repo.
+- **Header `X-Api-Key: 3MewV-3_MgznYQphRZqO9J0_vM-7azB8`** is required, or the reply is `401`.
+  It's kept in the repo on purpose (demo data only). The same key is in
+  [`examples/readings-client.js`](examples/readings-client.js), whose `sendEntries()` sends
+  typed-in readings for you.
 - **`adapter_id`** says what format the body is in. For anything a person types in (check-in
   form, health log), use `manual-entry`.
 - **`subject_id`** is who the data belongs to: letters, digits, `.`, `_`, `-`, up to 100

@@ -1,8 +1,12 @@
-// Drop-in replacement for generateReadings() in app/data.js.
-// Fetches stored data points from the backend and flattens them into the
-// { astronaut_id, device_id, device_type, metric, value, unit, time } rows the dashboard uses.
+// Talks to the live backend.
+// fetchReadings(): drop-in replacement for generateReadings() in app/data.js. Fetches stored data
+//   points and flattens them into the { astronaut_id, device_id, device_type, metric, value, unit, time }
+//   rows the dashboard uses.
+// sendEntries(): saves typed-in readings (check-in form, health log) and returns the backend's report.
 
 const API_BASE = "https://tylanauts-api.vercel.app/api/v1";
+// Key for sending data. Demo data only, so it's kept in the repo on purpose.
+const API_KEY = "3MewV-3_MgznYQphRZqO9J0_vM-7azB8";
 
 // Backend metric id -> name the dashboard already uses.
 const DASHBOARD_NAMES = {
@@ -37,4 +41,18 @@ async function fetchReadings(astronautId) {
   });
 }
 
-if (typeof module !== "undefined") module.exports = { fetchReadings, API_BASE };
+// entries: [{ metric: "mood", value: 4, time: "2026-11-14T07:40:00Z", extras: { note: "..." } }, ...]
+// Uses backend metric ids ("mood", "blood-pressure", "sleep-duration"...), not the dashboard's names.
+// Returns { accepted, duplicates, rejected: [{ ref, reason }], warnings, ... }; show rejected[].reason to the user.
+async function sendEntries(astronautId, entries) {
+  const url = `${API_BASE}/ingest/manual-entry?subject_id=${encodeURIComponent(astronautId)}`;
+  const response = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "X-Api-Key": API_KEY },
+    body: JSON.stringify({ entries }),
+  });
+  if (!response.ok) throw new Error(`Backend returned ${response.status}: ${await response.text()}`);
+  return response.json();
+}
+
+if (typeof module !== "undefined") module.exports = { fetchReadings, sendEntries, API_BASE };

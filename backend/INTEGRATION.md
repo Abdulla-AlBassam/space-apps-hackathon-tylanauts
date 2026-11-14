@@ -75,12 +75,12 @@ Two things to change around it:
 ```bash
 curl -X POST "https://tylanauts-api.vercel.app/api/v1/ingest/manual-entry?subject_id=crew-01" \
   -H "Content-Type: application/json" \
-  -H "X-Api-Key: <key from nayem-m>" \
+  -H "X-Api-Key: 3MewV-3_MgznYQphRZqO9J0_vM-7azB8" \
   -d '{"entries":[{"metric":"mood","value":4,"time":"2026-11-14T08:00:00Z","extras":{"note":"Slept well"}}]}'
 ```
 
-- Sending needs the shared key in `X-Api-Key` (ask the backend owner; never commit it).
-  Reading never needs it.
+- Sending needs the shared key in `X-Api-Key` (the one above, kept in the repo on purpose for the
+  demo). Reading never needs it. `sendEntries()` in `examples/readings-client.js` adds it for you.
 - Every input format and a working example of its payload: `GET /api/v1/adapters`.
 - The reply always says how many readings were accepted, how many were duplicates, and why
   any were rejected. Full details: [README.md](README.md#sending-data).

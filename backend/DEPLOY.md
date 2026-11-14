@@ -21,7 +21,7 @@ deploys as empty static files and every address returns 404.
 | Runtime | Python 3.12 (from `.python-version`), FastAPI detected through `vercel.json`, dependencies from `requirements.txt` |
 | Database | **Neon Postgres**, resource **`tylanauts-db`**, added through the Vercel Marketplace and connected to the project. See it and its plan under the project's **Storage** tab |
 | Tables | `ingestions` (every upload, its raw payload and its report) and `data_points` (one row per reading, the standard data point stored as JSONB), plus an index on subject, metric and time. Created automatically on the first request (`app/storage/postgres.py`) |
-| Settings | Environment variables on the Vercel project, Production only (table below). No secrets are in the repo |
+| Settings | Environment variables on the Vercel project, Production only (table below). The database connection string is not in the repo; the `INGEST_API_KEY` value is, on purpose (README, demo data only) |
 | Deploys | From a laptop with the Vercel CLI. **Not** connected to GitHub |
 
 Environment variables on the project:
@@ -75,7 +75,8 @@ npx vercel deploy --prod  # every time you want the live API updated
 
 Environment variables (`DATABASE_URL` from Neon, `INGEST_API_KEY`, `CORS_ORIGINS`) live in the
 Vercel project, not in the repo. Change them with `npx vercel env add/rm` or in the dashboard, then
-redeploy. `INGEST_API_KEY` is stored as a secret Vercel won't show again; the owner keeps a copy.
+redeploy. `INGEST_API_KEY` is stored as a Vercel secret it won't show again; its value is in README.md.
+If you change it on Vercel, update README.md, INTEGRATION.md and `examples/readings-client.js` too.
 
 ## Setting it up from scratch through GitHub instead (in the Vercel dashboard)
 
