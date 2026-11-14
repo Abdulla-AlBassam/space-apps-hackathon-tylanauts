@@ -218,7 +218,7 @@
       ${SIRIUS.dial(crewScore, level, crewScore, 132)}
       <div>
         <p class="cw-score-title">Crew score ${helpBtn("crew-score")} <span class="level-word lvl-${level}">${ICONS[level]}${WORDS[level]}</span></p>
-        <p class="cw-score-note">${change < 0 ? "Down " + -change : change > 0 ? "Up " + change : "No change"} from a week ago. ${n ? `${n} shared pattern${n === 1 ? "" : "s"} right now.` : "No shared patterns right now."}</p>
+        <p class="cw-score-note">${change < 0 ? "Down " + -change : change > 0 ? "Up " + change : "No change"} from a week ago. ${n ? `${n} shared trend${n === 1 ? "" : "s"} right now.` : "No shared trends right now."}</p>
       </div>`;
   }
 
@@ -299,8 +299,8 @@
   const HELP = {
     view: ["Who is viewing", "Flight surgeon view shows everyone's name. Astronaut view keeps your own name and shows crewmates as \"Crewmate B\" and so on, so people can see the crew picture without seeing each other's private health details. (An idea for the team to decide.)"],
     "crew-score": ["Crew score", "Everyone's health rolled into one number, from 0 to 100: the average of each person's four health areas. One number can hide one person struggling, so the table below always shows everyone. Placeholder formula for the demo."],
-    patterns: ["Where the crew lines up", `When ${CREW_MIN} or more people drop in the same health area over the same days (at least ${DROP} points under their own normal), it usually points to a shared cause, like the schedule or a stressful event, rather than one person's health. Click a row to highlight those people in the table below.`],
-    grid: ["Everyone today", "Each row is one astronaut and each column is one health area. The number is today's score from 0 to 100. Orange text means Watch and a solid orange tag means Alert. A score on its own, like one person's heart, is personal rather than crew-wide."],
+    patterns: ["Shared trends", `When ${CREW_MIN} or more people drop in the same health area over the same days (at least ${DROP} points under their own normal), it usually points to a shared cause, like the schedule or a stressful event, rather than one person's health. Click a row to highlight those people in the table below.`],
+    grid: ["Crew today", "Each row is one astronaut and each column is one health area. The number is today's score from 0 to 100. Orange text means Watch and a solid orange tag means Alert. A score on its own, like one person's heart, is personal rather than crew-wide."],
   };
   const pop = $("help-pop");
   let pinned = null;
