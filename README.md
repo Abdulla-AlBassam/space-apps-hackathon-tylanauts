@@ -126,4 +126,4 @@ work offline with made-up data.
 
 - 3D anatomy model: **BodyParts3D**, © The Database Center for Life Science, CC BY 4.0.
 - 3D drawing: three.js (MIT licence).
-- Sirius is an independent student project. It isn't made or endorsed by NASA, and doesn't use the NASA logo.
+- Sirius is an independent project.
