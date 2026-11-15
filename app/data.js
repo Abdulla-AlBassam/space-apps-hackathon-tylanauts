@@ -2,6 +2,8 @@
  * Nothing in this file is a real astronaut's reading: the live data comes from our device
  * simulator (simulator/simulate.py), and the rest is made up here.
  *
+ * Written with help from an AI coding assistant (Claude by Anthropic); see docs/AI_USE.md.
+ *
  * What this file does, in plain English:
  * 1. Pretends four wearables (a watch, a chest strap, a headband and a smart shirt) plus a
  *    radiation badge sent readings to our hub for the last 30 days of a mission.
@@ -35,7 +37,7 @@
   //   dose  extra radiation that day (mSv)
   //   bp    blood pressure creeping up (each point adds 5/3 mmHg)
   //   ex, exHr  extra exercise minutes / heart rate (a spacewalk counts as hard exercise)
-  const MISSION = { mission: "Lunar Gateway Expedition 3", missionDay: 142, missionLength: 180 }; // made-up mission
+  const MISSION = { mission: "Sirius Deep Space Mission 3", missionDay: 142, missionLength: 180 }; // made-up mission
   const REST_DEBT = [1.0, 0.7, 0.45, 0.2]; // the commander's last four days (today first)
   const SOLAR_EVENT_DAY = 18; // a solar particle event hits everyone on the same day
   const CREW = [

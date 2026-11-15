@@ -82,6 +82,18 @@ b, strong { font-weight: 500; }
 .intro video { width: min(420px, 70vmin); height: auto; display: block; }
 .intro p { position: absolute; bottom: 28px; left: 0; right: 0; margin: 0; text-align: center; }
 
+/* "AI" tag on every logo: the logo was made with an AI image tool, and NASA Space Apps rules
+   ask for a visible mark on AI-generated images (docs/AI_USE.md). */
+.sirius-mark-wrap { position: relative; display: block; flex: none; line-height: 0; }
+.ai-tag {
+  position: absolute; right: -7px; bottom: -5px;
+  font: 600 8px/1 var(--font-mono); letter-spacing: 0.04em;
+  color: var(--ink); background: var(--bone); border-radius: 3px; padding: 2px 3px;
+}
+/* Small logos (headers): the tag sits beside the logo instead of covering it */
+.sirius-mark-wrap.is-small { display: flex; align-items: center; gap: 4px; }
+.sirius-mark-wrap.is-small .ai-tag { position: static; font-size: 7px; padding: 2px; }
+
 /* ---------- Loading: the same motion, drawn live, for anything that takes a moment ---------- */
 .sirius-loading { display: grid; justify-items: center; gap: 14px; }
 

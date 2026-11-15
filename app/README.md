@@ -36,7 +36,7 @@ changes into one merge where you can.
 | `index.html` | The page layout: left rail, header, and six pages switched by the rail: Today (scores, body map, alerts card, vitals, this week, trend), Alerts, Calendar, Train, Health log and Devices. |
 | `sirius.css` | **The Sirius visual identity**, shared by every page: the four colours, the two fonts, the logo and the health dial. Change a brand colour here and it changes everywhere. |
 | `sirius.js` | Draws the brand pieces: the logo (`SIRIUS.mark`), the health dial used as the score meter (`SIRIUS.dial`), the moving logo for loading (`SIRIUS.loading`) and the intro video. |
-| `brand/` | Logo files (`sirius-mark.svg`, `favicon.svg`) and the designer's motion logo video (`sirius-motion.mp4`). |
+| `brand/` | Logo files (`sirius-mark.svg`, `favicon.svg`) and the motion logo video (`sirius-motion.mp4`). The logo and the video were made with AI tools, so they carry an "AI" / "AI-GENERATED" mark ([docs/AI_USE.md](../docs/AI_USE.md)). |
 | `styles.css` | The main dashboard's layout and components. Colours and fonts come from `sirius.css`. |
 | `data.js` | Reads the astronaut's readings from the backend, fills any gaps with made-up readings (3 wearables and a radiation badge), then works out the scores and alerts. Pages wait for `window.HEALTH_READY` before drawing. |
 | `escalation.js` | Mariam's escalation rules (`docs/ESCALATION_RULES.md`): gives each day a tier from 0 (Nominal) to 4 (Emergency). The alerts and the Sirius voice both use it. |
@@ -71,7 +71,7 @@ The look follows the designer's guide: `docs/design/sirius-identity/Sirius_visua
 - **Log button:** the white "+ Log" button is on every page (top of the left rail, and in the
   header of the Crew and Body map pages). It opens the Health log page (`#log`).
 - **Status words:** Steady, Watch, Alert (always with an icon, never colour alone).
-- **Motion:** the designer's motion logo video plays once as an intro when the dashboard opens
+- **Motion:** the AI-generated motion logo video plays once as an intro when the dashboard opens
   (click to skip; add `?intro=0` to the address to turn it off). The same motion, drawn live,
   shows while the 3D body loads and while a new device is being tested. Motion is calm:
   colours fade, nothing bounces, spins or glows.

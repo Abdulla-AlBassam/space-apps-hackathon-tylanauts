@@ -15,7 +15,7 @@ window.HEALTH_READY.then(function () {
   const ic = (name) => window.icon(name);
   const me = C.list.find((p) => p.id === C.current);
 
-  // The role sits in front of the mission line, e.g. "Pilot · Lunar Gateway Expedition 3".
+  // The role sits in front of the mission line, e.g. "Pilot · Sirius Deep Space Mission 3".
   const missionEl = document.getElementById("astro-mission");
   if (missionEl && me) missionEl.insertAdjacentHTML("beforeend", `<span class="who-role">· ${me.role}</span>`);
 

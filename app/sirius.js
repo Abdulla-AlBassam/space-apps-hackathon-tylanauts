@@ -41,7 +41,10 @@
     }).join("");
     if (opts.motion) addMotionStyles();
     const label = opts.label === "" ? `aria-hidden="true"` : `role="img" aria-label="${opts.label || "Sirius"}"`;
-    return `<svg class="sirius-mark${opts.motion ? " is-motion" : ""}" width="${size}" height="${size}" viewBox="0 0 100 100" ${label}>${ticks}<path d="${STAR}" fill="currentColor"/></svg>`;
+    const svg = `<svg class="sirius-mark${opts.motion ? " is-motion" : ""}" width="${size}" height="${size}" viewBox="0 0 100 100" ${label}>${ticks}<path d="${STAR}" fill="currentColor"/></svg>`;
+    // The logo was made with an AI image tool. NASA Space Apps rules ask for a visible mark on
+    // AI-generated images, so every logo carries a small "AI" tag (see docs/AI_USE.md).
+    return `<span class="sirius-mark-wrap${size < 32 ? " is-small" : ""}" title="Logo generated with an AI image tool">${svg}<span class="ai-tag">AI</span></span>`;
   }
 
   /* ---------- The motion logo ----------
@@ -112,7 +115,7 @@
   }
 
   /* ---------- Intro video ----------
-   * Plays the designer's motion logo video once per browser tab, then fades into the page.
+   * Plays the motion logo video (AI-generated, watermarked "AI-GENERATED") once per browser tab, then fades into the page.
    * Click, tap or press any key to skip. Skipped entirely if the person asked their
    * device for less motion, or if the video can't play.
    */
