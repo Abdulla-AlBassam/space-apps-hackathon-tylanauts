@@ -119,6 +119,7 @@ work offline with made-up data.
 | FinnAliR | Frontend, research and docs |
 | nayem-m | Backend and device simulator |
 | Mariam | Health logic: escalation rules |
+| minhajadnan27 | Health research |
 | TaqiTellsTales | Business and pitch |
 
 ## Credits
