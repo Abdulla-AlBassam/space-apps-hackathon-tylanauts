@@ -79,6 +79,11 @@
   .pulse { animation: pulse 0.9s ease-out; }
   @keyframes pulse { from { box-shadow: 0 0 0 3px var(--accent-wash); border-color: var(--accent); } to { box-shadow: 0 0 0 0 transparent; } }
   .banner { background: var(--raised); border: 1px solid var(--critical); border-radius: 8px; padding: 10px 14px; }
+  .scenario-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(165px, 1fr)); gap: 8px; }
+  .scenario { text-align: left; display: grid; gap: 2px; padding: 10px 12px; }
+  .scenario b { font-size: 13.5px; }
+  .scenario span { color: var(--ink-2); font-size: 12px; line-height: 1.35; }
+  .scenario.random { border-style: dashed; }
   @media (prefers-reduced-motion: reduce) { .pulse { animation: none; } }
 </style>
 </head>
@@ -92,8 +97,7 @@
     <div class="spacer"></div>
     <span class="pill" id="status"><span class="dot"></span><span>Loading…</span></span>
     <button class="primary" id="run" type="button">Start devices</button>
-    <button id="storm" type="button" aria-pressed="false">Solar storm</button>
-    <button id="reset" type="button">Reset levers</button>
+    <button id="reset" type="button">Back to normal</button>
   </header>
 
   <div class="banner" id="error" hidden></div>
@@ -107,6 +111,16 @@
   </section>
 
   <p class="explain">Devices only send while this page is open: every few seconds it asks the backend to send each device's due readings through that device's own adapter (smart watch, smart shirt, radiation badge). Move the levers to worsen a crew member's condition and watch the dashboard's scores and alerts follow. <b>Faulty sensor</b> makes every other reading impossible, so you can see the backend reject it with a reason.</p>
+
+  <section class="card" aria-labelledby="sc-h">
+    <div class="card-head">
+      <h2 id="sc-h">Scenarios</h2>
+      <span class="sub">One click sets the levers for a situation and starts the devices. Each one starts from normal.</span>
+      <div class="spacer"></div>
+      <span class="chip" id="scenario-now">No scenario</span>
+    </div>
+    <div class="scenario-grid" id="scenarios"></div>
+  </section>
 
   <section class="crew" id="crew" aria-label="Crew"></section>
 </div>
@@ -154,6 +168,7 @@ function build(v) {
       const input = h("input", { type: "range", min: 0, max: 100, step: 5, value: 0, id: `${crew}-${l.key}`, "aria-label": `${crew} ${l.label}` });
       input.addEventListener("input", () => {
         settings.crew[crew][l.key] = input.value / 100;
+        markCustom();
         out.textContent = `${input.value}%`;
         renderChips();
         queueSave();
@@ -164,8 +179,8 @@ function build(v) {
     const devs = devices.map((d) => {
       const on = h("input", { type: "checkbox", id: `${d.id}-on` });
       const faulty = h("input", { type: "checkbox", id: `${d.id}-faulty` });
-      on.addEventListener("change", () => { settings.devices[d.id].on = on.checked; queueSave(0); });
-      faulty.addEventListener("change", () => { settings.devices[d.id].faulty = faulty.checked; queueSave(0); });
+      on.addEventListener("change", () => { settings.devices[d.id].on = on.checked; markCustom(); queueSave(0); });
+      faulty.addEventListener("change", () => { settings.devices[d.id].faulty = faulty.checked; markCustom(); queueSave(0); });
       const values = h("div", { class: "values" });
       const spark = h("div", { class: "spark", "aria-hidden": "true" });
       const foot = h("div", { class: "dev-foot" });
@@ -239,9 +254,11 @@ function render(v, { fromServer = true } = {}) {
     }
   }
   renderChips();
-  const stormOn = Object.values(settings.crew).every((c) => c.radiation >= 1);
-  $("storm").setAttribute("aria-pressed", String(stormOn));
-  $("storm").textContent = stormOn ? "End solar storm" : "Solar storm";
+  $("scenario-now").textContent = settings.scenario ? `Scenario: ${settings.scenario}` : "No scenario";
+  $("scenario-now").className = settings.scenario ? "chip changed" : "chip";
+  for (const b of $("scenarios").children) {
+    b.setAttribute("aria-pressed", String(!!settings.scenario && settings.scenario.startsWith(b.dataset.label)));
+  }
   $("run").textContent = settings.running ? "Pause devices" : "Start devices";
   $("run").className = settings.running ? "" : "primary";
 
@@ -304,17 +321,60 @@ async function tick() {
   finally { ticking = false; }
 }
 
+/* ---------- scenarios ---------- */
+
+const pickRandom = (list, n) => [...list].sort(() => Math.random() - 0.5).slice(0, n);
+const step = (x) => Math.round(x * 20) / 20; // sliders move in 5% steps
+const SCENARIOS = [
+  { name: "Sleep-deprived crew", desc: "Everyone after a run of short nights: heart rate and blood pressure up, HRV down.",
+    apply: (s) => { for (const c of Object.values(s.crew)) c.stress = 0.6; } },
+  { name: "Solar particle event", desc: "A solar storm hits the station: every badge reads up to 40× the normal dose.",
+    apply: (s) => { for (const c of Object.values(s.crew)) c.radiation = 1; } },
+  { name: "Life-support fault", desc: "Cabin oxygen drops for everyone: SpO₂ falls, breathing and heart rate rise.",
+    apply: (s) => { for (const c of Object.values(s.crew)) Object.assign(c, { low_oxygen: 0.6, stress: 0.2 }); } },
+  { name: "Spacewalk", desc: "Two crew members out on a spacewalk: hard exertion and extra radiation.",
+    apply: (s) => {
+      const who = pickRandom(Object.keys(s.crew), 2).sort();
+      for (const c of who) Object.assign(s.crew[c], { stress: 0.85, radiation: 0.35 });
+      return `Spacewalk (${who.join(", ")})`;
+    } },
+  { name: "Crew member falling ill", label: "Falling ill", desc: "One person getting sick: heart rate and breathing up, HRV down, oxygen a little low.",
+    apply: (s) => {
+      const [who] = pickRandom(Object.keys(s.crew), 1);
+      Object.assign(s.crew[who], { stress: 0.5, low_oxygen: 0.35 });
+      return `Falling ill (${who})`;
+    } },
+  { name: "Equipment trouble", desc: "Two sensors start sending impossible values and one device drops out.",
+    apply: (s) => {
+      const [a, b, c] = pickRandom(Object.keys(s.devices), 3);
+      s.devices[a].faulty = true; s.devices[b].faulty = true; s.devices[c].on = false;
+    } },
+  { name: "Randomise", random: true, desc: "Random levers: most crew stay normal, some get worse, the odd sensor fails.",
+    apply: (s) => {
+      for (const c of Object.values(s.crew)) for (const l of LEVERS) c[l.key] = Math.random() < 0.65 ? 0 : step(0.2 + Math.random() * 0.8);
+      for (const d of Object.values(s.devices)) { d.on = Math.random() > 0.05; d.faulty = d.on && Math.random() < 0.08; }
+    } },
+];
+
+function toNormal(s) {
+  for (const c of Object.values(s.crew)) Object.assign(c, { stress: 0, low_oxygen: 0, radiation: 0 });
+  for (const d of Object.values(s.devices)) Object.assign(d, { on: true, faulty: false });
+}
+function applyScenario(sc) {
+  if (!settings) return;
+  toNormal(settings);
+  settings.scenario = sc.apply(settings) || sc.name;
+  settings.running = true;
+  queueSave(0);
+}
+function markCustom() { if (settings.scenario) settings.scenario = "Custom"; }
+
+$("scenarios").replaceChildren(...SCENARIOS.map((sc) =>
+  h("button", { type: "button", class: `scenario${sc.random ? " random" : ""}`, "data-label": sc.label ?? sc.name, "aria-pressed": "false", onclick: () => applyScenario(sc) },
+    h("b", {}, sc.name), h("span", {}, sc.desc))));
+
 $("run").addEventListener("click", () => { settings.running = !settings.running; queueSave(0); });
-$("storm").addEventListener("click", () => {
-  const on = !Object.values(settings.crew).every((c) => c.radiation >= 1);
-  for (const c of Object.values(settings.crew)) c.radiation = on ? 1 : 0;
-  queueSave(0);
-});
-$("reset").addEventListener("click", () => {
-  for (const c of Object.values(settings.crew)) Object.assign(c, { stress: 0, low_oxygen: 0, radiation: 0 });
-  for (const d of Object.values(settings.devices)) Object.assign(d, { on: true, faulty: false });
-  queueSave(0);
-});
+$("reset").addEventListener("click", () => { toNormal(settings); settings.scenario = null; queueSave(0); });
 document.addEventListener("visibilitychange", () => { if (!document.hidden) tick(); });
 
 (async () => {

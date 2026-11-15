@@ -1037,6 +1037,19 @@
             "title": "Running",
             "default": false
           },
+          "scenario": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 60
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scenario",
+            "description": "Name of the preset last applied, if any."
+          },
           "crew": {
             "additionalProperties": {
               "$ref": "#/components/schemas/CrewLevers"

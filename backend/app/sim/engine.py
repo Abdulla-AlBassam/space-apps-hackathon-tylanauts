@@ -59,6 +59,7 @@ class DeviceLevers(BaseModel):
 
 class SimSettings(BaseModel):
     running: bool = False
+    scenario: str | None = Field(None, max_length=60, description="Name of the preset last applied, if any.")
     crew: dict[str, CrewLevers] = Field(default_factory=lambda: {c: CrewLevers() for c in CREW})
     devices: dict[str, DeviceLevers] = Field(default_factory=lambda: {d: DeviceLevers() for d in DEVICES})
 

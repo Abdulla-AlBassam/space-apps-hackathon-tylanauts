@@ -196,8 +196,11 @@ a smart watch, a smart shirt and a radiation badge: 18 simulated devices.
     normal dose).
   - Per device: **On** and **Faulty sensor** (every other reading is impossible, and the
     backend rejects it with a reason).
-  - **Solar storm** sets radiation to maximum for everyone. **Reset levers** puts everything
-    back to normal.
+  - **Scenarios**, one click each, starting from normal and starting the devices:
+    Sleep-deprived crew, Solar particle event, Life-support fault, Spacewalk (two random crew),
+    Crew member falling ill (one random crew), Equipment trouble (two faulty sensors, one device
+    off), and **Randomise** (random levers). The name of the active scenario is shown to everyone.
+  - **Back to normal** resets every lever and switch.
 - **Shared:** levers are saved in the database, so everyone sees the same state.
 - **For the dashboard:** to show it reacting, keep reading `crew-*` data every few seconds;
   a raised lever shows up in the latest readings within about 10 seconds.

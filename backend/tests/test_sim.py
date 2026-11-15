@@ -104,6 +104,10 @@ def test_api(client):
     assert tick["accepted_this_tick"] == PER_CREW_ONE_SAMPLE * len(CREW)
     assert len(tick["devices"]) == len(DEVICES) == 18
 
+    named = client.put("/api/v1/sim/settings", json={**settings, "scenario": "Spacewalk (crew-02, crew-05)"}).json()
+    assert client.get("/api/v1/sim").json()["settings"]["scenario"] == named["settings"]["scenario"] == "Spacewalk (crew-02, crew-05)"
+    assert client.put("/api/v1/sim/settings", json={**settings, "scenario": "x" * 61}).status_code == 422
+
     bad = {**settings, "crew": {"crew-99": {"stress": 0.5}}}
     assert client.put("/api/v1/sim/settings", json=bad).status_code == 422
     assert client.put("/api/v1/sim/settings", json={**settings, "crew": {"crew-01": {"stress": 3}}}).status_code == 422
