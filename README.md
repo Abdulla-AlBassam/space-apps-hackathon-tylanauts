@@ -6,6 +6,19 @@ By Team Tylonauts.
 
 Our team's project for the **NASA Space Apps Challenge 2026** (Manama local event).
 
+## Links
+
+| What | Where |
+| --- | --- |
+| Live demo (the dashboard) | https://tylanauts-crew-health.vercel.app |
+| Backup copy of the demo | https://abdulla-albassam.github.io/space-apps-hackathon-tylanauts/ |
+| Backend (live server) | https://tylanauts-api.vercel.app |
+| Backend API docs (try every request in the browser) | https://tylanauts-api.vercel.app/docs |
+| Demo slides | [docs/pitch/Sirius_demo_deck.pptx](docs/pitch/Sirius_demo_deck.pptx) ([PDF](docs/pitch/Sirius_demo_deck.pdf)) |
+
+All readings are simulated: real astronauts' daily vitals aren't public. The simulator in
+`simulator/simulate.py` sends them to the backend, and the dashboard reads them from there.
+
 ## The challenge
 
 > Long-duration missions expose astronauts to space radiation, isolation and confinement, altered gravity, and a hostile closed environment, which can bring immune changes, bone loss, cardiovascular events, and behavioral health problems. On long missions, astronauts carry much of the responsibility for spotting these changes in themselves. Your challenge is to build a health monitoring software that gathers health indicators and enables astronauts to evaluate and act on the status of their health.
