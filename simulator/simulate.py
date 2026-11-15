@@ -22,7 +22,12 @@ Run it (Python 3.9+, nothing to install):
     python3 simulator/simulate.py --dry-run          # print what would be sent, send nothing
 
 The key is the shared sending key from the backend (ask the backend owner where it lives).
+
+Written with help from an AI coding assistant (Claude by Anthropic). Every reading this script
+produces is simulated, not real astronaut data. See docs/AI_USE.md.
 """
+
+__ai_assistance__ = "Written with help from Claude (Anthropic). Output data is simulated."
 
 import argparse
 import json

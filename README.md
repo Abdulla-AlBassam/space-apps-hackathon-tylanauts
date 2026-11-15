@@ -122,6 +122,18 @@ work offline with made-up data.
 | minhajadnan27 | Health research |
 | TaqiTellsTales | Business and pitch |
 
+## Use of AI
+
+We used AI tools, as NASA Space Apps allows, and mark them as its rules ask. Full details:
+[docs/AI_USE.md](docs/AI_USE.md).
+
+- **Code, debugging and docs:** written with help from **Claude** (Anthropic). AI-assisted
+  commits carry a `Co-Authored-By: Claude` line.
+- **Logo and intro video:** made with AI tools, and marked "AI" / "AI-GENERATED".
+- **Demo slides:** built with Claude, and marked on every slide.
+- **Inside the app:** no AI model runs. Scores and alerts are fixed rules, and all health data is simulated.
+- **No NASA branding:** no NASA logo or flag, and the demo mission is made up.
+
 ## Credits
 
 - 3D anatomy model: **BodyParts3D**, © The Database Center for Life Science, CC BY 4.0.

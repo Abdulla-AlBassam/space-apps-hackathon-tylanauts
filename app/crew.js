@@ -26,7 +26,7 @@
   const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   /* ---------- Settings ---------- */
-  const MISSION = { name: "Lunar Gateway Expedition 3", today: 142, length: 180 }; // made-up mission
+  const MISSION = { name: "Sirius Deep Space Mission 3", today: 142, length: 180 }; // made-up mission
   const DAYS = 14; // days 129 to 142
   const FIRST_DAY = MISSION.today - DAYS + 1;
   const BASE_DAYS = 5; // each person's "normal" is their average over the first 5 days
