@@ -4,6 +4,8 @@ One page on what The Tylonauts are building: what works now, what's decided, wha
 still open, and who owns what. Last updated 15 Nov 2026, from the code, the Issues and the
 pull requests. If something here is wrong, fix it in a pull request.
 
+**Result:** Sirius won the **Best Use of Data** award at the NASA Space Apps Challenge 2026 in Manama, Bahrain.
+
 ---
 
 ## 1. The pitch in one paragraph
