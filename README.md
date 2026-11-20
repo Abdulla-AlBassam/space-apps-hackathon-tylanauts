@@ -2,6 +2,8 @@
 
 By **The Tylonauts**, for the **NASA Space Apps Challenge 2026** (Manama local event).
 
+🏆 **Winner of the Best Use of Data award** at the NASA Space Apps Challenge 2026 in Manama, Bahrain.
+
 Sirius is an astronaut health dashboard. It collects readings from every wearable an
 astronaut wears, combines them into three simple scores, and tells the astronaut in plain
 words what needs attention and what to do about it. All readings are simulated, but they
